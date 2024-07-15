@@ -1,0 +1,1 @@
+export const POSITIONS = ['bg', 'l', 'c', 'r'] as const
