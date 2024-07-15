@@ -16,12 +16,6 @@ export type Sprite = {
   type: string
 }
 
-export enum ViewRatio {
-  unconstrained = "",
-  fourByThree = "4/3",
-  sixteenByNine = "16/9",
-}
-
 export type KeysMatching<T extends object, V> = {
   [K in keyof T]-?: T[K] extends V ? K : never
 }[keyof T];
@@ -44,3 +38,20 @@ export type LcLetter = 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'
 export type UcLetter = 'A'|'B'|'C'|'D'|'E'|'F'|'G'|'H'|'I'|'J'|'K'
       |'L'|'M'|'N'|'O'|'P'|'Q'|'R'|'S'|'T'|'U'|'V'|'W'|'X'|'Y'|'Z'
 export type Letter = LcLetter|UcLetter
+
+export type DivProps = React.ComponentPropsWithoutRef<"div">
+
+
+/****************/
+/*   Flowchart	*/
+/****************/
+export type FcNodeAttrs = {
+	col: number
+	from: string[]
+	cutAt?: number
+	align?: string
+}
+
+export type FcSceneAttrs = FcNodeAttrs & {
+	graph: Graphics
+}
