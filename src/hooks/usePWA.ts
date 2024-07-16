@@ -20,8 +20,8 @@ async function installPWA() {
 }
 
 function usePWA() {
-	const [hasPWAcapability] = useObserved(sync, 'installPWAEvent', e=>e!=undefined)
-	return {hasPWAcapability, installPWA}
+	const [canInstallPWA] = useObserved(sync, 'installPWAEvent', e=>e!=undefined)
+	return {canInstallPWA, installPWA}
 }
 
 export default usePWA

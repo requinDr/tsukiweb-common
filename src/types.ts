@@ -41,6 +41,9 @@ export type Letter = LcLetter|UcLetter
 
 export type DivProps = React.ComponentPropsWithoutRef<"div">
 
+export type NumVarName = `%${string}`
+export type StrVarName = `$${string}`
+export type VarName = NumVarName | StrVarName
 
 /****************/
 /*   Flowchart	*/
