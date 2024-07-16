@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import classNames from "classnames";
 import { Link } from "react-router-dom";
 
 type Props = {
@@ -15,15 +15,11 @@ const TitleMenuButton = ({
 }: Props) => {
 	const Attention = () => <span> !</span>
 
-	const className = useMemo(()=>
-		["menu-item", attention ? "attention" : "", props.className ?? ""]
-			.filter(Boolean).join(" "),
-		[attention, props.className]
-	)
+	const className = classNames("menu-item", {"attention": attention}, props.className)
 
 	if (to) {
 		return (
-			<Link {...props} to={to} className={className} >
+			<Link {...props} to={to} className={className}>
 				{children}
 				{attention && <Attention />}
 			</Link>
