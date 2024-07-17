@@ -1,4 +1,4 @@
-import { useObserved } from "@tsukiweb-common/utils/Observer";
+import { useObserved } from "../utils/Observer";
 
 type BeforeInstallPromptEvent = Event & { prompt: ()=>Promise<{outcome: any}> }
 

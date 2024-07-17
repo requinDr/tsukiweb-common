@@ -1,4 +1,4 @@
-import TabsComponent, { Tab } from "@tsukiweb-common/ui-core/components/TabsComponent"
+import TabsComponent, { Tab } from "../components/TabsComponent"
 import styles from "../styles/layouts.module.scss"
 
 type Props = {
