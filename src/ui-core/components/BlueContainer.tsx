@@ -1,5 +1,6 @@
 import { HTMLAttributes, PropsWithChildren } from 'react';
 import styles from '../styles/smallcomponents.module.scss';
+import classNames from 'classnames';
 
 type BlueContainerProps = {
 
@@ -9,7 +10,7 @@ const BlueContainer = ({ children, ...props }: HTMLAttributes<HTMLDivElement> & 
 	const { className } = props
 
 	return (
-		<div {...props} className={`${styles.blueContainer} ${className}`}>
+		<div {...props} className={classNames(styles.blueContainer, className)}>
 			{children}
 		</div>
 	)
