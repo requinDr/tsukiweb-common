@@ -1,0 +1,78 @@
+@use "fonts.scss";
+@use "colors.scss";
+
+:root {
+	font-family: system-ui, Arial, sans-serif;
+	line-height: 1.5;
+	font-weight: 400;
+
+	color-scheme: light dark;
+	color: rgba(255, 255, 255, 0.87);
+	background-color: #242424;
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+
+	--page-width: max(1400px, 60%);
+
+	@extend %colors;
+}
+
+* {
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+	overscroll-behavior: none;
+}
+
+img {
+	-webkit-user-drag: none;
+	user-select: none;
+	font-style: italic;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+a {
+  font-weight: 500;
+  color: var(--color-link);
+  text-decoration: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+button {
+  all: unset;
+  user-select: none;
+
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+// not touch devices
+@media (hover: hover) and (pointer: fine) {
+	*::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	*::-webkit-scrollbar-thumb {
+		border-radius: 4px;
+
+		background-image: var(--scrollbar-gradient);
+
+    &:hover {
+      background-image: var(--scrollbar-hover);
+    }
+	}
+}
