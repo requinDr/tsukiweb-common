@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Fragment, PropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef } from "react"
+import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef } from "react"
 import Timer from "./timer"
 import { innerText, TSForceType } from "./utils"
 
@@ -231,7 +231,7 @@ type Props = {
 	dict?: typeof defaultBBcodeDict,
 	rootPrefix?: ReactNode,
 	rootSuffix?: ReactNode
-} & React.ComponentPropsWithoutRef<"span">
+} & ComponentPropsWithoutRef<"span">
 
 export const Bbcode = memo(({text, dict = defaultBBcodeDict, rootPrefix: prefix, rootSuffix: suffix, ...props}: Props)=> {
 	let root = bb(text, props, dict)
