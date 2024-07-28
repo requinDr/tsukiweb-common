@@ -1,14 +1,15 @@
-import { Link, LinkProps } from "react-router-dom"
+import { Link, LinkProps, To } from "react-router-dom"
 import styles from "../styles/button.module.scss"
+import classNames from "classnames"
 
 interface PropsButton extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 interface PropsLink extends LinkProps {
-	to: string
+	to: To
 }
 
 type Props = {
-	variant?: "default" | "corner"
+	variant?: "default" | "corner" | "menu"
 	active?: boolean
 	className?: string
 	[key: string]: any
@@ -18,30 +19,25 @@ type Props = {
  * A button or Link already styled
  */
 const Button = ({children, to, className, variant = "default", active = false, ...props}: Props) => {
-	const classNames = [styles.btn, "btn"]
-	if (variant === "default") {
-		classNames.push(styles.btnVariantDefault)
-	} else if (variant === "corner") {
-		classNames.push(styles.btnVariantCorner)
-	}
-	if (active) {
-		classNames.push(styles.active)
-	}
-	if (className) {
-		classNames.push(className)
-	}
+	const classes = classNames(styles.btn, "btn", {
+		[styles.btnVariantDefault]: variant === "default",
+		[styles.btnVariantCorner]: variant === "corner",
+		[styles.btnVariantMenu]: variant === "menu",
+		[styles.active]: active,
+		[className || ""]: className
+	})
 
 	const button = to ? (
 		<Link
-			className={classNames.join(" ") || ""}
+			className={classes}
 			{...props as LinkProps}
+			to={to}
 		>
 			{children}
 		</Link>
 	) : (
 		<button
-			// onClick={onClick}
-			className={classNames.join(" ") || ""}
+			className={classes}
 			{...props as React.ButtonHTMLAttributes<HTMLButtonElement>}
 		>
 			{children}

@@ -1,20 +1,3 @@
-.menuBtn {
-	display: inline-block;
-	color: var(--text-color);
-	padding: 0.3em 2em;
-	font-size: clamp(0.86rem, 3.5vmin, 1rem);
-	background-color: var(--menu-container);
-	box-shadow: var(--menu-shadow);
-	transition: 0.2s;
-
-	&:hover,
-	&:focus-visible {
-		box-shadow: var(--selected-shadow);
-		text-decoration: none;
-	}
-}
-
-
 .btn {
 	display: inline-flex;
 	align-items: center;
@@ -26,6 +9,21 @@
 	color: var(--text-color);
 	padding: .2rem .6rem;
 	font-size: clamp(0.86em, 3.5vmin, 1em);
+	transition: 0.2s;
+
+	&:hover,
+	&:focus-visible {
+		box-shadow: var(--selected-shadow);
+		text-decoration: none;
+	}
+}
+
+.btnVariantMenu {
+	color: var(--text-color);
+	padding: 0.3em 2em;
+	font-size: clamp(0.86rem, 3.5vmin, 1rem);
+	background-color: var(--menu-container);
+	box-shadow: var(--menu-shadow);
 	transition: 0.2s;
 
 	&:hover,
