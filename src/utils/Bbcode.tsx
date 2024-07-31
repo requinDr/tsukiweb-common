@@ -114,8 +114,8 @@ export const defaultBBcodeDict: Record<string, TagTranslator> = {
 	'right': align,
 	'url': url,
 	'line': line,
-	'copy': (_, content, _a, props)=> <span {...props}>&copy;{content}</span>,
-	'class': (_, content, arg, props)=> <span className={arg} {...props}>{content}</span>,
+	'copy': (_, content, _a, props)=> <span {...props} key={props?.key}>&copy;{content}</span>,
+	'class': (_, content, arg, props)=> <span className={arg} {...props} key={props?.key}>{content}</span>,
 }
 
 //##############################################################################
