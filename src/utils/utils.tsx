@@ -1,4 +1,4 @@
-import { RecursivePartial, JSONObject, JSONPrimitive } from "@tsukiweb-common/types"
+import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent } from "@tsukiweb-common/types"
 import { ReactElement, ReactNode } from "react"
 
 //##############################################################################
@@ -375,7 +375,7 @@ export function TSForceType<T>(_v: any): asserts _v is T {}
  * @param object object to modify
  * @param dir directory path to insert
  */
-export function insertDirectory(object: JSONObject|(JSONObject|JSONPrimitive)[], dir: string) {
+export function insertDirectory<T extends JSONParent>(object: T, dir: string): T {
 	const entries = (object.constructor == Array) ?
 			object.entries() : Object.entries(object)
 	for (const [key, value] of entries) {

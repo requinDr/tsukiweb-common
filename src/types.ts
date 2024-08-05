@@ -31,6 +31,7 @@ export type JSONPrimitive = string|number|boolean|null
 export type JSONObject = {
   [key:string]: JSONPrimitive|JSONObject|Array<JSONPrimitive|JSONObject>
 }
+export type JSONParent = JSONObject | (JSONPrimitive | JSONObject)[]
 
 export type Digit = '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
 export type LcLetter = 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'
