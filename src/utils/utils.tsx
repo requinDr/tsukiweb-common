@@ -375,19 +375,26 @@ export function TSForceType<T>(_v: any): asserts _v is T {}
  * @param object object to modify
  * @param dir directory path to insert
  */
-export function insertDirectory(object: JSONObject, dir: string) {
-	for (const key of Object.getOwnPropertyNames(object)) {
-		const value = object[key]
-		const valueType = value?.constructor
-		if (valueType == String) {
-			TSForceType<String>(value)
-			if (value.startsWith('./')) {
-				object[key] = dir + value.substring(1)
-			}
-			else if (value.startsWith('../'))
-				object[key] = dir + '/' + value
-		} else if (valueType == Object) {
-			insertDirectory(value as JSONObject, dir)
+export function insertDirectory(object: JSONObject|(JSONObject|JSONPrimitive)[], dir: string) {
+	const entries = (object.constructor == Array) ?
+			object.entries() : Object.entries(object)
+	for (const [key, value] of entries) {
+		if (!value)
+			continue
+		switch(value.constructor) {
+			case String :
+				TSForceType<String>(value)
+				if (value.startsWith('./'))
+					(object as any)[key] = dir + value.substring(1)
+				else if (value.startsWith('../'))
+					(object as any)[key] = dir + '/' + value
+				break
+			case Object :
+				insertDirectory(value as JSONObject, dir)
+				break
+			case Array :
+				insertDirectory(value as (JSONObject|JSONPrimitive)[], dir)
+				break
 		}
 	}
 	return object
