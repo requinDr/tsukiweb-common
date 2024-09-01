@@ -2,12 +2,12 @@ import TabsComponent, { Tab } from "../components/TabsComponent"
 import styles from "../styles/layouts.module.scss"
 
 type Props = {
-	title: string
+	title?: string
 	tabs: Tab[]
 	selectedTab: string
 	setSelectedTab: (selected: any) => void
 	children: any
-	backButton: any
+	backButton?: any
 	[key: string]: any
 }
 const PageTabsLayout = ({
@@ -23,7 +23,9 @@ const PageTabsLayout = ({
 	return (
 		<div className={`${styles.pageContent} ${styles.pageTabsLayout}`} {...props}>
 			<main>
+				{title &&
 				<h2 className={styles.pageTitle}>{title}</h2>
+				}
 
 				<TabsComponent
 					tabs={tabs}
@@ -35,9 +37,11 @@ const PageTabsLayout = ({
 					{children}
 				</div>
 
+				{backButton &&
 				<div className={styles.backButton}>
 					{backButton}
 				</div>
+				}
 			</main>
 		</div>
 	)
