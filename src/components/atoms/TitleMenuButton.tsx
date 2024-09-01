@@ -1,13 +1,20 @@
 import classNames from "classnames";
-import { Link } from "react-router-dom";
+import { Link, LinkProps, To } from "react-router-dom";
 
-type Props = {
-	[key: string]: any;
-	children: React.ReactNode;
+interface PropsButton extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+}
+interface PropsLink extends LinkProps {
+	to: To
 }
 
+type Props = {
+	variant?: "default" | "corner" | "menu"
+	active?: boolean
+	className?: string
+	[key: string]: any
+} & (PropsButton | PropsLink)
+
 const TitleMenuButton = ({
-	onClick,
 	to,
 	attention,
 	children,
@@ -15,23 +22,28 @@ const TitleMenuButton = ({
 }: Props) => {
 	const Attention = () => <span> !</span>
 
-	const className = classNames("menu-item", {"attention": attention}, props.className)
+  const classes = classNames("menu-item", {"attention": attention}, props.className)
 
-	if (to) {
-		return (
-			<Link {...props} to={to} className={className}>
-				{children}
-				{attention && <Attention />}
-			</Link>
-		)
-	} else {
-		return (
-			<button {...props} className={className} onClick={onClick}>
-				{children}
-				{attention && <Attention />}
-			</button>
-		)
-	}
+  const button = to ? (
+		<Link
+			{...props as LinkProps}
+      className={classes}
+			to={to}
+		>
+			{children}
+      {attention && <Attention />}
+		</Link>
+	) : (
+		<button
+			{...props as React.ButtonHTMLAttributes<HTMLButtonElement>}
+      className={classes}
+		>
+			{children}
+      {attention && <Attention />}
+		</button>
+	)
+
+  return button
 }
 
 export default TitleMenuButton
