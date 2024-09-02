@@ -1,0 +1,12 @@
+@mixin hover-scale($prefix, $scale: 1.05) {
+	animation: #{$prefix}-scale-up-down infinite 1.6s;
+
+	@keyframes #{$prefix}-scale-up-down {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(#{$scale});
+		}
+	}
+}
