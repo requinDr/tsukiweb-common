@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from "react"
 import styles from "../styles/tabs.module.scss"
+import classNames from "classnames"
 
 export type Tab = {
 	label: string,
@@ -17,7 +18,7 @@ type TabsProps = {
  * Tabs with a default style applied
  */
 const TabsComponent = ({ tabs, selected, setSelected }: TabsProps) => (
-	<div className={styles.tabs}>
+	<div className={classNames(styles.tabs, "tabs")}>
 		{tabs.map(tab =>
 			<TabBtn key={tab.value}
 				text={tab.label}

@@ -39,6 +39,7 @@
 	position: relative;
 	transition: box-shadow .2s ease-in-out;
 	border-radius: 3px;
+	overflow: hidden;
 
 	&::before, &::after {
 		content: "";
