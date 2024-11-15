@@ -10,16 +10,11 @@ interface PropsLink extends LinkProps {
 type Props = {
 	variant?: "default" | "corner" | "menu"
 	active?: boolean
-	className?: string
+	attention?: boolean
 	[key: string]: any
 } & (PropsButton | PropsLink)
 
-const TitleMenuButton = ({
-	to,
-	attention,
-	children,
-	...props
-}: Props) => {
+const TitleMenuButton = ({to, attention, children, ...props}: Props) => {
 	const Attention = () => <span> !</span>
 
   const classes = classNames("menu-item", {"attention": attention}, props.className)
