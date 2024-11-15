@@ -47,7 +47,7 @@
 		grid-template-rows: auto auto 1fr auto;
 	}
 
-	@media screen and (orientation: landscape) and (max-height: 480px) {
+	@media screen and (orientation: landscape) and (max-height: 680px) {
 		main {
 			grid-template-columns: 180px 1fr;
 			grid-template-areas:

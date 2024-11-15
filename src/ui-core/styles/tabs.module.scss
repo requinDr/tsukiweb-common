@@ -6,9 +6,8 @@
 	overflow-x: auto;
 	margin-bottom: 8px;
 
-	@media screen and (orientation: landscape) and (max-height: 480px) {
+	@media screen and (orientation: landscape) and (max-height: 680px) {
 		flex-direction: column;
-		margin-bottom: 0;
 	}
 }
 
