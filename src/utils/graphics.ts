@@ -22,11 +22,14 @@ export function getTransition(type: string, skipTransition = false) {
 	}
 	[effect, speed] = splitLast(effect, '_')
 	if (speed != null && !skipTransition) {
-		switch(speed) {
-			case 'slw': duration = 1500; break
-			case 'mid': duration =  800; break
-			case 'fst': duration =  400; break
-			default : throw Error(`Ill-formed effect '${type}'`)
+		duration = Number.parseInt(speed)
+		if (Number.isNaN(duration)) {
+			switch(speed) {
+				case 'slw': duration = 1500; break
+				case 'mid': duration =  800; break
+				case 'fst': duration =  400; break
+				default : throw Error(`Ill-formed effect '${type}'`)
+			}
 		}
 	}
 	return {effect, duration}
