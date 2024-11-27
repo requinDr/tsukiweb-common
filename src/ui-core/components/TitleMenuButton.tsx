@@ -1,3 +1,4 @@
+import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
 import { Link, LinkProps, To } from "react-router-dom";
 
@@ -8,16 +9,21 @@ interface PropsLink extends LinkProps {
 }
 
 type Props = {
-	variant?: "default" | "corner" | "menu"
 	active?: boolean
 	attention?: boolean
 	[key: string]: any
 } & (PropsButton | PropsLink)
 
-const TitleMenuButton = ({to, attention, children, ...props}: Props) => {
-	const Attention = () => <span> !</span>
-
-  const classes = classNames("menu-item", {"attention": attention}, props.className)
+const TitleMenuButton = ({to, attention, active, children, ...props}: Props) => {
+  const classes = classNames(
+		styles.menuItem,
+		{
+			[styles.attention]: attention,
+			[styles.active]: active
+		},
+		"menu-item",
+		props.className
+	)
 
   const button = to ? (
 		<Link
@@ -42,3 +48,5 @@ const TitleMenuButton = ({to, attention, children, ...props}: Props) => {
 }
 
 export default TitleMenuButton
+
+const Attention = () => <span> !</span>

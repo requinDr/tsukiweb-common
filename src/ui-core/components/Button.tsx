@@ -2,6 +2,10 @@ import { Link, LinkProps, To } from "react-router-dom"
 import styles from "../styles/button.module.scss"
 import classNames from "classnames"
 
+
+/**
+ * A button or Link already styled
+ */
 interface PropsButton extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 interface PropsLink extends LinkProps {
@@ -14,10 +18,6 @@ type Props = {
 	className?: string
 	[key: string]: any
 } & (PropsButton | PropsLink)
-
-/**
- * A button or Link already styled
- */
 const Button = ({children, to, className, variant = "default", active = false, ...props}: Props) => {
 	const classes = classNames(styles.btn, "btn", {
 		[styles.btnVariantDefault]: variant === "default",
