@@ -9,8 +9,8 @@ type TagTranslator<T=string|undefined> = (tag: string, content: Array<string|JSX
 //[/?<tag>(=<arg>)?/?]
 const bbcodeTagRegex = /\[(?<tag>\/?\w*)(=(?<arg>([^\/\]]|\/(?!\]))+))?(?<leaf>\/)?\]/g
 
-//##############################################################################
-//#                             BBCODE TAG TO JSX                              #
+//#endregion ###################################################################
+//#region                       BBCODE TAG TO JSX
 //##############################################################################
 
 const simple: TagTranslator = (tag, content, _, props?)=> {
@@ -88,38 +88,39 @@ const line: TagTranslator = (_, content, arg, props?)=> {
 		{content}
 	</Fragment>
 }
+const ruby: TagTranslator = (_, content, arg, props?)=> {
+	return <ruby {...props}>
+		{content}
+		<rp>(</rp>
+		<rt>{arg}</rt>
+		<rp>)</rp>
+	</ruby>
+}
 
 /**
  * The default bbcode dictionary used to convert bbcode to JSX.
  * New dictionaries should extend it.
  */
 export const defaultBBcodeDict: Record<string, TagTranslator> = {
-	'': (_, content, _a, props)=> simple('span', content, _, props),
-	'br' : leaf,
-	'wbr' : leaf,
-	'b' : simple,
-	'i' : simple,
-	's' : simple,
-	'sup' : simple,
-	'sub' : simple,
-	'u' : (_, content, _a, props)=> styled('span', content, {textDecoration: "underline"}, props),
-	'size' : (_, content, arg, props)=> styled('span', content, {fontSize: arg}, props),
-	'font': (_, content, arg, props)=> styled('span', content, {fontFamily: arg}, props),
+	''		: (_, content, _a, props)=> simple('span', content, _, props),
+	'br' 	: leaf,		'wbr' 	: leaf,
+	'sup' 	: simple,	'sub' 	: simple,
+	'b' 	: simple,	'i' 	: simple,	's' : simple,
+	'center': align,	'left'	: align,	'right'	: align,
+	'url'	: url,		'line'	: line,		'ruby'	: ruby,
+	'u'		: (_, content, _a, props)=> styled('span', content, {textDecoration: "underline"}, props),
+	'size' 	: (_, content, arg, props)=> styled('span', content, {fontSize: arg}, props),
+	'font'	: (_, content, arg, props)=> styled('span', content, {fontFamily: arg}, props),
 	'color' : (_, content, arg, props)=> styled('span', content, {color: arg}, props),
-	'opacity': (_, content, arg, props)=> styled('span', content, {opacity: arg}, props),
+	'opacity':(_, content, arg, props)=> styled('span', content, {opacity: arg}, props),
 	'noline': (_, content, _a, props)=> styled('span', content, {textShadow: "none"}, props),
-	'hide': (_, content, _a, props)=> styled('span', content, {visibility: "hidden"}, props),
-	'center': align,
-	'left': align,
-	'right': align,
-	'url': url,
-	'line': line,
-	'copy': (_, content, _a, props)=> <span {...props} key={props?.key}>&copy;{content}</span>,
-	'class': (_, content, arg, props)=> <span className={arg} {...props} key={props?.key}>{content}</span>,
+	'hide'	: (_, content, _a, props)=> styled('span', content, {visibility: "hidden"}, props),
+	'copy'	: (_, content, _a, props)=> <span {...props} key={props?.key}>&copy;{content}</span>,
+	'class'	: (_, content, arg, props)=> <span className={arg} {...props} key={props?.key}>{content}</span>,
 }
 
-//##############################################################################
-//#                            TEXT TO BBCODE TREE                             #
+//#endregion ###################################################################
+//#region                      TEXT TO BBCODE TREE
 //##############################################################################
 
 type BbNode = {tag: string, arg: string, content: (BbNode|string)[]}
@@ -219,8 +220,8 @@ export function noBb(text: string): string {
 		return ""
 }
 
-//##############################################################################
-//#                                 COMPONENTS                                 #
+//#endregion ###################################################################
+//#region                           COMPONENTS
 //##############################################################################
 
 //___________________________________<Bbcode>___________________________________
