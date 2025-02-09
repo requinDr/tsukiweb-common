@@ -81,3 +81,7 @@ export default class Timer {
 		}
 	}
 }
+
+export function asyncDelay(ms: number) : Promise<void> {
+	return new Promise((resolve)=> setTimeout(resolve, ms))
+}
