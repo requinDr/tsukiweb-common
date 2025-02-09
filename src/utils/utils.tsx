@@ -180,8 +180,8 @@ export function innerText(jsx: ReactNode): string {
 		default :
 			if (Array.isArray(jsx))
 				return (jsx as Array<ReactNode>).reduce<string>((str, node)=>str + innerText(node), "")
-			if ((jsx as ReactElement).props.children) {
-				return innerText((jsx as ReactElement).props.children)
+			if ((jsx as ReactElement<{ children?: React.ReactNode }>).props.children) {
+				return innerText((jsx as ReactElement<{ children?: React.ReactNode }>).props.children)
 			}
 			return ""
 	}

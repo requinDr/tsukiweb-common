@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef } from "react"
+import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef, JSX } from "react"
 import Timer from "./timer"
 import { innerText, TSForceType } from "./utils"
 
@@ -361,13 +361,13 @@ type TWProps = Props & {
 export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay, rootPrefix,
 		rootSuffix, restartOnAppend=false, hideTag=undefined, hideTagArg="",
 		onFinish, ...props}: TWProps)=> {
-	const root = useRef<BbNode>()
+	const root = useRef<BbNode | undefined>(undefined)
 	const prevText = useRef<string>("")
 	const cursors = useRef<number[]>([0])
-	const path = useRef<(BbNode|string)[]>([])
+	const path = useRef<(BbNode | string)[]>([])
 	const [tree, updateTree] = useReducer(()=>
 		root.current ? hideTree(root.current, cursors.current, hideTag, hideTagArg) : undefined, undefined)
-	const finishCallback = useRef<VoidFunction>()
+	const finishCallback = useRef<VoidFunction | undefined>(undefined)
 
 	//useTraceUpdate("[BBTW] "+ text, {text, dict, charDelay, restartOnAppend, hideTag, hideTagArg, onFinish, hideTree, ...props})
 	
