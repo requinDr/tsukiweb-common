@@ -347,6 +347,10 @@ export async function requestJSONs({ multiple = false, accept = ''}) : Promise<R
 	return jsons
 }
 
+export function supportFullscreen() {
+	return Boolean(document.fullscreenEnabled)
+}
+
 export function isFullscreen() {
 	return document.fullscreenElement !== null
 }
