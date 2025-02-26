@@ -101,7 +101,7 @@ const ruby: TagTranslator = (_, content, arg, props?)=> {
  * The default bbcode dictionary used to convert bbcode to JSX.
  * New dictionaries should extend it.
  */
-export const defaultBBcodeDict: Record<string, TagTranslator> = {
+const defaultBBcodeDict: Record<string, TagTranslator> = {
 	''		: (_, content, _a, props)=> simple('span', content, _, props),
 	'br' 	: leaf,		'wbr' 	: leaf,
 	'sup' 	: simple,	'sub' 	: simple,

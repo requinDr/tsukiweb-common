@@ -7,7 +7,7 @@ export type SwipeListener = (direction: Direction, distance: number, event: Touc
 
 const events = ["touchstart", "touchmove", "touchend", "touchcancel"]
 
-export class GestureHandler {
+class GestureHandler {
   private _onTouch: TouchEventHandler
   private swipeListener: SwipeListener|undefined
   private element: HTMLElement|undefined

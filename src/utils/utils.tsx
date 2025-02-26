@@ -265,11 +265,6 @@ export function getScrollableParent(element: Node, directions?: Array<"up"|"down
 	return null
 }
 
-export function isDigit(str: string, index: number = 0) {
-	const char = str.charAt(index)
-	return char >= '0' && char <= '9'
-}
-
 export function negative(n: number) {
 	return !Object.is(Math.abs(n), n)
 }
@@ -323,7 +318,7 @@ export function requestFilesFromUser({ multiple = false, accept = '' }): Promise
 }
 
 export async function requestJSONs({ multiple = false, accept = ''}) : Promise<Record<string,any>[]|null> {
-	let files = await requestFilesFromUser(({multiple, accept}))
+	let files = await requestFilesFromUser({multiple, accept})
 	if (!files)
 		return null; // canceled by user
 	if (files instanceof File)
@@ -365,10 +360,6 @@ export function toggleFullscreen() {
 export function resettable<T extends Record<PropertyKey, any>>(resetValue: Readonly<T>): [T, VoidFunction, Readonly<T>] {
 	const value = deepAssign({}, resetValue) as T
 	return [value, deepAssign.bind(null, value, resetValue, {}), resetValue]
-}
-
-export function isIterable(obj: any): obj is Iterable<any> {
-	return typeof obj[Symbol.iterator] === 'function'
 }
 
 export function TSForceType<T>(_v: any): asserts _v is T {}
