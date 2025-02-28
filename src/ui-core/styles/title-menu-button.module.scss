@@ -5,6 +5,7 @@
 	text-decoration: none;
 	transition: var(--transition);
 	user-select: none;
+	-webkit-user-drag: none;
 	text-shadow: 0 0 8px #d0d3e1;
 	position: relative;
 	-webkit-tap-highlight-color: transparent;
