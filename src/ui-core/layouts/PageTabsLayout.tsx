@@ -1,3 +1,4 @@
+import { useCallback, useRef } from "react"
 import TabsComponent, { Tab } from "../components/TabsComponent"
 import styles from "../styles/layouts.module.scss"
 
@@ -19,6 +20,18 @@ const PageTabsLayout = ({
 	backButton,
 	...props
 }: Props) => {
+	const tabsRef = useRef<HTMLDivElement>(null);
+
+	const handleSetSelectedTab = useCallback(
+		(selected: any) => {
+			setSelectedTab(selected);
+			requestAnimationFrame(() => {
+				const selectedTabElement = tabsRef.current?.querySelector(`[data-tab='${selected}']`)
+				selectedTabElement?.scrollIntoView({ behavior: "smooth" })
+			})
+		},
+		[setSelectedTab]
+	)
 
 	return (
 		<div className={`${styles.pageContent} ${styles.pageTabsLayout}`} {...props}>
@@ -30,7 +43,8 @@ const PageTabsLayout = ({
 				<TabsComponent
 					tabs={tabs}
 					selected={selectedTab}
-					setSelected={setSelectedTab}
+					setSelected={handleSetSelectedTab}
+					ref={tabsRef}
 				/>
 
 				<div className={styles.content}>
