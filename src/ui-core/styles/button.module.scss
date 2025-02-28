@@ -11,8 +11,7 @@
 
 .btnVariantDefault {
 	color: var(--text-color);
-	padding: .2rem .6rem;
-	font-size: clamp(0.86em, 3.5vmin, 1em);
+	padding: .3rem .8rem;
 	transition: 0.2s;
 
 	&:hover,
@@ -25,7 +24,6 @@
 .btnVariantMenu {
 	color: var(--text-color);
 	padding: 0.3em 2em;
-	font-size: clamp(0.86rem, 3.5vmin, 1rem);
 	background-color: var(--menu-container);
 	box-shadow: var(--menu-shadow);
 	transition: 0.2s;
@@ -38,7 +36,7 @@
 }
 
 .btnVariantCorner {
-	padding: .2rem .6rem;
+	padding: .3rem .8rem;
 	background-color: transparent;
 	position: relative;
 	transition: box-shadow .2s ease-in-out;
