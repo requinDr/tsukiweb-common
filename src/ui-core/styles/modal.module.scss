@@ -27,3 +27,55 @@
 	isolation: isolate;
 	font-size: 1.1em;
 }
+
+.prompt {
+	// beautiful red #760101
+	--prompt-color: #012f76;
+	align-self: center;
+	margin: 1em;
+	width: min(500px, 100%);
+	display: grid;
+	text-align: center;
+	text-wrap: balance;
+	user-select: none;
+	font-size: 1.1em;
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	.promptModal {
+		border: 1px solid var(--message-container-background);
+		background-color: var(--prompt-color);
+		box-shadow: 0 0 10px black;
+		display: grid;
+		grid-template-rows: 1fr auto;
+	}
+
+	.body {
+		padding-inline: min(3em, 3vmin);
+		padding-top: 2em;
+		padding-bottom: 2em;
+		background-color: var(--menu-container);
+	}
+
+	.buttons {
+		display: grid;
+		grid-template-columns: 1fr 1px 1fr;
+		font-size: 1.2em;
+
+		&:not(:has(.separator)) {
+			grid-template-columns: 1fr;
+		}
+
+		& > button {
+			padding-block: .6em;
+		}
+		.separator {
+			width: 1px;
+			height: 60%;
+			background-color: var(--separator);
+			align-self: center;
+		}
+	}
+}
