@@ -36,6 +36,7 @@ const TitleMenuButton = ({to, attention, active, children, ...props}: Props) => 
 		</Link>
 	) : (
 		<button
+			onContextMenu={e => e.preventDefault()}
 			{...props as React.ButtonHTMLAttributes<HTMLButtonElement>}
       className={classes}
 		>

@@ -24,7 +24,9 @@ const TabsComponent = ({ tabs, selected, setSelected }: TabsProps) => (
 				text={tab.label}
 				active={selected === tab.value}
 				onClick={() => setSelected(tab.value)}
-				disabled={tab.disabled}
+				buttonProps={{
+					disabled: tab.disabled,
+				}}
 			/>
 		)}
 	</div>
@@ -37,13 +39,14 @@ type TabBtnProps = {
 	text: string,
 	active: boolean,
 	onClick: ()=> void
-	disabled?: boolean
+	buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>
 }
-
-const TabBtn = ({text, active, onClick, disabled}: TabBtnProps) => (
-	<button className={`${styles.tab} ${active ? styles.active : ''}`}
+const TabBtn = ({text, active, onClick, buttonProps}: TabBtnProps) => (
+	<button
+		className={classNames(styles.tab, "tab", { [styles.active]: active }, buttonProps?.className)}
 		onClick={onClick}
-		disabled={disabled}
+		onContextMenu={e => e.preventDefault()}
+		{...buttonProps}
 	 >
 		{text}
 	</button>

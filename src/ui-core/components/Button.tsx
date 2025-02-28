@@ -38,6 +38,7 @@ const Button = ({children, to, className, variant = "default", active = false, .
 	) : (
 		<button
 			className={classes}
+			onContextMenu={e => e.preventDefault()}
 			{...props as React.ButtonHTMLAttributes<HTMLButtonElement>}
 		>
 			{children}

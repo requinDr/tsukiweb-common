@@ -6,6 +6,12 @@
 	overflow-x: auto;
 	margin-bottom: 8px;
 
+	@media (pointer: coarse) {
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
 	@media screen and (orientation: landscape) and (max-height: 680px) {
 		flex-direction: column;
 	}
