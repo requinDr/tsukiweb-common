@@ -34,13 +34,16 @@ const GraphicElement = ({ pos, image, getUrl, blur = false, lazy = false, props 
 			blur = blur(image) // GALLERY_IMAGES[image]?.sensitive && settings.blurThumbnails
 		}
 		imageElement = (
-			<img
-				src={imgUrl}
-				alt={alt}
-				draggable={false}
-				className={classNames({ blur })}
-				{...(lazy ? { loading: "lazy" } : {})}
-			/>
+			<picture style={{display: "contents", width: "inherit", height: "inherit"}}>
+				<source srcSet={imgUrl.replace(".webp", ".avif")} type="image/avif" />
+				<img
+					src={imgUrl}
+					alt={alt}
+					draggable={false}
+					className={classNames({ blur })}
+					{...(lazy ? { loading: "lazy" } : {})}
+				/>
+			</picture>
 		)
 	}
 	if (text) {
