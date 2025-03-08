@@ -37,7 +37,7 @@ const PageTabsLayout = ({
 		<div className={`${styles.pageContent} ${styles.pageTabsLayout}`} {...props}>
 			<main>
 				{title &&
-				<h2 className={styles.pageTitle}>{title}</h2>
+				<h2 className={`${styles.pageTitle} page-title`}>{title}</h2>
 				}
 
 				<TabsComponent

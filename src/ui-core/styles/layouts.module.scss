@@ -61,8 +61,7 @@
 }
 
 .pageSection {
-	background-color: var(--menu-container);
-	box-shadow: var(--menu-shadow);
+	border-block: 2px solid var(--separator);
 	position: relative;
 	padding: 1rem;
 	overflow-y: auto;
