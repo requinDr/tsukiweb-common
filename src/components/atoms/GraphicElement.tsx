@@ -1,3 +1,4 @@
+import { replaceExtensionByAvif } from "../../utils/images";
 import { DivProps, SpritePos } from "../../types";
 import { bb } from "../../utils/Bbcode";
 import { splitFirst } from "../../utils/utils";
@@ -31,11 +32,11 @@ const GraphicElement = ({ pos, image, getUrl, blur = false, lazy = false, props 
 		const imgUrl = getUrl(image)
 		const alt = `[[sprite:${image}]]`
 		if (blur instanceof Function) {
-			blur = blur(image) // GALLERY_IMAGES[image]?.sensitive && settings.blurThumbnails
+			blur = blur(image)
 		}
 		imageElement = (
 			<picture style={{display: "contents", width: "inherit", height: "inherit"}}>
-				<source srcSet={imgUrl.replace(".webp", ".avif")} type="image/avif" />
+				<source srcSet={replaceExtensionByAvif(imgUrl)} type="image/avif" />
 				<img
 					src={imgUrl}
 					alt={alt}
