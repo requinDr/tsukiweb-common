@@ -4,7 +4,7 @@ import Button from "./Button"
 import ReactModal, { Styles } from "react-modal"
 import styles from '../styles/modal.module.scss'
 import { createRoot } from 'react-dom/client'
-import { motion } from "motion/react"
+import * as motion from "motion/react-m"
 
 type Props = {
 	display: boolean
