@@ -4,6 +4,7 @@ import Button from "./Button"
 import ReactModal, { Styles } from "react-modal"
 import styles from '../styles/modal.module.scss'
 import { createRoot } from 'react-dom/client'
+import { LazyMotion, domAnimation } from 'motion/react';
 import * as motion from "motion/react-m"
 
 type Props = {
@@ -203,7 +204,11 @@ const ModalManager: React.FC = () => {
 export const mountModalManager = (): void => {
 	const { root } = initializeModalContainer()
 	if (root) {
-		root.render(<ModalManager />)
+		root.render(
+			<LazyMotion features={domAnimation} strict>
+				<ModalManager />
+			</LazyMotion>
+		)
 	}
 }
 
