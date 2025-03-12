@@ -16,10 +16,9 @@ type TabsProps = {
 	tabs: Tab[],
 	selected: string,
 	setSelected: Dispatch<SetStateAction<any>>
-	ref?: React.Ref<HTMLDivElement>
 }
-const TabsComponent = ({ tabs, selected, setSelected, ref }: TabsProps) => (
-	<div className={classNames(styles.tabs, "tabs")} ref={ref}>
+const TabsComponent = ({ tabs, selected, setSelected }: TabsProps) => (
+	<div className={classNames(styles.tabs, "tabs")}>
 		{tabs.map(tab =>
 			<TabBtn key={tab.value}
 				text={tab.label}

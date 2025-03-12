@@ -34,7 +34,7 @@ const PageTabsLayout = ({
 	)
 
 	return (
-		<div className={`${styles.pageContent} ${styles.pageTabsLayout}`} {...props}>
+		<div className={`${styles.pageContent} ${styles.pageTabsLayout}`} {...props} ref={tabsRef}>
 			<main>
 				{title &&
 				<h2 className={`${styles.pageTitle} page-title`}>{title}</h2>
@@ -44,7 +44,6 @@ const PageTabsLayout = ({
 					tabs={tabs}
 					selected={selectedTab}
 					setSelected={handleSetSelectedTab}
-					ref={tabsRef}
 				/>
 
 				<div className={styles.content}>
