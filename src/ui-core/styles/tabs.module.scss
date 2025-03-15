@@ -5,6 +5,7 @@
 	padding-right: 1em;
 	overflow-x: auto;
 	margin-bottom: 8px;
+	flex: none;
 
 	@media (pointer: coarse) {
 		&::-webkit-scrollbar {
