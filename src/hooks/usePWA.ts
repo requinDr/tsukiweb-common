@@ -6,7 +6,6 @@ let sync = {
   installPWAEvent: undefined as BeforeInstallPromptEvent|undefined
 }
 window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault()
   sync.installPWAEvent = event as BeforeInstallPromptEvent;
 })
 
