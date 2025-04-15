@@ -2,23 +2,9 @@
 @use "colors.scss";
 
 :root {
-	font-family: system-ui, Arial, sans-serif;
-	line-height: 1.5;
-	font-weight: 400;
-
-	color-scheme: light dark;
-	color: rgba(255, 255, 255, 0.87);
-	background-color: #242424;
-
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	-webkit-text-size-adjust: 100%;
-
 	--page-width: max(1500px, 60%);
 
-	@extend %colors;
+	@include colors.color-vars;
 }
 
 * {
@@ -68,7 +54,6 @@ button {
 	}
 	*::-webkit-scrollbar-thumb {
 		border-radius: 4px;
-
 		background-image: var(--scrollbar-gradient);
 
     &:hover {
