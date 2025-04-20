@@ -1,7 +1,6 @@
 .pageContent {
 	--page-padding: clamp(.8rem, 1.6vmin, 1.2rem);
 	max-width: var(--page-width);
-	max-height: max(1080px, 60%);
 	margin-inline: auto;
 	padding: var(--page-padding);
 	height: inherit;
