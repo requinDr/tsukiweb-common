@@ -49,3 +49,38 @@ export class StoredJSON<T> extends StoredValue<T> {
     super(name, session, JSON.stringify, JSON.parse, onBlur)
   }
 }
+
+export abstract class Stored {
+  private _storage: Storage
+  private _storageName: string
+
+  constructor(name: string, session: boolean, saveOnBlur: boolean = false) {
+    this._storage = session ? sessionStorage : localStorage
+    this._storageName = name
+    if (saveOnBlur) {
+      document.addEventListener("visibilitychange", ()=> {
+        if (document.visibilityState == "hidden") {
+          this.saveToStorage()
+        }
+      })
+    }
+  }
+
+  saveToStorage() {
+    this._storage.setItem(this._storageName, this.serializeToStorage())
+  }
+
+  restoreFromStorage() {
+    const storedStr = this._storage.getItem(this._storageName)
+    if (storedStr !== null)
+      this.deserializeFromStorage(storedStr)
+  }
+  
+  storageExists(): boolean {
+    return this._storage.getItem(this._storageName) !== null
+  }
+
+  protected abstract serializeToStorage(): string
+  protected abstract deserializeFromStorage(str: string): void
+
+}

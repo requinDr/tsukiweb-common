@@ -17,7 +17,7 @@ type ChildrenListener<T> = {
 type ChildrenObserverOptions<T> = Partial<Omit<ChildrenListener<T>, 'callback'>>
 
 //##############################################################################
-//#                              OBSERVER CLASSES                              #
+//#region                        OBSERVER CLASSES
 //##############################################################################
 
 class PropertyObserver<V> {
@@ -26,9 +26,12 @@ class PropertyObserver<V> {
   private listeners: Array<Listener<V>>
 
   constructor(parent: any, property: PropertyKey, onValueChange: VoidFunction) {
-    const descriptor = Object.seal(Object.getOwnPropertyDescriptor(parent, property))
+    let descriptor = Object.getOwnPropertyDescriptor(parent, property)
+    if (!descriptor)
+      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(parent), property)
     if (!descriptor)
       throw Error(`property ${property.toString()} is not a direct property of object ${parent}`)
+    descriptor = Object.seal(descriptor)
     if (!(descriptor.configurable && (descriptor.writable??true)))
       throw Error(`property ${property.toString()} of ${parent} must be configurable and writable to be observed`)
     if ((descriptor.get != undefined) != (descriptor.set != undefined))
@@ -239,8 +242,8 @@ class ObservableContainer<T extends Object> {
   }
 }
 
-//##############################################################################
-//#                           PUBLIC BASE FUNCTIONS                            #
+//#endregion ###################################################################
+//#region                     PUBLIC BASE FUNCTIONS
 //##############################################################################
 
 /**
@@ -325,8 +328,8 @@ export function unobserveChildren<T extends Object>(parent: T, attr: keyof T,
   return true
 }
 
-//##############################################################################
-//#                            REACT-HOOK FUNCTIONS                            #
+//#endregion ###################################################################
+//#region                      REACT-HOOK FUNCTIONS
 //##############################################################################
 
 /**
@@ -404,3 +407,5 @@ export function useChildrenObserver<T extends Object>(
     return unobserveChildren.bind(null, parent, attr as any, callback as any) as VoidFunction
   }, [])
 }
+
+//#endregion ###################################################################

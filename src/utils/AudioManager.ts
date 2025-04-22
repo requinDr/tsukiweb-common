@@ -1,8 +1,6 @@
 //##############################################################################
-//region                        imports, constants
+//#region                      imports, constants
 //##############################################################################
-
-import { TSForceType } from "./utils"
 
 const autoPlayEnablingEvents = [
     'auxclick', 'click'    , 'contextmenu',
@@ -10,8 +8,8 @@ const autoPlayEnablingEvents = [
     'keydown' , 'keyup'    , 'touchend'
 ]
 
-//endregion ####################################################################
-//region                           AudioChannel
+//#endregion ###################################################################
+//#region                         AudioChannel
 //##############################################################################
 
 export class AudioChannel {
@@ -164,8 +162,8 @@ export class AudioChannel {
     }
 }
 
-//endregion ####################################################################
-//region                           AudioManager
+//#endregion ###################################################################
+//#region                         AudioManager
 //##############################################################################
 
 export class AudioManager {
@@ -179,6 +177,7 @@ export class AudioManager {
     private _channels: Map<string, AudioChannel> = new Map()
     private _id2url: (id: string) => string
     private _autoMuteEn: boolean = false;
+    private _autoMuted: boolean = false;
     private _autoMuteListener: ()=> void;
 
 //_________________________________constructor__________________________________
@@ -210,7 +209,7 @@ export class AudioManager {
         const resume = ()=> {
             this.context.resume()
             for (const evt of autoPlayEnablingEvents)
-            removeEventListener(evt, resume)
+                removeEventListener(evt, resume)
         }
         for (const evt of autoPlayEnablingEvents)
             addEventListener(evt, resume)
@@ -387,8 +386,8 @@ export class AudioManager {
     }
 }
 
-//endregion ####################################################################
-//region                         Shortcut classes
+//#endregion ###################################################################
+//#region                       Shortcut classes
 //##############################################################################
 
 export class BasicAudioManager extends AudioManager {
@@ -406,4 +405,4 @@ export class BasicAudioManager extends AudioManager {
     }
 }
 
-//endregion ####################################################################
+//#endregion ###################################################################

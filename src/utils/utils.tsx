@@ -93,7 +93,7 @@ export function deepAssign<Td extends Record<string,any>, Ts extends Record<stri
 				else if (Array.isArray(dest[p]))
 					res[p] = Array.from(dest[p])
 				else if (dest[p]?.constructor == Object)
-					res[p] = deepAssign({}, dest[p], {extend, morphTypes, clone: false})
+					res[p] = deepAssign({}, dest[p], {extend: true, morphTypes, clone: false})
 				else
 					throw Error(`cannot clone ${p as string}:${dest[p].constructor}`)
 			}
@@ -393,4 +393,19 @@ export function insertDirectory<T extends JSONParent>(object: T, dir: string): T
 		}
 	}
 	return object
+}
+
+export function version_compare(v1: string, v2: string) {
+	const v1Split = v1.split('.')
+	const v2Split = v2.split('.')
+	const len = Math.min(v1Split.length, v2Split.length)
+	for (let i=0; i < len; i++) {
+		if (v1Split[i] != v2Split[i]) {
+			const diff = Math.sign(Number.parseInt(v1Split[i]) - Number.parseInt(v2Split[i]))
+			if (diff != 0)
+				return diff
+			return v1Split[i] > v2Split[i] ? 1 : -1
+		}
+	}
+	return Math.sign(v1Split.length - v2Split.length)
 }
