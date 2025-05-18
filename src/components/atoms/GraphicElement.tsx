@@ -15,6 +15,8 @@ type Props = {
 
 const GraphicElement = ({ pos, image, getUrl, blur = false, lazy = false, props = {} }: Props) => {
 	image = image || (pos == "bg" ? "#000000" : "#00000000")
+	if (image.startsWith('"'))
+		image = image.replaceAll('"', '')
 	const isColor = image.startsWith("#")
 	let text
 	[image, text] = splitFirst(image, "$")
