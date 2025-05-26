@@ -2,9 +2,10 @@
  * Created by Loic France on 12/20/2016.
  */
 
-import { DependencyList, RefObject, useCallback, useEffect, useRef } from "react"
+import { RefObject, useEffect, useRef } from "react"
 import { objectsEqual } from "./utils"
 import { observe } from "./Observer"
+import { NoMethods } from "../types"
 
 type KeyMapCallback = (action: any, event: KeyboardEvent, ...args: any) => boolean|void
 type KeyMapCondition = (action: any, event: KeyboardEvent, ...args: any) => boolean
@@ -20,8 +21,7 @@ export type KeymapKeyFilter = ({
 }) & {
 	[KeyMap.condition]?: KeyMapCondition
 	[KeyMap.args]?: any|Array<any>
-	[key: string]: any // other parameters to filter keyboard events (repeat, ctrlKey, etc)
-}
+} & Partial<NoMethods<KeyboardEvent>> // other parameters to filter keyboard events (repeat, ctrlKey, etc)
 
 export default class KeyMap {
 	private mapping: Map<string, any>

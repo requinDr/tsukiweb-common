@@ -278,7 +278,7 @@ export class BlockPlayerBase<LabelName extends string> {
             const { cmd = '', arg = '',
                     handler = this._script.getCommand(cmd)
                 } = instructions[i]
-            console.debug(`${cmd}(${arg})`)
+            //console.debug(`${cmd}(${arg})`)
             if (handler) {
                 await new Promise<void>(resolve => {
                     let commandResult = handler(arg, cmd, this._script, resolve)
