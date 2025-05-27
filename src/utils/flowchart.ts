@@ -63,7 +63,7 @@ export abstract class Flowchart<N extends FlowchartNode<any, any>> {
   }
   
   listNodes() {
-    return this._nodes.values()
+    return Array.from(this._nodes.values())
   }
   
   listNodeIds() {
