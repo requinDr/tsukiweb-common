@@ -2,8 +2,6 @@
 export type FlowchartNodeAttrs<NodeId extends string> = {
 	from?: NodeId[]
 }
-type NodeIdForNode<N> = N extends FlowchartNode<infer I, any> ? I : never
-//type NodeAttrsForNode<N> = N extends FlowchartNode<any, infer A, any> ? A : never
 
 export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<any>> {
   id: NodeId

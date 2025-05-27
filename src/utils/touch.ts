@@ -1,4 +1,4 @@
-import { TouchEvent, TouchEventHandler } from "react"
+import { RefObject, TouchEvent, TouchEventHandler, useEffect } from "react"
 import { getScrollableParent } from "./utils"
 
 type Direction = ""|"left"|"right"|"up"|"down"
@@ -112,6 +112,27 @@ class GestureHandler {
     this.lastTouch.x = -1
     this.lastTouch.y = -1
   }
+}
+
+export function useSwipeGesture(onSwipe: SwipeListener,
+  target: HTMLElement|RefObject<HTMLElement|null|undefined>,
+  triggerDistance = 20) {
+  useEffect(()=> {
+    if (!('addEventListener' in target)) {
+      if ('current' in target) {
+        if (!target.current)
+          return // wait for the reference to be valid
+        target = target.current
+      } else {
+        throw Error(`target is not a valid event target or reference`)
+      }
+    }
+    if (target) {
+      const handler = new GestureHandler(target, {swipeTrigDistance: triggerDistance, onSwipe})
+      
+      return handler.disable.bind(handler)
+    }
+  }, [target])
 }
 
 export default GestureHandler

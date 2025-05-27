@@ -1,5 +1,5 @@
-import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent } from "@tsukiweb-common/types"
-import { ReactElement, ReactNode } from "react"
+import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent, PartialJSON, JSONDiff, JSONMerge } from "@tsukiweb-common/types"
+import { ReactElement, ReactNode, SyntheticEvent, useEffect } from "react"
 
 //##############################################################################
 //#                            OBJECTS MANIPULATION                            #
@@ -119,23 +119,17 @@ export function deepFreeze<T extends Record<PropertyKey, any>>(object: T): Reado
 	return Object.freeze(object)
 }
 
-export function jsonDiff<T extends JSONObject>(obj: T, ref: Readonly<RecursivePartial<T>>) {
-	const result: JSONObject = {}
+export function jsonDiff<T1 extends PartialJSON, T2 extends PartialJSON<T1>>(
+	obj: T1, ref: Readonly<T2>): JSONDiff<T1, T2> {
+	const result: PartialJSON = {}
 	for (const p of Object.keys(obj)) {
-		TSForceType<keyof T>(p)
-		if (!Object.hasOwn(ref, p)) {
-			if (isPrimitive(obj[p]))
-				result[p] = ref[p] as JSONPrimitive
-			else if (Array.isArray(obj[p])) {
-				result[p] = Array.from(obj[p] as Array<JSONPrimitive|JSONObject>)
-			} else {
-				result[p] = deepAssign({}, obj[p] as JSONObject)
-			}
-		} else if (obj[p] == ref[p]) {
+		if (!Object.hasOwn(ref, p) || ref[p] === undefined)
+			result[p] = structuredClone(obj[p])
+		else if (obj[p] == ref[p])
 			continue
-		} else if (isPrimitive(obj[p])) {
+		else if (isPrimitive(obj[p]))
 			result[p] = obj[p]
-		} else if (Array.isArray(obj[p])) {
+		else if (Array.isArray(obj[p])) {
 			const refArray = ref[p] as any[]
 			const objArray = obj[p] as any[]
 			if (objArray.length != refArray.length ||
@@ -143,12 +137,44 @@ export function jsonDiff<T extends JSONObject>(obj: T, ref: Readonly<RecursivePa
 				result[p] = Array.from(objArray)
 			}
 		} else {
-			const val = jsonDiff(obj[p] as JSONObject, ref[p] as JSONObject) as JSONObject
+			const val = jsonDiff(obj[p], ref[p] as PartialJSON)
 			if (Object.keys(val).length > 0)
 				result[p] = val
 		}
 	}
-	return result as RecursivePartial<T>
+	return result as JSONDiff<T1, T2>
+}
+
+export function jsonMerge<T1 extends PartialJSON, T2 extends PartialJSON>(
+	dest: T1, src: T2, {inplace = false, override = false} = {}) : JSONMerge<T1, T2> {
+	const result = inplace ? dest : structuredClone(dest)
+	for (const p of Object.keys(src) as (keyof T1)[]) {
+		const value = src[p] as unknown as T1[typeof p]
+		if (!Object.hasOwn(dest, p) || dest[p] === undefined) {
+			result[p] = structuredClone(value)
+		} else {
+			const currValue = result[p]
+			if (currValue == value)
+				continue
+			else if (isPrimitive(currValue)) {
+				if (override) result[p] = value
+			} else if (Array.isArray(currValue)) {
+				if (override) {
+					if (isPrimitive(value))
+						result[p] = value
+					if (Array.isArray(value)) {
+						if (value.length != currValue.length
+							|| (currValue as any[]).some((v, i) => v != value[i]))
+							result[p] = structuredClone(value)
+					} else
+						result[p] = structuredClone(value)
+				}
+			} else {
+				jsonMerge(currValue, value as JSONObject, {override, inplace:true})
+			}
+		}
+	}
+	return result as unknown as JSONMerge<T1, T2>
 }
 
 //##############################################################################
@@ -317,7 +343,7 @@ export function requestFilesFromUser({ multiple = false, accept = '' }): Promise
 	}));
 }
 
-export async function requestJSONs({ multiple = false, accept = ''}) : Promise<Record<string,any>[]|null> {
+export async function requestJSONs({ multiple = false, accept = ''}) : Promise<JSONObject[]|null> {
 	let files = await requestFilesFromUser({multiple, accept})
 	if (!files)
 		return null; // canceled by user
@@ -334,7 +360,7 @@ export async function requestJSONs({ multiple = false, accept = ''}) : Promise<R
 					reject(`cannot read save file ${file.name}`)
 			}
 		}).then(
-			(text)=>JSON.parse(text),
+			(text)=>JSON.parse(text) as JSONObject,
 			(errorMsg)=> {
 				throw Error(errorMsg)
 		})
@@ -395,7 +421,7 @@ export function insertDirectory<T extends JSONParent>(object: T, dir: string): T
 	return object
 }
 
-export function version_compare(v1: string, v2: string) {
+export function versionsCompare(v1: string, v2: string) {
 	const v1Split = v1.split('.')
 	const v2Split = v2.split('.')
 	const len = Math.min(v1Split.length, v2Split.length)

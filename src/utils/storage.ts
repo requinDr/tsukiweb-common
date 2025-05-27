@@ -76,6 +76,10 @@ export abstract class Stored {
       this.deserializeFromStorage(storedStr)
   }
   
+  deleteStorage() {
+    this._storage.removeItem(this._storageName)
+  }
+  
   storageExists(): boolean {
     return this._storage.getItem(this._storageName) !== null
   }

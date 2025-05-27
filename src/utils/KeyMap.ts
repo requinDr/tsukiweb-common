@@ -2,13 +2,17 @@
  * Created by Loic France on 12/20/2016.
  */
 
+import { RefObject, useEffect, useRef } from "react"
 import { objectsEqual } from "./utils"
+import { observe } from "./Observer"
+import { NoMethods } from "../types"
 
 type KeyMapCallback = (action: any, event: KeyboardEvent, ...args: any) => boolean|void
 type KeyMapCondition = (action: any, event: KeyboardEvent, ...args: any) => boolean
 export type KeyMapMapping = Record<string,
 	KeymapKeyFilter|Array<KeymapKeyFilter|KeyMapCondition>
 >
+type KeyboardEvents = 'keydown'|'keypress'|'keyup'
 
 export type KeymapKeyFilter = ({
 		code: string
@@ -17,8 +21,7 @@ export type KeymapKeyFilter = ({
 }) & {
 	[KeyMap.condition]?: KeyMapCondition
 	[KeyMap.args]?: any|Array<any>
-	[key: string]: any // other parameters to filter keyboard events (repeat, ctrlKey, etc)
-}
+} & Partial<NoMethods<KeyboardEvent>> // other parameters to filter keyboard events (repeat, ctrlKey, etc)
 
 export default class KeyMap {
 	private mapping: Map<string, any>
@@ -87,7 +90,7 @@ export default class KeyMap {
 		this.mapping.clear();
 	}
 
-	enable(element: HTMLElement|Document, events: string|string[],
+	enable(element: GlobalEventHandlers, events: string|string[],
 			 options: boolean|AddEventListenerOptions|undefined = undefined) {
 
 		if (element !== document && !(element as HTMLElement).hasAttribute('tabindex')) {
@@ -101,8 +104,8 @@ export default class KeyMap {
 			element.addEventListener(events, this.keyListener, options);
 	};
 
-	disable(element: HTMLElement|Document, events: string|string[],
-				options: boolean|AddEventListenerOptions|undefined = undefined) {
+	disable(element: GlobalEventHandlers, events: string|string[],
+				options?: boolean|AddEventListenerOptions) {
 		if (element !== document && (element as HTMLElement).getAttribute('tabindex') == '-1') {
 			(element as HTMLElement).removeAttribute('tabindex');
 		}
@@ -190,4 +193,47 @@ export default class KeyMap {
 		}
 		return undefined;
 	}
+}
+
+export function useKeyMap(mapping: KeyMapMapping|(()=>KeyMapMapping), callback: KeyMapCallback,
+		target: GlobalEventHandlers|RefObject<GlobalEventHandlers|null|undefined>, 
+		events: KeyboardEvents|KeyboardEvents[],
+		options?: boolean|AddEventListenerOptions) {
+	
+	const keyMap = useRef<KeyMap>(undefined)
+	
+	useEffect(()=> {
+		if (keyMap.current == undefined)
+			keyMap.current = new KeyMap(null, callback)
+	}, [])
+
+	useEffect(()=> {
+		if (mapping.constructor == Function)
+			keyMap.current!.setMapping((mapping as Function)())
+		else
+			keyMap.current!.setMapping(mapping as KeyMapMapping)
+	}, [mapping])
+
+	useEffect(()=> {
+		if ('current' in target) {
+			let current: GlobalEventHandlers|null|undefined = target.current
+			observe(target, 'current', (node)=> {
+				if (current) {
+					keyMap.current!.disable(current, events, options)
+				}
+				if (node) {
+					keyMap.current!.enable(node, events, options)
+				}
+				current = node
+			})
+			return ()=> {
+				if (current) {
+					keyMap.current!.disable(current, events, options)
+				}
+			}
+		} else {
+			keyMap.current!.enable(target, events, options)
+			return keyMap.current!.disable.bind(keyMap, target, events, options)
+		}
+	}, [target, events, options])
 }

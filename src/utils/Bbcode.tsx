@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef, JSX } from "react"
+import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef, JSX, useCallback } from "react"
 import Timer from "./timer"
 import { innerText, TSForceType } from "./utils"
 
@@ -350,46 +350,64 @@ function pathFromCursors(root: BbNode, cursors: number[]): (string|BbNode)[] {
 //............. component ..............
 
 type TWProps = Props & {
-	charDelay: number,
-	startIndex?: number,
-	restartOnAppend?: boolean,
-	hideTag?: string,
+	charDelay: number
+	startIndex?: number
+	restartOnAppend?: boolean
+	hideTag?: string
 	hideTagArg?: string
+	paused?: boolean
 	onFinish?: VoidFunction
 }
 
-export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay, rootPrefix,
-		rootSuffix, restartOnAppend=false, hideTag=undefined, hideTagArg="",
-		onFinish, ...props}: TWProps)=> {
+export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
+		rootPrefix, rootSuffix, restartOnAppend=false, paused = false,
+		hideTag=undefined, hideTagArg="", onFinish, ...props}: TWProps)=> {
 	const root = useRef<BbNode | undefined>(undefined)
 	const prevText = useRef<string>("")
 	const cursors = useRef<number[]>([0])
 	const path = useRef<(BbNode | string)[]>([])
 	const [tree, updateTree] = useReducer(()=>
 		root.current ? hideTree(root.current, cursors.current, hideTag, hideTagArg) : undefined, undefined)
-	const finishCallback = useRef<VoidFunction | undefined>(undefined)
 
 	//useTraceUpdate("[BBTW] "+ text, {text, dict, charDelay, restartOnAppend, hideTag, hideTagArg, onFinish, hideTree, ...props})
-	
+	const finished = useRef<boolean>(true)
 	const timer = useRef<Timer>(new Timer(charDelay, ()=> {
 		if (atEnd(path.current, cursors.current)) {
-			finishCallback.current?.()
-			timer.current.stop()
+			onEnd()
 		} else {
 			moveCursors(path.current, cursors.current, 0)
 			updateTree()
 		}
 	}, true))
 
-	useEffect(()=> { finishCallback.current = onFinish }, [onFinish])
+	const onEnd = useCallback<VoidFunction>(()=> {
+		timer.current.stop()
+		if (!finished.current) {
+			finished.current = true
+			onFinish?.()
+		}
+	}, [onFinish])
+
+	useEffect(()=> {
+		if (paused) {
+			if (timer.current.started)
+				timer.current.pause()
+		} else {
+			if (path.current.length > 0
+					&& !finished.current
+					&& charDelay != 0)
+				timer.current.start()
+		}
+	}, [paused])
 
 	useEffect(()=> {
 		if (text == prevText.current)
 			return
+		finished.current = false
 		root.current = createTree(text)
 		if (charDelay == 0) {
 			[path.current, cursors.current] = pathToEnd(root.current)
-			finishCallback.current?.()
+			onEnd()
 		} else {
 			if (restartOnAppend || prevText.current == "" || !text.startsWith(prevText.current)) {
 				cursors.current = [0]
@@ -405,11 +423,14 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay, ro
 
 	useEffect(()=> {
 		if (charDelay == 0) {
-			if (root.current)
-				[path.current, cursors.current] = pathToEnd(root.current)
-			updateTree()
-			timer.current.stop()
-			finishCallback.current?.()
+			if (!finished.current) {
+				if (root.current)
+					[path.current, cursors.current] = pathToEnd(root.current)
+				updateTree()
+				onEnd()
+			}
+		} else {
+			timer.current.delay = charDelay
 		}
 	}, [charDelay])
 

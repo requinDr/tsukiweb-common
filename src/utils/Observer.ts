@@ -61,6 +61,9 @@ class PropertyObserver<V> {
   get modified() {
     return this.changed
   }
+  simulateChange() {
+    this.changed = true
+  }
   notifyChange(value : V) {
     this.changed = false
     const listeners = this.listeners.filter(({filter})=>filter?.(value)??true)
@@ -150,7 +153,11 @@ class PropertiesObserver<T extends Observable> {
     this.notifyQueued = false
     for (const [property, observer] of this.observers.entries()) {
       if (observer.modified) {
-        observer.notifyChange(this.parent[property])
+        const empty = observer.notifyChange(this.parent[property])
+        if (empty) {
+          observer.stopObserver(this.parent, property)
+          this.onSizeChanged()
+        }
       }
     }
   }
@@ -181,6 +188,14 @@ class PropertiesObserver<T extends Observable> {
       observer.stopObserver(this.parent, property)
       this.observers.delete(property)
       this.onSizeChanged()
+    }
+  }
+
+  simulateChange<K extends keyof T>(property: K) {
+    const observer = this.observers.get(property)
+    if (observer) {
+      observer.simulateChange()
+      this._onValueChange()
     }
   }
 
@@ -280,7 +295,13 @@ export function unobserve<T extends Observable, P extends keyof T>
  * Notify all listeners (call the callbacks) with the current value of the specified property
  */
 export function notifyObservers<T extends Observable>(object: T, property: keyof T) {
-  notifyTask.enqueue(object[observerSymbol].notifyObservers.bind(object[observerSymbol], property))
+  if (object[observerSymbol])
+    notifyTask.enqueue(object[observerSymbol].notifyObservers.bind(object[observerSymbol], property))
+}
+
+export function simulateObserverChange<T extends Observable>(object: T, property: keyof T) {
+  if (object[observerSymbol])
+    (object[observerSymbol] as PropertiesObserver<T>).simulateChange(property)
 }
 
 export function isObserverNotifyPending<T extends Observable>(object: T, property: keyof T) {
@@ -350,7 +371,7 @@ export function useObserver<T extends Observable, P extends keyof T>(
       callback(val)
     }
     return unobserve.bind(null, object as T, property, callback) as VoidFunction
-  }, [])
+  }, [object])
 }
 
 /**
