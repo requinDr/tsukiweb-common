@@ -156,6 +156,7 @@ class PropertiesObserver<T extends Observable> {
         const empty = observer.notifyChange(this.parent[property])
         if (empty) {
           observer.stopObserver(this.parent, property)
+          this.observers.delete(property)
           this.onSizeChanged()
         }
       }
@@ -205,6 +206,7 @@ class PropertiesObserver<T extends Observable> {
       const empty = observer.notifyChange(this.parent[property])
       if (empty) {
         observer.stopObserver(this.parent, property)
+        this.observers.delete(property)
         this.onSizeChanged()
       }
     }
