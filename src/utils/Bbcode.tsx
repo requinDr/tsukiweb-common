@@ -156,6 +156,9 @@ function createTree(text: string): BbNode {
 				throw Error(`Unmatched [${tag}] in "${text}"`)
 			nodes.pop()
 		} else {
+			if (arg && ((arg.startsWith('"') && arg.endsWith('"')) ||
+					    (arg.startsWith("'") && arg.endsWith("'"))))
+				arg = arg.substring(1, arg.length-1)
 			const node = {tag, arg, content: []}
 			currNode.content.push(node)
 			if (!leaf)

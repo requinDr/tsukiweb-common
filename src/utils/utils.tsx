@@ -74,7 +74,7 @@ export function deepAssign<Td extends Record<string,any>, Ts extends Record<stri
 			if (isPrimitive(src[p])) {
 				res[p] = src[p]
 			} else if (srcType == Object)
-				res[p] = deepAssign(dest[p], src[p] as any, {extend, morphTypes, clone})
+				res[p] = deepAssign(dest[p], src[p] as any, {extend, morphTypes, clone, clean})
 			else if (srcType == Array) {
 				if (clone)
 					res[p] = Array.from(src[p])
