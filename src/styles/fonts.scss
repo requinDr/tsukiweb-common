@@ -2,25 +2,49 @@
 //Ubuntu
 @font-face {
     font-family: 'Ubuntu';
-    src: local('Ubuntu-Regular'), url('../assets/fonts/Ubuntu-Regular.ttf');
+    src: local('Ubuntu-Regular'), url('../assets/fonts/Ubuntu-Regular.woff2');
     font-weight: normal;
     font-style: normal;
 }
 @font-face {
     font-family: 'Ubuntu';
-    src: local('Ubuntu-Bold'), url('../assets/fonts/Ubuntu-Bold.ttf');
+    src: local('Ubuntu-Light'), url('../assets/fonts/Ubuntu-Light.woff2');
+    font-weight: 300;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Ubuntu';
+    src: local('Ubuntu-Medium'), url('../assets/fonts/Ubuntu-Medium.woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Ubuntu';
+    src: local('Ubuntu-Bold'), url('../assets/fonts/Ubuntu-Bold.woff2');
     font-weight: bold;
     font-style: normal;
 }
 @font-face {
     font-family: 'Ubuntu';
-    src: local('Ubuntu-Italic'), url('../assets/fonts/Ubuntu-Italic.ttf');
+    src: local('Ubuntu-Italic'), url('../assets/fonts/Ubuntu-Italic.woff2');
     font-weight: normal;
     font-style: italic;
 }
 @font-face {
     font-family: 'Ubuntu';
-    src: local('Ubuntu-BoldItalic'), url('../assets/fonts/Ubuntu-BoldItalic.ttf');
+    src: local('Ubuntu-LightItalic'), url('../assets/fonts/Ubuntu-LightItalic.woff2');
+    font-weight: 300;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Ubuntu';
+    src: local('Ubuntu-MediumItalic'), url('../assets/fonts/Ubuntu-MediumItalic.woff2');
+    font-weight: 500;
+    font-style: italic;
+}
+@font-face {
+    font-family: 'Ubuntu';
+    src: local('Ubuntu-BoldItalic'), url('../assets/fonts/Ubuntu-BoldItalic.woff2');
     font-weight: bold;
     font-style: italic;
 }
