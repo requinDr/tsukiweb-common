@@ -27,7 +27,7 @@
 
 	&:hover, &.active:hover {
 		background-color: var(--active);
-		color: var(--text);
+		color: var(--text-color);
 	}
 	&:focus-visible {
 		background-color: var(--focus);
@@ -35,7 +35,7 @@
 
 	&.active {
 		color: rgb(88 219 255);
-		background-color: rgb(3 70 102 / 50%);
+		background-color: rgb(3 70 102 / 80%);
 	}
 	&:focus-visible.active {
 		background-color: var(--focus);

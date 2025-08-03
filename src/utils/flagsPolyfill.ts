@@ -70,34 +70,41 @@ function supportsEmoji(text: string) {
   return black === white && !black.startsWith("0,0,0,");
 }
 
+let polyfillInjected = false
 /**
  * Injects a style element into the HEAD with a web font with country flags,
- * iff the browser does support emojis but not country flags.
+ * if the browser does support emojis but not country flags.
  *
  * @param fontName - Override the default font name ("Twemoji Country Flags")
- *
  * @returns true if the web font was loaded (ie the browser does not support country flags)
  */
 export function polyfillCountryFlagEmojis(
-    fontName: string = "Twemoji Country Flags"
-) {
-  if (
+  fontName: string = "Twemoji Country Flags"
+): boolean {
+  if (polyfillInjected) return true;
+
+  const shouldInject =
     typeof window !== "undefined" &&
     supportsEmoji("😊") &&
-    !supportsEmoji("🇨🇭")
-  ) {
-    const style = document.createElement("style");
+    !supportsEmoji("🇨🇭");
 
-    style.textContent = `@font-face {
-      font-family: "${fontName}";
-      unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067,
-        U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
-      src: url('${fontUrl}') format('woff2');
-      font-display: swap;
-    }`;
-    document.head.appendChild(style);
-
-    return true;
+  if (!shouldInject) {
+    return false;
   }
-  return false;
+
+  const style = document.createElement("style");
+  style.setAttribute("data-emoji-polyfill", "true");
+
+  style.textContent = `@font-face {
+    font-family: "${fontName}";
+    unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067,
+      U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+    src: url('${fontUrl}') format('woff2');
+    font-display: swap;
+  }`;
+
+  document.head.appendChild(style);
+  polyfillInjected = true;
+
+  return true;
 }
