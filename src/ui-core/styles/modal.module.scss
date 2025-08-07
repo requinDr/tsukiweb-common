@@ -45,9 +45,8 @@
 	}
 
 	.promptModal {
-		border: 1px solid var(--message-container-background);
 		background-color: var(--prompt-color);
-		box-shadow: 0 0 10px black;
+		box-shadow: 0 0 1em hsl(0deg 0% 0% / 60%);
 		display: grid;
 		grid-template-rows: 1fr auto;
 	}
@@ -56,7 +55,9 @@
 		padding-inline: min(3em, 3vmin);
 		padding-top: 2em;
 		padding-bottom: 2em;
-		background-color: var(--menu-container);
+		background-color: hsl(0deg 0% 0% / 50%);
+		font-size: 1.04em;
+		line-height: 1.5;
 	}
 
 	.buttons {
