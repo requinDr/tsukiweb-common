@@ -1,8 +1,9 @@
-import { replaceExtensionByAvif } from "../../utils/images";
-import { DivProps, SpritePos } from "../../types";
-import { bb } from "../../utils/Bbcode";
-import { splitFirst } from "../../utils/utils";
+import { replaceExtensionByAvif } from "../utils/images";
+import { DivProps, SpritePos } from "../types";
+import { bb } from "../utils/Bbcode";
+import { splitFirst } from "../utils/utils";
 import classNames from "classnames";
+import { ReactNode } from "react";
 
 type Props = {
 	pos: SpritePos
@@ -13,29 +14,28 @@ type Props = {
 	props?: DivProps
 }
 
-const GraphicElement = ({ pos, image, getUrl, blur = false, lazy = false, props = {} }: Props) => {
+const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = false, props: extraProps = {} }: Props) => {
 	image = image || (pos == "bg" ? "#000000" : "#00000000")
-	if (image.startsWith('"'))
-		image = image.replaceAll('"', '')
+	if (image.startsWith('"')) image = image.replaceAll('"', '')
+	
 	const isColor = image.startsWith("#")
 	let text
 	[image, text] = splitFirst(image, "$")
 
-	let imageElement = undefined
-	let overlay = undefined
+	let imageElement: ReactNode
+	let overlay: ReactNode
 
 	if (isColor) {
-		const { style, ...attrs } = props
-		props = {
-			style: { background: image, ...(style ?? {}) },
+		const { style, ...attrs } = extraProps
+		extraProps = {
 			...attrs,
-		};
+			style: { background: image, ...(style ?? {}) },
+		}
 	} else {
 		const imgUrl = getUrl(image)
 		const alt = `[[sprite:${image}]]`
-		if (blur instanceof Function) {
-			blur = blur(image)
-		}
+		const blur = typeof rawBlur === "function" ? rawBlur(image) : rawBlur
+
 		imageElement = (
 			<picture style={{display: "contents", width: "inherit", height: "inherit"}}>
 				<source srcSet={replaceExtensionByAvif(imgUrl)} type="image/avif" />
@@ -49,6 +49,7 @@ const GraphicElement = ({ pos, image, getUrl, blur = false, lazy = false, props 
 			</picture>
 		)
 	}
+
 	if (text) {
 		const match = text.match(/^(?<vAlign>[tcb])?`(?<str>[^`]*)`/)
 		const { vAlign, str } = match?.groups ?? {}
@@ -66,8 +67,8 @@ const GraphicElement = ({ pos, image, getUrl, blur = false, lazy = false, props 
 
 	return (
 		<div
-			{...props}
-			className={classNames(pos, props.className)}
+			{...extraProps}
+			className={classNames(pos, extraProps.className)}
 		>
 			{imageElement}
 			{overlay}
