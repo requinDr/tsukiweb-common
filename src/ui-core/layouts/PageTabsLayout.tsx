@@ -20,11 +20,11 @@ const PageTabsLayout = ({
 	backButton,
 	...props
 }: Props) => {
-	const tabsRef = useRef<HTMLDivElement>(null);
+	const tabsRef = useRef<HTMLDivElement>(null)
 
 	const handleSetSelectedTab = useCallback(
 		(selected: any) => {
-			setSelectedTab(selected);
+			setSelectedTab(selected)
 			requestAnimationFrame(() => {
 				const selectedTabElement = tabsRef.current?.querySelector(`[data-tab='${selected}']`)
 				selectedTabElement?.scrollIntoView({ behavior: "smooth" })
