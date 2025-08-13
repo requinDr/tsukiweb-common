@@ -168,6 +168,16 @@ export type Graphics = Record<SpritePos, string> & {
 //type Test2 = {label?: LabelName | undefined}
 //type Test1 = JSONMerge<PartialJSON<Test2>, Required<Test2>>
 
+export type RocketProps = {
+  layer: 'l' | 'c' | 'r';
+  my: number;
+  magnify: number;
+  time: number;
+  accel: number;
+  opacity: number;
+  onAnimationEnd: VoidFunction;
+}
+
 export type GraphicsTransition = {
   to: Partial<Graphics>
   effect: string
