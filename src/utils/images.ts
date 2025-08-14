@@ -1,6 +1,6 @@
-export let supportAvif: boolean | null = null
+let supportAvif: boolean | null = null
 
-export async function testAvifSupport(): Promise<boolean> {
+async function testAvifSupport(): Promise<boolean> {
 	if (supportAvif !== null)
 		return supportAvif
 
@@ -21,8 +21,15 @@ export async function testAvifSupport(): Promise<boolean> {
 }
 testAvifSupport()
 
-export const replaceExtensionByAvif = (src: string): string => {
+const replaceExtensionWithAvif = (src: string): string => {
 	if (src.endsWith(".webp"))
 		return src.replace(".webp", ".avif")
 	return src
 }
+
+const avif = {
+	isSupported: supportAvif,
+	testSupport: testAvifSupport,
+	replaceExtension: replaceExtensionWithAvif,
+}
+export { avif, supportAvif, testAvifSupport }

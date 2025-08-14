@@ -1,4 +1,4 @@
-import { replaceExtensionByAvif } from "../utils/images";
+import { avif } from "../utils/images";
 import { DivProps, SpritePos } from "../types";
 import { bb } from "../utils/Bbcode";
 import { splitFirst } from "../utils/utils";
@@ -38,7 +38,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 
 		imageElement = (
 			<picture style={{display: "contents", width: "inherit", height: "inherit"}}>
-				<source srcSet={replaceExtensionByAvif(imgUrl)} type="image/avif" />
+				<source srcSet={avif.replaceExtension(imgUrl)} type="image/avif" />
 				<img
 					src={imgUrl}
 					alt={alt}
