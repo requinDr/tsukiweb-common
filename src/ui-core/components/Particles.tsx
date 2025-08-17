@@ -4,7 +4,7 @@ import styles from "../styles/particles.module.scss"
 const Particles = () => {
 	return (
 		<div className={styles.particles}>
-			{Array.from({ length: 100 }, (_, index) =>
+			{Array.from({ length: 50 }, (_, index) =>
 				<div className={styles.circleContainer} key={index}>
 					<div className={styles.circle} />
 				</div>
