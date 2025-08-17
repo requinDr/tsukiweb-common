@@ -6,7 +6,7 @@
 	transition: var(--transition);
 	user-select: none;
 	-webkit-user-drag: none;
-	text-shadow: 0 0 8px #d0d3e1;
+	text-shadow: 0 0 8px #d0d3e16b;
 	position: relative;
 	-webkit-tap-highlight-color: transparent;
 	text-align: center;
@@ -32,13 +32,16 @@
 	}
 
 	&:hover, &:focus-visible, &.active {
-		color: rgb(10 164 171);
-		text-shadow: 0 0 6px #005aff;
 		text-decoration: none;
+		text-shadow: 0 0 6px #0095ff85;
+		text-decoration: none;
+		background: linear-gradient(180deg, #0ff1ff, #004a86);
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
 	}
 	&:hover, &:focus-visible {
 		cursor: pointer;
-		transform: translateY(-6px);
+		transform: translateY(-4px);
 
 		&::before {
 			top: 0;

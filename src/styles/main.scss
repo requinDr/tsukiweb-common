@@ -2,7 +2,7 @@
 @use "colors.scss";
 
 :root {
-	--page-width: max(1500px, 60%);
+	--page-width: max(1520px, 60%);
 
 	@include colors.color-vars;
 }
