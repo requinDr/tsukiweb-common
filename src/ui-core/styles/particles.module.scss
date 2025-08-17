@@ -4,7 +4,7 @@
 	position: absolute;
 	inset: 0;
 	-webkit-mask-image: linear-gradient(to top, black 0%, transparent 80%);
-	mask-image: linear-gradient(to top, black 0%, transparent 80%);
+	mask-image: linear-gradient(to top, black 0%, transparent 60%);
 	pointer-events: none;
 	overflow: hidden;
 }
@@ -52,7 +52,7 @@
 			$oldLen: $startY + ($startY + $oldTopOvershoot);
 			$newLen: $startY + $endOvershoot;
 			$baseDuration: 22000 + math.random(7000);
-			$moveDuration: $baseDuration * ($newLen / $oldLen);
+			$moveDuration: $baseDuration * math.div($newLen, $oldLen);
 
 			$fromX: math.random(100);
 			$deltaX: math.random(30) - 15;
