@@ -75,6 +75,7 @@
 			color: rgb(10 164 171);
 			pointer-events: none;
 			text-shadow: 0 0 6px #005aff;
+			-webkit-text-fill-color: initial;
 			@include hover-scale("attention", 1.2);
 		}
 	}
