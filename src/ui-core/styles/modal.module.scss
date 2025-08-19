@@ -56,14 +56,13 @@
 		padding-top: 2em;
 		padding-bottom: 2em;
 		background-color: hsl(0deg 0% 0% / 50%);
-		font-size: 1.04em;
 		line-height: 1.5;
 	}
 
 	.buttons {
 		display: grid;
 		grid-template-columns: 1fr 1px 1fr;
-		font-size: 1.2em;
+		font-size: 1.1em;
 
 		&:not(:has(.separator)) {
 			grid-template-columns: 1fr;
