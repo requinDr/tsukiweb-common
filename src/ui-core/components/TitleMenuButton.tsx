@@ -1,21 +1,20 @@
 import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
-import { Link, LinkProps, To } from "react-router-dom";
+import { Link, LinkProps } from "react-router-dom";
 
-interface PropsButton extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-}
-interface PropsLink extends LinkProps {
-	to: To
-}
 
-type Props = {
+type CommonProps = {
 	active?: boolean
 	attention?: boolean
-	[key: string]: any
-} & (PropsButton | PropsLink)
+}
 
-const TitleMenuButton = ({to, attention, active, children, ...props}: Props) => {
-  const classes = classNames(
+type ButtonProps = CommonProps & React.ButtonHTMLAttributes<HTMLButtonElement>
+type LinkButtonProps = CommonProps & LinkProps
+
+type Props = ButtonProps | LinkButtonProps
+
+const TitleMenuButton = ({ active, attention, children, ...props}: Props) => {
+	const classes = classNames(
 		styles.menuItem,
 		{
 			[styles.attention]: attention,
@@ -25,27 +24,27 @@ const TitleMenuButton = ({to, attention, active, children, ...props}: Props) => 
 		props.className
 	)
 
-  const button = to ? (
+	if ("to" in props) return (
 		<Link
-			{...props as LinkProps}
-      className={classes}
-			to={to}
+			{...props}
+			className={classes}
+			to={props.to}
 		>
 			{children}
-      {attention && <Attention />}
+			{attention && <Attention />}
 		</Link>
-	) : (
-		<button
-			onContextMenu={e => e.preventDefault()}
-			{...props as React.ButtonHTMLAttributes<HTMLButtonElement>}
-      className={classes}
-		>
-			{children}
-      {attention && <Attention />}
-		</button>
 	)
 
-  return button
+	return (
+		<button
+			onContextMenu={e => e.preventDefault()}
+			{...props}
+			className={classes}
+		>
+			{children}
+			{attention && <Attention />}
+		</button>
+	)
 }
 
 export default TitleMenuButton

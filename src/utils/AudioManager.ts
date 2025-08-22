@@ -129,7 +129,7 @@ export class AudioChannel {
             // Source was changed while buffer was loading. Abort
             return
         if (this._sourceNode)
-            // Source was loaded twice. Abord
+            // Source was loaded twice. Abort
             return
         this._sourceNode = node
         node.connect(this.gainNode)
