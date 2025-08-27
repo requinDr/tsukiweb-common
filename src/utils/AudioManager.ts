@@ -99,7 +99,7 @@ export class AudioChannel {
      * @param forceRestart `true` if the sound must be restarted if it is
      *          already playing, `false` otherwise. Defaults to `true`
      */
-    async play(id: string, {loop = false, forceRestart = true} = {}) {
+    async play(id: string, {loop = false, forceRestart = false} = {}) {
  
         const context = this.context
         this._sourceId = id
