@@ -97,8 +97,11 @@ abstract class Buffer<T> {
             fromIndex: number = 0, thisArg?: any) {
     if (fromIndex < 0)
       fromIndex = this._items.length + fromIndex
-    return this._items.slice(fromIndex).findIndex(
+    let index = this._items.slice(fromIndex).findIndex(
       (item, index)=>predicate(item, index+fromIndex, this), thisArg)
+    if (index >= 0)
+      return index + fromIndex
+    return index
   }
   findLast(predicate: (item: T, index: number, buffer: this)=>boolean,
            fromIndex: number = this.length-1, thisArg?: any) {
@@ -106,11 +109,11 @@ abstract class Buffer<T> {
     return index >= 0 ? this._items[index] : undefined
   }
   findLastIndex(predicate: (item: T, index: number, buffer: this)=>boolean,
-                fromIndex: number = 0, thisArg?: any) {
+                fromIndex: number = this.length-1, thisArg?: any) {
     if (fromIndex < 0)
       fromIndex = this._items.length + fromIndex
-    return this._items.slice(fromIndex).findLastIndex(
-      (item, index)=>predicate(item, index+fromIndex, this), thisArg)
+    return this._items.slice(0, fromIndex+1).findLastIndex(
+      (item, index)=>predicate(item, index, this), thisArg)
   }
 
   all() {
