@@ -116,32 +116,36 @@ export class AudioChannel {
             this._sourceNode = null
         }
 
-        const buffer = await this._manager.loadAudioBuffer(id)
-        if (!buffer) {
-            console.error(`Unknown audio id ${id}`)
-            return
-        }
-        const node: AudioBufferSourceNode = context.createBufferSource()
-        node.buffer = await buffer
-        node.loop = this._loop
-
-        if (this._sourceId != id || loop != this._loop)
-            // Source was changed while buffer was loading. Abort
-            return
-        if (this._sourceNode)
-            // Source was loaded twice. Abort
-            return
-        this._sourceNode = node
-        node.connect(this.gainNode)
-        this._manager.resume()
-        node.start()
-        node.onended = () => {
-            if (this._sourceNode == node) { // if node has not been replaced
-                this._sourceNode.disconnect()
-                this._sourceNode = null
-                if (this._sourceId == id)
-                    this._sourceId = null
+        try {
+            const buffer = await this._manager.loadAudioBuffer(id)
+            if (!buffer) {
+                console.error(`Unknown audio id ${id}`)
+                return
             }
+            const node: AudioBufferSourceNode = context.createBufferSource()
+            node.buffer = await buffer
+            node.loop = this._loop
+
+            if (this._sourceId != id || loop != this._loop)
+                // Source was changed while buffer was loading. Abort
+                return
+            if (this._sourceNode)
+                // Source was loaded twice. Abort
+                return
+            this._sourceNode = node
+            node.connect(this.gainNode)
+            this._manager.resume()
+            node.start()
+            node.onended = () => {
+                if (this._sourceNode == node) { // if node has not been replaced
+                    this._sourceNode.disconnect()
+                    this._sourceNode = null
+                    if (this._sourceId == id)
+                        this._sourceId = null
+                }
+            }
+        } catch (e) {
+            console.error(`Error playing audio id ${id}:`, e)
         }
     }
 
