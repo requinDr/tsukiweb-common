@@ -15,6 +15,9 @@
 html, body {
 	overscroll-behavior: none;
 }
+body {
+	touch-action: manipulation;
+}
 
 img {
 	-webkit-user-drag: none;
