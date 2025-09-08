@@ -8,7 +8,7 @@
 	backdrop-filter: blur(1px);
 }
 .modal {
-	background-image: linear-gradient(53deg, #00145f, #00000000), radial-gradient(#0750fd, #01275b);
+	background-color: var(--focus);
 	flex: 1;
 	max-width: 880px;
 	width: 100%;
