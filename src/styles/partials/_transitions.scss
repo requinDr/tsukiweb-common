@@ -149,6 +149,39 @@ img[for-mask], *[for-mask] img {
 *[fade-in="bcartain"] { @include shutter('bi', (0 $size*2), (0 $size)); }
 
 
+@mixin explosion($origin) {
+	animation-name: expl-in;
+	-webkit-mask-image: radial-gradient(circle at center, #fff 25%, transparent 50%);
+	mask-image: radial-gradient(circle at center, #fff 25%, transparent 50%);
+	mask-repeat: no-repeat;
+	width: 100% !important;
+	aspect-ratio: 1 / 1;
+	height: unset !important;
+	margin-block: auto;
+	right: unset !important;
+	left: $origin !important;
+	transform-origin: center;
+
+	@keyframes expl-in {
+		0% {
+			transform: scale(0);
+			opacity: 0;
+		}
+		50% {
+			opacity: 1;
+		}
+		100% {
+			transform: scale(6);
+			opacity: 1;
+		}
+	}
+}
+
+*[fade-in="lexpl"] {  
+	@include explosion(-30%);
+}
+
+
 *.quake {
 	animation-duration: var(--quake-time);
 	animation-timing-function: linear;
