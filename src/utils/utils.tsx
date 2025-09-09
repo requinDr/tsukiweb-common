@@ -435,3 +435,7 @@ export function versionsCompare(v1: string, v2: string) {
 	}
 	return Math.sign(v1Split.length - v2Split.length)
 }
+
+export function twoDigits(n: number) {
+  return n.toString().padStart(2, '0')
+}
