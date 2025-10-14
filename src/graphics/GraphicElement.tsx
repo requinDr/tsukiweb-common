@@ -1,4 +1,3 @@
-import { avif } from "../utils/images";
 import { DivProps, SpritePos } from "../types";
 import { bb } from "../utils/Bbcode";
 import { splitFirst } from "../utils/utils";
@@ -37,16 +36,13 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 		const blur = typeof rawBlur === "function" ? rawBlur(image) : rawBlur
 
 		imageElement = (
-			<picture style={{display: "contents", width: "inherit", height: "inherit"}}>
-				<source srcSet={avif.replaceExtension(imgUrl)} type="image/avif" />
-				<img
-					src={imgUrl}
-					alt={alt}
-					draggable={false}
-					className={classNames({ blur })}
-					{...(lazy ? { loading: "lazy" } : {})}
-				/>
-			</picture>
+			<img
+				src={imgUrl}
+				alt={alt}
+				draggable={false}
+				className={classNames({ blur })}
+				{...(lazy ? { loading: "lazy" } : {})}
+			/>
 		)
 	}
 

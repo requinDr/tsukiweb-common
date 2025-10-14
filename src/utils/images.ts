@@ -1,35 +1,38 @@
-let supportAvif: boolean | null = null
+/**
+ * AVIF support detector with caching.
+ */
+export const avif = {
+	isSupported: null as boolean | null,
 
-async function testAvifSupport(): Promise<boolean> {
-	if (supportAvif !== null)
-		return supportAvif
-
-	return new Promise(resolve => {
-		const img = new Image()
-		img.onload = () => {
-			supportAvif = true
-			resolve(true)
+	/** Runs once and caches the result */
+	async testSupport(): Promise<boolean> {
+		if (this.isSupported !== null) {
+			return this.isSupported
 		}
-		img.onerror = () => {
-			supportAvif = false
-			resolve(false)
-		}
-		
-		// base64 AVIF header
-		img.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
-	})
-}
-testAvifSupport()
 
-const replaceExtensionWithAvif = (src: string): string => {
-	if (src.endsWith(".webp"))
-		return src.replace(".webp", ".avif")
-	return src
+		console.log("aaaavif test")
+		this.isSupported = await new Promise<boolean>((resolve) => {
+			const img = new Image()
+			img.onload = () => resolve(true)
+			img.onerror = () => resolve(false)
+
+			// minimal AVIF header
+			img.src =
+				'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A='
+		})
+
+		return this.isSupported
+	},
 }
 
-const avif = {
-	isSupported: supportAvif,
-	testSupport: testAvifSupport,
-	replaceExtension: replaceExtensionWithAvif,
-}
-export { avif, supportAvif, testAvifSupport }
+export let imageFormat: string = import.meta.env.VITE_IMAGE_FORMAT ?? 'webp'
+
+;(async () => {
+	// only test if env asked for AVIF
+	if (imageFormat === 'avif') {
+		const supported = await avif.testSupport()
+	if (!supported) {
+		imageFormat = 'webp'
+	}
+	}
+})()
