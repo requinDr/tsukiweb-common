@@ -1,7 +1,7 @@
 /**
  * AVIF support detector with caching.
  */
-export const avif = {
+const avif = {
 	isSupported: null as boolean | null,
 
 	async testSupport(): Promise<boolean> {

@@ -1,6 +1,5 @@
-import { Choice, LabelName } from "types";
+import { Choice } from "types";
 import { POSITIONS } from "./constants";
-import { SaveState } from "utils/savestates";
 import { ScriptPlayer } from "script/ScriptPlayer";
 import { PageType } from "utils/history";
 
@@ -113,44 +112,6 @@ export type JSONMerge<T1 extends PartialJSON, T2 extends PartialJSON> =
       : K extends keyof T2 ? T2[K]
       : never
   }>
-// export type JSONMerge2<T1 extends PartialJSON, T2 extends PartialJSON<T1>> = {
-//   // non-optional fields
-//   [K in NonUndefinedKeys<T1> | NonUndefinedKeys<T2>]:
-//     K extends NonUndefinedKeys<T1> ? // required in T1
-//       T1[K] extends JSONPrimitive | Array<any> ? T1[K]
-//       : T2[K] extends undefined ? T1[K]
-//       : Defined<T2[K]> extends PartialJSON ?
-//         undefined extends T2[K] ? JSONMerge<T1[K], PartialJSON<Defined<T2[K]>>>
-//         : JSONMerge<T1[K], Defined<T2[K]>>
-//       : T1[K]
-//     : K extends keyof T1 ? // optional in T1, required in T2
-//       T1[K] extends JSONPrimitive | undefined | Array<any> ?
-//         Defined<T1[K]> | T2[K]
-//       : T2[K] extends PartialJSON ?
-//         Defined<T1[K]> extends PartialJSON<infer U> ?
-//           JSONMerge<PartialJSON<U>, T2[K]>
-//         : never
-//       : never
-//     : T2[K] // only exists in T2
-// } & {
-//   // optional fields
-//   [K in Exclude<keyof (T1 & T2),
-//                  NonUndefinedKeys<T1> | NonUndefinedKeys<T2>>
-//       ]?: Defined<
-//       K extends keyof T1 ?
-//         K extends keyof T2 ?
-//           T1[K] extends undefined ? T2[K]
-//           : T2[K] extends undefined ? T1[K]
-//           : Defined<T1[K]> extends JSONPrimitive | Array<any> ? T1[K] | T2[K]
-//           : Defined<T2[K]> extends PartialJSON ?
-//             JSONMerge<PartialJSON<Defined<T1[K]>>, PartialJSON<Defined<T2[K]>>>
-//           : never
-//         : T1[K]
-//       : T2[K]
-//     >
-// }
-type Test = JSONMerge<NonNullable<SaveState['pages'][0]>,
-                      NonNullable<ReturnType<typeof ScriptPlayer.defaultPageContext>>>
 
 type PageContent<T extends PageType = PageType> = (
   T extends 'text' | 'skip' | 'phase' ? { } :
@@ -165,8 +126,13 @@ export type SpritePos = typeof POSITIONS[number]
 export type Graphics = Record<SpritePos, string> & {
   monochrome ?: string
 }
-//type Test2 = {label?: LabelName | undefined}
-//type Test1 = JSONMerge<PartialJSON<Test2>, Required<Test2>>
+
+export type Quake = {
+	duration: number
+	x: number
+	y: number
+	onFinish: VoidFunction
+}
 
 export type RocketProps = {
   layer: 'l' | 'c' | 'r';
