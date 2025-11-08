@@ -11,7 +11,7 @@ const PageSection = forwardRef<HTMLElement, Props>(({ children, ...props }, ref)
 		<section
 			{...props}
 			ref={ref}
-			className={`${styles.pageSection} ${props.className || ''}`}
+			className={`${styles.pageSection} page-section ${props.className || ''}`}
 		>
 			{children}
 		</section>

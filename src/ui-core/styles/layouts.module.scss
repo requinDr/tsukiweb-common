@@ -2,7 +2,7 @@
 	--page-padding: clamp(.8rem, 1.6vmin, 1.2rem);
 	max-width: var(--page-width);
 	margin-inline: auto;
-	padding: var(--page-padding);
+	padding-block: var(--page-padding);
 	height: inherit;
 	width: inherit;
 	display: flex;
@@ -12,6 +12,7 @@
 }
 
 .pageTitle {
+	padding-inline: var(--page-padding);
 	font-size: clamp(2.2rem, 8vmin, 3rem);
 	letter-spacing: -1px;
 	margin-block: 0;
@@ -21,7 +22,6 @@
 	background-clip: text;
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
-	margin-bottom: 0.2em;
 	grid-area: page-title;
 }
 .content {
@@ -36,6 +36,9 @@
 }
 
 .pageTabsLayout {
+	.pageTitle {
+		margin-bottom: 0.2em;
+	}
 	main {
 		display: grid;
 		grid-template-columns: 1fr;
@@ -60,6 +63,7 @@
 }
 
 .pageSection {
+	padding-inline: var(--page-padding);
 	border-block: 2px solid var(--separator);
 	position: relative;
 	padding: 1rem;

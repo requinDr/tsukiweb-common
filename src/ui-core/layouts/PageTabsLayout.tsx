@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react"
 import TabsComponent, { Tab } from "../components/TabsComponent"
+import PageTitle from "./PageTitle"
 import styles from "../styles/layouts.module.scss"
 
 type Props = {
@@ -34,10 +35,10 @@ const PageTabsLayout = ({
 	)
 
 	return (
-		<div className={`${styles.pageContent} ${styles.pageTabsLayout}`} {...props} ref={tabsRef}>
+		<div {...props} className={`${styles.pageContent} ${styles.pageTabsLayout}`} ref={tabsRef}>
 			<main>
 				{title &&
-				<h2 className={`${styles.pageTitle} page-title`}>{title}</h2>
+				<PageTitle>{title}</PageTitle>
 				}
 
 				<TabsComponent

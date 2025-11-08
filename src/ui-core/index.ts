@@ -9,3 +9,4 @@ export { default as TitleMenuButton } from "./components/TitleMenuButton"
 
 export { default as PageSection } from "./layouts/PageSection"
 export { default as PageTabsLayout } from "./layouts/PageTabsLayout"
+export { default as PageTitle } from "./layouts/PageTitle"
