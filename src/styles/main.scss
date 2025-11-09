@@ -7,16 +7,8 @@
 	@include colors.color-vars;
 }
 
-* {
-	box-sizing: border-box;
-	-webkit-tap-highlight-color: transparent;
-}
-
 html, body {
 	overscroll-behavior: none;
-}
-body {
-	touch-action: manipulation;
 }
 
 img {
@@ -43,6 +35,7 @@ a {
 button {
   all: unset;
   user-select: none;
+  box-sizing: border-box;
 
   &:hover {
     cursor: pointer;
