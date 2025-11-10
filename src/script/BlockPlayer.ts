@@ -1,96 +1,10 @@
 
 import Timer from "../utils/timer"
-import { CommandHandler, FFwStopPredicate, Instruction } from "./utils";
+import { CommandHandler, extractInstructions, FFwStopPredicate, Instruction } from "./utils";
 import { ScriptPlayerBase } from "./ScriptPlayer";
 
 type BlockFinishCallback =
     (complete: boolean)=> void
-type PageBreakCallback =
-    (line: string, index: number, lines: string[], label: string) => void
-
-//##############################################################################
-//#region                        LOCAL FUNCTIONS
-//##############################################################################
-
-/**
- * Split inline commands (e.g., `!w1000`) into command and argument
- * (e.g., `{cmd: "!w", arg: "1000"}`)
- * @param text - command string
- * @returns command details
- */
-function parseInlineCommand(text: string): Instruction {
-	const argIndex = text.search(/\d|\s|$/)
-	return {
-		cmd: text.substring(0, argIndex),
-		arg: text.substring(argIndex)
-	}
-}
-
-/**
- * Extract the inline commands (e.g., `!w1000`) and `@` from a text line
- * and create an array of instructions
- * @param text - original text line
- * @returns extracted instructions
- */
-function splitText(text: string) {
-	const instructions = new Array<Instruction>()
-	let index = 0
-	// replace spaces with en-spaces at the beginning of the line
-	while (text.charCodeAt(index) == 0x20)
-		index++
-	text = "\u2002".repeat(index) + text.substring(index)
-	// split tokens at every '@', '\', '!xxx'
-	while (text.length > 0) {
-		index = text.search(/@|!\w|$/)
-		if (index > 0)
-			instructions.push({cmd:'`', arg: text.substring(0, index)})
-		text = text.substring(index)
-		switch (text.charAt(0)) {
-			case '@' :
-				instructions.push({cmd: '@', arg:""})
-				text = text.substring(1)
-				break
-			case '!' : // !w<time>
-				const endIndex = text.substring(2).search(/\D|$/)+2
-				const cmd = parseInlineCommand(text.substring(0, endIndex))
-				instructions.push(cmd)
-				text = text.substring(endIndex)
-				break
-		}
-	}
-	return instructions
-}
-
-/**
- * Extract all instructions from the script line
- * @param line - script line
- * @returns the array of instructions extracted from the line
- */
-export function extractInstructions(line: string) {
-	const instructions = new Array<Instruction>()
-	switch(line.charAt(0)) {
-		case '!' : // inline command
-			instructions.push(parseInlineCommand(line))
-			break
-		case '\\' : // page break
-			instructions.push({cmd:'\\',arg:''})
-			break
-		case '`' : // text
-			instructions.push(...splitText(line.substring(1)+'\n'))
-			break
-		default : // normal command
-			let index = line.search(/\s|$/)
-			instructions.push({
-				cmd: line.substring(0,index),
-				arg: line.substring(index+1)
-			})
-			break
-	}
-	return instructions
-}
-
-//#endregion
-//##############################################################################
 
 export class BlockPlayerBase<LabelName extends string> {
 
