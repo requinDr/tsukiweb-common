@@ -8,12 +8,6 @@
 }
 @font-face {
     font-family: 'Ubuntu';
-    src: local('Ubuntu-Light'), url('../assets/fonts/Ubuntu-Light.woff2') format('woff2');
-    font-weight: 300;
-    font-style: normal;
-}
-@font-face {
-    font-family: 'Ubuntu';
     src: local('Ubuntu-Medium'), url('../assets/fonts/Ubuntu-Medium.woff2') format('woff2');
     font-weight: 500;
     font-style: normal;
@@ -28,12 +22,6 @@
     font-family: 'Ubuntu';
     src: local('Ubuntu-Italic'), url('../assets/fonts/Ubuntu-Italic.woff2') format('woff2');
     font-weight: normal;
-    font-style: italic;
-}
-@font-face {
-    font-family: 'Ubuntu';
-    src: local('Ubuntu-LightItalic'), url('../assets/fonts/Ubuntu-LightItalic.woff2') format('woff2');
-    font-weight: 300;
     font-style: italic;
 }
 @font-face {
