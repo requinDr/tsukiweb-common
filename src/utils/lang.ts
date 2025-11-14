@@ -1,6 +1,5 @@
 export type ImageRedirect<format extends string> = {
 	thumb: format,
-	sd:format,
 	hd: format
 }
 
@@ -12,7 +11,7 @@ export type TextImage = {
   { bottom: string|string[], top?: never, center?: never }
 )
 
-export type ResolutionId = 'thumb'|'sd'|'hd'
+export type ResolutionId = 'thumb'|'src'
 
 export type TranslationId = string
 
