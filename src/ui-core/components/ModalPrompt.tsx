@@ -5,7 +5,7 @@ import ReactModal, { Styles } from "react-modal"
 import styles from '../styles/modal.module.scss'
 import { createRoot } from 'react-dom/client'
 import { LazyMotion, domAnimation } from 'motion/react';
-import * as motion from "motion/react-m"
+import * as m from "motion/react-m"
 
 type Props = {
 	display: boolean
@@ -35,7 +35,7 @@ const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, style}: Pro
 			ariaHideApp={false}
 			style={{content: style}}
 		>
-			<motion.div
+			<m.div
 				className={styles.promptModal}
 				initial={{ translateY: "-1em", opacity: 0 }}
 				animate={{ translateY: 0, opacity: 1 }}
@@ -53,7 +53,7 @@ const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, style}: Pro
 						</>
 					)}
 				</div>
-			</motion.div>
+			</m.div>
 		</ReactModal>
 	)
 }
