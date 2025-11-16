@@ -1,4 +1,4 @@
-import { Link, LinkProps, To } from "react-router-dom"
+import { Link, LinkProps, To } from "react-router"
 import styles from "../styles/button.module.scss"
 import classNames from "classnames"
 

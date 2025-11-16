@@ -1,6 +1,6 @@
 import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
-import { Link, LinkProps } from "react-router-dom";
+import { Link, LinkProps } from "react-router";
 
 
 type CommonProps = {
