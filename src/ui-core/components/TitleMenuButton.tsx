@@ -1,3 +1,5 @@
+import { MouseEventHandler } from "react";
+import { AudioManager } from "../../audio/AudioManager";
 import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
 import { Link, LinkProps } from "react-router";
@@ -6,6 +8,7 @@ import { Link, LinkProps } from "react-router";
 type CommonProps = {
 	active?: boolean
 	attention?: boolean
+	audio?: AudioManager
 }
 
 type ButtonProps = CommonProps & React.ButtonHTMLAttributes<HTMLButtonElement>
@@ -13,7 +16,7 @@ type LinkButtonProps = CommonProps & LinkProps
 
 type Props = ButtonProps | LinkButtonProps
 
-const TitleMenuButton = ({ active, attention, children, ...props}: Props) => {
+const TitleMenuButton = ({ active, attention, audio, children, onMouseEnter, onClick, ...props}: Props) => {
 	const classes = classNames(
 		styles.menuItem,
 		{
@@ -23,6 +26,7 @@ const TitleMenuButton = ({ active, attention, children, ...props}: Props) => {
 		"menu-item",
 		props.className
 	)
+	let lastHover = 0
 
 	if ("to" in props) return (
 		<Link
@@ -37,6 +41,22 @@ const TitleMenuButton = ({ active, attention, children, ...props}: Props) => {
 
 	return (
 		<button
+			onMouseEnter={(evt)=> {
+				const now = Date.now()
+				if (now - lastHover > 200) { // 200ms delay
+					audio?.playUiSound('tick')
+					lastHover = now
+				}
+				(onMouseEnter as MouseEventHandler<HTMLButtonElement>)?.(evt)
+			}}
+			onMouseLeave={()=> {
+				lastHover = Date.now()
+			}}
+			onClick={(evt)=> {
+				audio?.playUiSound('glass')
+				audio?.playUiSound('impact');
+				(onClick as MouseEventHandler<HTMLButtonElement>)?.(evt)
+			}}
 			onContextMenu={e => e.preventDefault()}
 			{...props}
 			className={classes}
