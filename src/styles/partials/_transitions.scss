@@ -149,8 +149,8 @@ img[for-mask], *[for-mask] img {
 *[fade-in="bcartain"] { @include shutter('bi', (0 $size*2), (0 $size)); }
 
 
-@mixin explosion($origin) {
-	animation-name: expl-in;
+@mixin circle($originx, $originy) {
+	animation-name: circle-in;
 	-webkit-mask-image: radial-gradient(circle at center, #fff 25%, transparent 50%);
 	mask-image: radial-gradient(circle at center, #fff 25%, transparent 50%);
 	mask-repeat: no-repeat;
@@ -159,10 +159,11 @@ img[for-mask], *[for-mask] img {
 	height: unset !important;
 	margin-block: auto;
 	right: unset !important;
-	left: $origin !important;
+	left: $originx !important;
+	top: $originy !important;
 	transform-origin: center;
 
-	@keyframes expl-in {
+	@keyframes circle-in {
 		0% {
 			transform: scale(0);
 			opacity: 0;
@@ -178,7 +179,14 @@ img[for-mask], *[for-mask] img {
 }
 
 *[fade-in="lexpl"] {  
-	@include explosion(-30%);
+	@include circle(-30%, 0%);
+}
+
+*[fade-in="lcircle"] {
+	@include circle(0%, 100%)
+}
+*[fade-in="ccircle"] {
+	animation-name: fadeIn
 }
 
 
