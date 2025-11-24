@@ -1,8 +1,9 @@
-import { MouseEventHandler } from "react";
+import { FocusEventHandler, MouseEventHandler } from "react";
 import { AudioManager } from "../../audio/AudioManager";
 import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
 import { Link, LinkProps } from "react-router";
+import { eventNames } from "process";
 
 
 type CommonProps = {
@@ -16,7 +17,8 @@ type LinkButtonProps = CommonProps & LinkProps
 
 type Props = ButtonProps | LinkButtonProps
 
-const TitleMenuButton = ({ active, attention, audio, children, onMouseEnter, onClick, ...props}: Props) => {
+const TitleMenuButton = ({ active, attention, audio, children,
+		onMouseEnter, onClick, onFocus, ...props}: Props) => {
 	const classes = classNames(
 		styles.menuItem,
 		{
@@ -51,6 +53,11 @@ const TitleMenuButton = ({ active, attention, audio, children, onMouseEnter, onC
 			}}
 			onMouseLeave={()=> {
 				lastHover = Date.now()
+			}}
+			onFocus={(evt)=> {
+				if (!evt.target.matches(':hover'))
+					audio?.playUiSound('tick');
+				(onFocus as FocusEventHandler<HTMLButtonElement>)?.(evt)
 			}}
 			onClick={(evt)=> {
 				audio?.playUiSound('glass');
