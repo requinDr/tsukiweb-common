@@ -22,9 +22,9 @@ const effects: Record<string, Sound> = {
     },
     'tick': {
         osc: [
-            { type: 'sine', freq: 800}
+            { type: 'sine', freq: [8285, [0.1, 10000, 'lin']] }
         ],
-        gain: [1, [0.03, 0, 'exp']],
+        gain: [0.33, [0.1, 0, 'exp']],
         stop: 0.1
     },
     'click': {

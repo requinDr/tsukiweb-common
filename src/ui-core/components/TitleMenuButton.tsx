@@ -53,8 +53,7 @@ const TitleMenuButton = ({ active, attention, audio, children, onMouseEnter, onC
 				lastHover = Date.now()
 			}}
 			onClick={(evt)=> {
-				audio?.playUiSound('glass')
-				audio?.playUiSound('impact');
+				audio?.playUiSound('glass');
 				(onClick as MouseEventHandler<HTMLButtonElement>)?.(evt)
 			}}
 			onContextMenu={e => e.preventDefault()}
