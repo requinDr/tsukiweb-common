@@ -4,7 +4,7 @@
 
 import { RefObject, useEffect, useRef } from "react"
 import { objectsEqual } from "../utils/utils"
-import { observe } from "../utils/Observer"
+import { observe, unobserve } from "../utils/Observer"
 import { NoMethods } from "../types"
 
 type KeyMapCallback = (action: any, event: KeyboardEvent, ...args: any) => boolean|void
@@ -203,37 +203,21 @@ export function useKeyMap(mapping: KeyMapMapping|(()=>KeyMapMapping), callback: 
 	const keyMap = useRef<KeyMap>(undefined)
 	
 	useEffect(()=> {
-		if (keyMap.current == undefined)
-			keyMap.current = new KeyMap(null, callback)
-	}, [])
-
-	useEffect(()=> {
-		if (mapping.constructor == Function)
-			keyMap.current!.setMapping((mapping as Function)())
+		const _mapping = (typeof mapping == 'function') ? mapping() : mapping
+		if (keyMap.current == undefined) 
+			keyMap.current = new KeyMap(_mapping, callback)
 		else
-			keyMap.current!.setMapping(mapping as KeyMapMapping)
+			keyMap.current.setMapping(_mapping)
 	}, [mapping])
 
 	useEffect(()=> {
 		if ('current' in target) {
 			let current: GlobalEventHandlers|null|undefined = target.current
-			observe(target, 'current', (node)=> {
-				if (current) {
-					keyMap.current!.disable(current, events, options)
-				}
-				if (node) {
-					keyMap.current!.enable(node, events, options)
-				}
-				current = node
-			})
-			return ()=> {
-				if (current) {
-					keyMap.current!.disable(current, events, options)
-				}
-			}
-		} else {
-			keyMap.current!.enable(target, events, options)
-			return keyMap.current!.disable.bind(keyMap, target, events, options)
+			if (!current)
+				return
+			target = current
 		}
+		keyMap.current!.enable(target, events, options)
+		return keyMap.current!.disable.bind(keyMap.current, target, events, options)
 	}, [target, events, options])
 }

@@ -79,7 +79,7 @@ export function directionalNavigate(direction: Direction) {
         const ny = parseFloat(n.getAttribute('nav-y') ?? '0')
         switch (direction) {
             case 'up' :
-                if (ny >= y)
+                if (ny >= y || (_y != null && ny < _y))
                     continue
                 if (_y == null || ny > _y)
                     [_x, _y, _elmt] = [nx, ny, n]
@@ -87,7 +87,7 @@ export function directionalNavigate(direction: Direction) {
                     [_x, _elmt] = [nx, n]
                 break
             case 'down' :
-                if (ny <= y)
+                if (ny <= y || (_y != null && ny > _y))
                     continue
                 if (_y == null || ny < _y)
                     [_x, _y, _elmt] = [nx, ny, n]
@@ -95,7 +95,7 @@ export function directionalNavigate(direction: Direction) {
                     [_x, _elmt] = [nx, n]
                 break
             case 'left' :
-                if (nx >= x)
+                if (nx >= x || (_x != null && nx < _x))
                     continue
                 if (_x == null || nx > _x)
                     [_x, _y, _elmt] = [nx, ny, n]
@@ -103,7 +103,7 @@ export function directionalNavigate(direction: Direction) {
                     [_y, _elmt] = [ny, n]
                 break
             case 'right' :
-                if (nx <= x)
+                if (nx <= x || (_x != null && nx > _x))
                     continue
                 if (_x == null || nx < _x)
                     [_x, _y, _elmt] = [nx, ny, n]
@@ -117,6 +117,10 @@ export function directionalNavigate(direction: Direction) {
         return true
     }
     return false
+}
+
+export function navProps(y: number, x: number) {
+    return {'nav-x': x, 'nav-y': y}
 }
 
 export default directionalNavigate
