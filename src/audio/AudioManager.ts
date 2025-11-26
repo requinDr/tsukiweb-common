@@ -161,6 +161,8 @@ export class AudioManager {
     }
     
     playUiSound(id: keyof typeof effects, gainFactor: number = 1) {
+        if (this._context.state != 'running')
+            return
         let node = null
         for (const n of this._uiNodes) {
             if (!n.playing) {
