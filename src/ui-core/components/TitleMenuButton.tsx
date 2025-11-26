@@ -1,24 +1,15 @@
-import { FocusEventHandler, MouseEventHandler } from "react";
 import { AudioManager } from "../../audio/AudioManager";
 import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
-import { Link, LinkProps } from "react-router";
-import { eventNames } from "process";
+import useButtonSounds from "../../hooks/useButtonSounds";
 
-
-type CommonProps = {
+type TitleMenuButtonProps = {
 	active?: boolean
 	attention?: boolean
 	audio?: AudioManager
-}
+} & React.ButtonHTMLAttributes<HTMLButtonElement>
 
-type ButtonProps = CommonProps & React.ButtonHTMLAttributes<HTMLButtonElement>
-type LinkButtonProps = CommonProps & LinkProps
-
-type Props = ButtonProps | LinkButtonProps
-
-const TitleMenuButton = ({ active, attention, audio, children,
-		onMouseEnter, onClick, onFocus, ...props}: Props) => {
+const TitleMenuButton = ({ active, attention, audio, children, ...props}: TitleMenuButtonProps) => {
 	const classes = classNames(
 		styles.menuItem,
 		{
@@ -28,43 +19,18 @@ const TitleMenuButton = ({ active, attention, audio, children,
 		"menu-item",
 		props.className
 	)
-	let lastHover = 0
 
-	if ("to" in props) return (
-		<Link
-			{...props}
-			className={classes}
-			to={props.to}
-		>
-			{children}
-			{attention && <Attention />}
-		</Link>
+	const soundProps = useButtonSounds<HTMLButtonElement>(
+		audio, 
+		props,
+		{ hoverSound: 'tick', clickSound: 'glass' }, 
+		200
 	)
 
 	return (
 		<button
-			onMouseEnter={(evt)=> {
-				const now = Date.now()
-				if (now - lastHover > 200) { // 200ms delay
-					audio?.playUiSound('tick')
-					lastHover = now
-				}
-				(onMouseEnter as MouseEventHandler<HTMLButtonElement>)?.(evt)
-			}}
-			onMouseLeave={()=> {
-				lastHover = Date.now()
-			}}
-			onFocus={(evt)=> {
-				if (!evt.target.matches(':hover'))
-					audio?.playUiSound('tick');
-				(onFocus as FocusEventHandler<HTMLButtonElement>)?.(evt)
-			}}
-			onClick={(evt)=> {
-				audio?.playUiSound('glass');
-				(onClick as MouseEventHandler<HTMLButtonElement>)?.(evt)
-			}}
 			onContextMenu={e => e.preventDefault()}
-			{...props}
+			{...soundProps}
 			className={classes}
 		>
 			{children}
