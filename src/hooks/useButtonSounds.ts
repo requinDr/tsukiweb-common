@@ -23,34 +23,34 @@ const useButtonSounds = <T extends HTMLButtonElement>(
 			audio.playUiSound(hoverSound)
 			lastHoverRef.current = now
 		}
-		onMouseEnter?.(evt as any)
+		onMouseEnter?.(evt)
 	}, [audio, hoverSound, throttle, onMouseEnter])
 
 	const handleSoundMouseLeave: MouseEventHandler<T> = useCallback((evt) => {
 		lastHoverRef.current = Date.now()
-		onMouseLeave?.(evt as any)
+		onMouseLeave?.(evt)
 	}, [onMouseLeave])
 
 	const handleSoundFocus: FocusEventHandler<T> = useCallback((evt) => {
 		if (audio && hoverSound && !evt.target.matches(':hover')) {
 			audio.playUiSound(hoverSound)
 		}
-		onFocus?.(evt as any)
+		onFocus?.(evt)
 	}, [audio, hoverSound, onFocus])
 
 	const handleSoundClick: MouseEventHandler<T> = useCallback((evt) => {
 		if (audio && clickSound) {
 			audio.playUiSound(clickSound)
 		}
-		onClick?.(evt as any)
+		onClick?.(evt)
 	}, [audio, clickSound, onClick])
 
 	return {
+		...originalProps,
 		onMouseEnter: handleSoundMouseEnter,
 		onMouseLeave: handleSoundMouseLeave,
 		onFocus: handleSoundFocus,
 		onClick: handleSoundClick,
-		...originalProps 
 	}
 }
 
