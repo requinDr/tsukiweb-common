@@ -40,10 +40,9 @@ type TabBtnProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 const TabBtn = ({label, value, active, audio, ...props}: TabBtnProps) => {
 	const soundProps = useButtonSounds<HTMLButtonElement>(
-		audio, 
+		audio,
 		props,
-		{ clickSound: 'glass' }, 
-		200
+		{ clickSound: 'glass' }
 	)
 
 	return (

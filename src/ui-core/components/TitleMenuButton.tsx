@@ -21,10 +21,9 @@ const TitleMenuButton = ({ active, attention, audio, children, ...props}: TitleM
 	)
 
 	const soundProps = useButtonSounds<HTMLButtonElement>(
-		audio, 
+		audio,
 		props,
-		{ hoverSound: 'tick', clickSound: 'glass' }, 
-		200
+		{ hoverSound: 'tick', clickSound: 'glass' }
 	)
 
 	return (
