@@ -368,19 +368,28 @@ export async function requestJSONs({ multiple = false, accept = ''}) : Promise<J
 	return jsons
 }
 
-export function supportFullscreen() {
-	return Boolean(document.fullscreenEnabled)
-}
-
-export function isFullscreen() {
+function isFullscreenOn() {
 	return document.fullscreenElement !== null
 }
-
-export function toggleFullscreen() {
-	if (isFullscreen())
-		document.exitFullscreen()
-	else
-		document.documentElement.requestFullscreen()
+async function setFullScreenOn() {
+	console.log('request fullscreen')
+	return document.documentElement.requestFullscreen()
+		.catch((err) => {
+			console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+		})
+}
+async function setFullScreenOff() {
+	return document.exitFullscreen()
+		.catch((err) => {
+			console.error(`Error attempting to disable full-screen mode: ${err.message} (${err.name})`);
+		})
+}
+export const fullscreen = {
+	isSupported: Boolean(document.fullscreenEnabled),
+	isOn: isFullscreenOn,
+	toggle: () => isFullscreenOn() ? setFullScreenOff() : setFullScreenOn(),
+	setOn: setFullScreenOn,
+	setOff: setFullScreenOff
 }
 
 export function resettable<T extends Record<PropertyKey, any>>(resetValue: Readonly<T>): [T, VoidFunction, Readonly<T>] {
