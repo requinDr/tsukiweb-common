@@ -4,7 +4,7 @@ export { default as MessageContainer } from "./components/MessageContainer"
 export { default as Modal } from "./components/Modal"
 export { default as ModalPrompt } from "./components/ModalPrompt"
 export { default as Particles } from "./components/Particles"
-export { default as TabsComponent } from "./components/TabsComponent"
+export { default as TabsBar } from "./components/TabsBar"
 export { default as TitleMenuButton } from "./components/TitleMenuButton"
 
 export { default as PageSection } from "./layouts/PageSection"

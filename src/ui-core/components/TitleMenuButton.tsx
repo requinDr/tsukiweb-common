@@ -3,11 +3,11 @@ import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
 import useButtonSounds from "../../hooks/useButtonSounds";
 
-type TitleMenuButtonProps = {
+type TitleMenuButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &{
 	active?: boolean
 	attention?: boolean
 	audio?: AudioManager
-} & React.ButtonHTMLAttributes<HTMLButtonElement>
+}
 
 const TitleMenuButton = ({ active, attention, audio, children, ...props}: TitleMenuButtonProps) => {
 	const classes = classNames(

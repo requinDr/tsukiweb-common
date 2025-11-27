@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react"
-import TabsComponent, { Tab } from "../components/TabsComponent"
+import TabsBar, { Tab } from "../components/TabsBar"
 import PageTitle from "./PageTitle"
 import styles from "../styles/layouts.module.scss"
 
@@ -41,7 +41,7 @@ const PageTabsLayout = ({
 				<PageTitle>{title}</PageTitle>
 				}
 
-				<TabsComponent
+				<TabsBar
 					tabs={tabs}
 					selected={selectedTab}
 					setSelected={handleSetSelectedTab}
