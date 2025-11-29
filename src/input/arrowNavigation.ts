@@ -69,7 +69,8 @@ export function directionalNavigate(direction: Direction) {
         parent = document.body
     const neighbours = searchNavElmtsDown(parent)
     
-    const attrX = elmt.getAttribute('nav-x'), attrY = elmt.getAttribute('nav-y')
+    const attrX = elmt.getAttribute('nav-x') ?? elmt.getAttribute('nav-temp-x'),
+          attrY = elmt.getAttribute('nav-y') ?? elmt.getAttribute('nav-temp-y')
     const x = attrX ? parseFloat(attrX) : (direction == 'left') ? 0.5 : -0.5
     const y = attrY ? parseFloat(attrY) : (direction == 'up') ? 0.5 : -0.5
 
@@ -113,7 +114,20 @@ export function directionalNavigate(direction: Direction) {
         }
     }
     if (_elmt instanceof HTMLElement) {
-        _elmt.focus()
+        if (_elmt.hasAttribute('nav-noscroll'))
+            _elmt.focus({preventScroll: true})
+        else
+            _elmt.focus()
+        
+        if (!_elmt.hasAttribute('nav-x')) {
+            _elmt.setAttribute('nav-temp-x', x.toString())
+            _elmt.addEventListener('blur', ()=>
+                _elmt.removeAttribute('nav-temp-x'))
+        } else if (!_elmt.hasAttribute('nav-y')) {
+            _elmt.setAttribute('nav-temp-y', y.toString())
+            _elmt.addEventListener('blur', ()=>
+                _elmt.removeAttribute('nav-temp-y'))
+        }
         return true
     }
     return false
