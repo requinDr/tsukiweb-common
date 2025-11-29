@@ -185,20 +185,23 @@ export class AudioManager {
             return
         this._gameTrack = id
         const buffer = await this._assetsMap.get(id)
-        await this.stopGameTrack()
+        await this._stopTrack(this._gameTrackNode)
         if (this._gameTrack == id) { // check if track has not changed during delays
             this._gameTrackNode.play({buffer, loop: true})
         }
     }
-    
-    async stopGameTrack() {
-        if (this._gameTrackNode.playing) {
+    private async _stopTrack(node: AudioSourceNode) {
+        if (node.playing) {
             if (this._trackFadeout) {
-                this._gameTrackNode.gainRamp(0, this._trackFadeout)
+                node.gainRamp(0, this._trackFadeout)
                 await asyncDelay(this._trackFadeout)
             }
-            this._gameTrackNode.stop()
+            node.stop()
         }
+    }
+    
+    async stopGameTrack() {
+        await this._stopTrack(this._gameTrackNode)
         this._gameTrack = null
     }
 
@@ -207,20 +210,14 @@ export class AudioManager {
             return
         this._menuTrack = id
         const buffer = await this._assetsMap.get(id)
-        await this.stopGameTrack()
+        await this._stopTrack(this._menuTrackNode)
         if (this._menuTrack == id) { // check if track has not changed during delays
             this._menuTrackNode.play({buffer, loop: true})
         }
     }
     
     async stopMenuTrack() {
-        if (this._menuTrackNode.playing) {
-            if (this._trackFadeout) {
-                this._menuTrackNode.gainRamp(0, this._trackFadeout)
-                await asyncDelay(this._trackFadeout)
-            }
-            this._menuTrackNode.stop()
-        }
+        this._stopTrack(this._menuTrackNode)
         this._menuTrack = null
     }
     
