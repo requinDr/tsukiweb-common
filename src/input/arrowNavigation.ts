@@ -7,14 +7,14 @@ function searchNavElmtUp(from: HTMLElement | null) {
     return e
 }
 function searchNavElmtsDown(from: HTMLElement) {
-    let elements = [...(from?.children ?? [])]
+    let elements = [...(from?.children ?? [])] as HTMLElement[]
     const result = []
     let e
     while (e = elements.pop()) {
-        if (e.hasAttribute('nav-x') || e.hasAttribute('nav-y'))
+        if (e.offsetParent && (e.hasAttribute('nav-x') || e.hasAttribute('nav-y')))
             result.push(e)
         else
-            elements.push(...e.children)
+            elements.push(...e.children as Iterable<HTMLElement>)
     }
     return result
 }
