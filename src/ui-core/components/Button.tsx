@@ -10,7 +10,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement>
 
 type Props = {
-	variant?: "default" | "corner" | "menu" | null
+	variant?: "default" | "corner" | "elevation" | "underline-left" | null
 	active?: boolean
 	[key: string]: any
 } & ({
@@ -29,7 +29,8 @@ const Button = ({children, to, href, className, variant = "default",
 	const classes = classNames(styles.btn, "btn", {
 		[styles.btnVariantDefault]: variant === "default",
 		[styles.btnVariantCorner]: variant === "corner",
-		[styles.btnVariantMenu]: variant === "menu",
+		[styles.btnVariantElevation]: variant === "elevation",
+		[styles.btnVariantUnderlineLeft]: variant === "underline-left",
 		[styles.active]: active,
 	}, className)
 
