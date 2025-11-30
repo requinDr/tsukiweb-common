@@ -1,34 +1,40 @@
-import { Link, LinkProps, To } from "react-router"
+import { Link, LinkProps } from "react-router"
 import styles from "../styles/button.module.scss"
 import classNames from "classnames"
+import useButtonSounds from "../../hooks/useButtonSounds"
+import { AudioManager } from "../../audio/AudioManager"
+import { NavigationProps } from "../../input/arrowNavigation"
+import { WithRequired } from "../../types"
 
-
-/**
- * A button or Link already styled
- */
-interface PropsButton extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-}
-interface PropsLink extends LinkProps {
-	to: To
-}
-interface PropsAnchor extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-	href: string
-}
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
+type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement>
 
 type Props = {
-	variant?: "default" | "corner" | "menu"
+	variant?: "default" | "corner" | "menu" | null
 	active?: boolean
-	className?: string
 	[key: string]: any
-} & (PropsButton | PropsLink | PropsAnchor)
-const Button = ({children, to, href, className, variant = "default", active = false, ...props}: Props) => {
+} & ({
+	audio: AudioManager
+	hoverSound?: string
+	clickSound?: string
+} | {}) & (
+	ButtonProps |
+	WithRequired<LinkProps, 'to'> |
+	WithRequired<AnchorProps, 'href'>
+) & NavigationProps
+
+const Button = ({children, to, href, className, variant = "default",
+				 active = false, audio, hoverSound, clickSound, ...props}: Props) => {
+	
 	const classes = classNames(styles.btn, "btn", {
 		[styles.btnVariantDefault]: variant === "default",
 		[styles.btnVariantCorner]: variant === "corner",
 		[styles.btnVariantMenu]: variant === "menu",
 		[styles.active]: active,
-		[className || ""]: className
-	})
+	}, className)
+
+	if (hoverSound || clickSound)
+		props = useButtonSounds(audio, props as any, {hoverSound, clickSound})
 
 	if (to) {
 		return (
@@ -40,14 +46,15 @@ const Button = ({children, to, href, className, variant = "default", active = fa
 
 	if (href) {
 		return (
-			<a className={classes} {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)} href={href}>
+			<a className={classes} {...(props as AnchorProps)} href={href}>
 				{children}
 			</a>
 		)
 	}
 
 	return (
-		<button className={classes} onContextMenu={(e) => e.preventDefault()} {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>
+		<button className={classes} onContextMenu={(e) => e.preventDefault()}
+				{...(props as ButtonProps)}>
 			{children}
 		</button>
 	)

@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react'
-import type { MouseEventHandler, FocusEventHandler, ButtonHTMLAttributes } from 'react'
+import type { MouseEventHandler, FocusEventHandler, HTMLAttributes } from 'react'
 import { AudioManager } from '../audio/AudioManager'
 
 interface ButtonSoundConfig {
@@ -7,9 +7,9 @@ interface ButtonSoundConfig {
 	clickSound?: string
 }
 
-const useButtonSounds = <T extends HTMLButtonElement>(
+const useButtonSounds = <T extends HTMLElement>(
 	audio: AudioManager | undefined,
-	originalProps: ButtonHTMLAttributes<T>,
+	originalProps: HTMLAttributes<T>,
 	sounds: ButtonSoundConfig = {},
 	throttle: number = 200
 ) => {

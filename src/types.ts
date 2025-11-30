@@ -31,6 +31,8 @@ export type PartialRecord<K extends keyof any, T> = {
   [P in K]?: T
 }
 
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
+
 type RequiredFieldsOnly<T> = {
   [K in keyof T as T[K] extends Required<T>[K] ? K : never]: T[K]
 }

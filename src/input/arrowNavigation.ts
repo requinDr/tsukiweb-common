@@ -21,6 +21,12 @@ function searchNavElmtsDown(from: HTMLElement) {
 
 type Direction = 'up'|'down'|'left'|'right'|'in'|'out'
 
+export type NavigationProps = {
+    'nav-x'?: number
+    'nav-y'?: number
+    'nav-noscroll'?: 1 // cannot use boolean on custom props
+}
+
 /**
  * Change the focused element to the next one in the specified direction, based
  * on the `"nav-x"` and `"nav-y"` html attributes and the specified direction.
