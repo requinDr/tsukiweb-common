@@ -11,11 +11,11 @@ const useButtonSounds = <T extends HTMLElement>(
 	audio: AudioManager | undefined,
 	originalProps: HTMLAttributes<T>,
 	sounds: ButtonSoundConfig = {},
-	throttle: number = 200
+	throttle: number = 200 // 200ms before replaying hover sound after button appears or mouse leaves
 ) => {
 	const { onMouseEnter, onMouseLeave, onFocus, onClick } = originalProps
 	const { hoverSound, clickSound } = sounds
-	const lastHoverRef = useRef<number>(0)
+	const lastHoverRef = useRef<number>(Date.now())
 
 	const handleSoundMouseEnter: MouseEventHandler<T> = useCallback((evt) => {
 		const now = Date.now()
