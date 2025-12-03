@@ -9,22 +9,22 @@ import { WithRequired } from "../../types"
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement>
 
-type Props = {
+type SoundProps = 
+	| { audio: AudioManager; hoverSound?: string; clickSound?: string }
+	| { audio?: never; hoverSound?: never; clickSound?: never }
+
+type Props = SoundProps & NavigationProps &{
 	variant?: "default" | "corner" | "elevation" | "underline-left" | null
 	active?: boolean
-	[key: string]: any
-} & ({
-	audio: AudioManager
-	hoverSound?: string
-	clickSound?: string
-} | {}) & (
-	ButtonProps |
-	WithRequired<LinkProps, 'to'> |
-	WithRequired<AnchorProps, 'href'>
-) & NavigationProps
+} & (
+	| ButtonProps 
+	| WithRequired<LinkProps, 'to'> 
+	| WithRequired<AnchorProps, 'href'>
+)
 
-const Button = ({children, to, href, className, variant = "default",
+const Button = ({children, className, variant = "default",
 				 active = false, audio, hoverSound, clickSound, ...props}: Props) => {
+	const { to, href } = props as any
 	
 	const classes = classNames(styles.btn, "btn", {
 		[styles.btnVariantDefault]: variant === "default",
