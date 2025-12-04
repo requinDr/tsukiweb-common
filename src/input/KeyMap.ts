@@ -4,32 +4,34 @@
 
 import { RefObject, useEffect, useRef } from "react"
 import { objectsEqual } from "../utils/utils"
-import { observe, unobserve } from "../utils/Observer"
 import { NoMethods } from "../types"
 
 type KeyMapCallback = (action: any, event: KeyboardEvent, ...args: any) => boolean|void
 type KeyMapCondition = (action: any, event: KeyboardEvent, ...args: any) => boolean
+type KeyAttr = 'key'|'code'|'keyCode'
 export type KeyMapMapping = Record<string,
-	KeymapKeyFilter|Array<KeymapKeyFilter|KeyMapCondition>
+	KeymapKeyFilter | Array<KeyMapCondition | Omit<KeymapKeyFilter, KeyAttr> | KeymapKeyFilter>
 >
 type KeyboardEvents = 'keydown'|'keypress'|'keyup'
 
 export type KeymapKeyFilter = ({
-		code: string
+		code: string, key?: never
 } | {
-		key: string
+		key: string, code?: never
 }) & {
 	[KeyMap.condition]?: KeyMapCondition
 	[KeyMap.args]?: any|Array<any>
-} & Partial<NoMethods<KeyboardEvent>> // other parameters to filter keyboard events (repeat, ctrlKey, etc)
+	[KeyMap.editing]?: boolean
+} & Partial<NoMethods<Omit<KeyboardEvent, KeyAttr>>> // other parameters to filter keyboard events (repeat, ctrlKey, etc)
 
 export default class KeyMap {
-	private mapping: Map<string, any>
+	private mapping: Map<string, Array<{ keyEventFilter: KeymapKeyFilter, action: any }>>
 	private callback: KeyMapCallback|null
 	private keyListener: EventListener
 
 	static readonly condition: unique symbol = Symbol("condition function to trigger action");
 	static readonly args: unique symbol = Symbol("additional parameters on callback");
+	static readonly editing: unique symbol = Symbol("if the event target is editable")
 
 	constructor(mapping: KeyMapMapping|null = null, callback: KeyMapCallback|null = null) {
 		this.mapping = new Map()
@@ -46,10 +48,13 @@ export default class KeyMap {
 
 	private listener_template(event: KeyboardEvent) {
 		if (this.callback) {
-			const result = this.getAction(event);
-			const preventDefault = result ? this.callback(result.action, event, ...result.args) || false : false;
-			if (preventDefault)
-				event.preventDefault()
+			const actions = this.getActions(event);
+			for (let {keyEventFilter: filter, action} of actions) {
+				if (this.callback(action, event, ...(filter[KeyMap.args] ?? []))) {
+					event.preventDefault()
+					break
+				}
+			}
 		}
 	}
 
@@ -57,23 +62,26 @@ export default class KeyMap {
 		this.clearMapping();
 		for (const [action, evtFilter] of Object.entries(mapping)) {
 			if (Array.isArray(evtFilter)) {
-				let condition = null
+				let common = null
 				for (let i = 0; i < evtFilter.length; i++) {
 					let filter = evtFilter[i]
 					if (typeof filter == "function") {
 						if (i == 0)
-							condition = filter
+							common = {[KeyMap.condition]: filter}
 						else
-							throw Error("a function is only possible on the first element of the array")
+							throw Error("Condition functions can only specified as the first element of the array")
+					} else if (!Object.hasOwn(filter, 'key') && !Object.hasOwn(filter, 'code')) {
+						if (i == 0)
+							common = filter
+						else
+							throw Error("Common filters can only be specified in first element of the array (missing key or code)")
 					} else {
-						if (condition) {
-							if (KeyMap.condition in evtFilter[i])
+						if (common?.[KeyMap.condition]) {
+							if (KeyMap.condition in filter)
 								throw Error("cannot accumulate global condition and local condition")
-							filter = { ...(evtFilter[i] as KeymapKeyFilter), [KeyMap.condition]: condition }
-						} else {
-							filter = evtFilter[i] as KeymapKeyFilter
+							filter = { ...common, ...filter }
 						}
-						this.setAction(filter, action);
+						this.setAction(filter as KeymapKeyFilter, action);
 					}
 				}
 			} else {
@@ -155,7 +163,7 @@ export default class KeyMap {
 		}
 	}
 
-	private getAction(evt: KeyboardEvent) {
+	private getActions(evt: KeyboardEvent) {
 		let key = evt.key;
 		const code = evt.code;
 
@@ -163,35 +171,33 @@ export default class KeyMap {
 			key = key.toUpperCase()
 
 		let actions = this.mapping.get(code) || this.mapping.get(key);
+		if (!actions)
+			return []
 
-		if (actions) {
-			let maxAttrLen = 0; // filters with more constraints are prefered
-			let result = undefined;
-			let args = []
-			for (let action of actions) {
-				const filter = action.keyEventFilter;
-				let attrLen = Object.keys(filter).length; // constraints number, without [KeyMap.condition]
-				const condition = filter[KeyMap.condition];
-				if (condition)
-					attrLen+=0.5 // condition function not as important as event attributes
-				if (attrLen > maxAttrLen) {
-					const filteredEvt = {
-						...Object.fromEntries(Object.keys(filter).map(k=>[k,evt[k as keyof typeof evt]])),
-						key // override event key
-					} as typeof filter
-					if (!Object.entries(filter).some(([k,v])=>(filteredEvt[k] != v))
-							&& (condition?.(action, evt, ...(filter?.[KeyMap.args]??[]))??true)) {
-						maxAttrLen = attrLen;
-						result = action.action;
-						args = filter?.[KeyMap.args]??[]
-					}
-				}
+		// filter actions based on conditions (specified function and event attributes)
+		actions = actions.filter(({keyEventFilter: filter, action})=> {
+			const attrs = Object.keys(filter) as Iterable<keyof KeymapKeyFilter>
+			for (let attr of attrs) {
+				if (filter[attr] != evt[attr as keyof typeof evt])
+					return false
 			}
-			if (result) {
-				return { action: result, args: args };
-			}
-		}
-		return undefined;
+			const condition = filter[KeyMap.condition]
+			const args = filter[KeyMap.args] ?? []
+			if (condition && !(condition(action, evt, ...args)))
+				return false
+			return true
+		})
+		// sort actions by number of constraints on the event
+		actions = actions.sort(({keyEventFilter: filter1}, {keyEventFilter: filter2})=> {
+			let weight1 = Object.keys(filter1).length
+			let weight2 = Object.keys(filter2).length
+			if (weight1 != weight2)
+				return weight1 - weight2
+			if (filter1[KeyMap.condition] || !filter2[KeyMap.condition])
+				return -1
+			return 1
+		})
+		return actions
 	}
 }
 
@@ -204,7 +210,7 @@ export function useKeyMap(mapping: KeyMapMapping|(()=>KeyMapMapping), callback: 
 	
 	useEffect(()=> {
 		const _mapping = (typeof mapping == 'function') ? mapping() : mapping
-		if (keyMap.current == undefined) 
+		if (keyMap.current == undefined)
 			keyMap.current = new KeyMap(_mapping, callback)
 		else
 			keyMap.current.setMapping(_mapping)

@@ -77,11 +77,13 @@ export function directionalNavigate(direction: Direction) {
     
     const attrX = elmt.getAttribute('nav-x') ?? elmt.getAttribute('nav-temp-x'),
           attrY = elmt.getAttribute('nav-y') ?? elmt.getAttribute('nav-temp-y')
-    const x = attrX ? parseFloat(attrX) : (direction == 'left') ? 0.5 : -0.5
-    const y = attrY ? parseFloat(attrY) : (direction == 'up') ? 0.5 : -0.5
+    const x = attrX ? parseFloat(attrX) : (direction == 'left') ? 1e-9 : -1e-9
+    const y = attrY ? parseFloat(attrY) : (direction == 'up') ? 1e-9 : -1e-9
 
     let _y = null, _x = null, _elmt = null
     for (const n of neighbours) {
+        if (n == elmt)
+            continue
         const nx = parseFloat(n.getAttribute('nav-x') ?? '0')
         const ny = parseFloat(n.getAttribute('nav-y') ?? '0')
         switch (direction) {
@@ -126,11 +128,11 @@ export function directionalNavigate(direction: Direction) {
             _elmt.focus()
         
         if (!_elmt.hasAttribute('nav-x')) {
-            _elmt.setAttribute('nav-temp-x', x.toString())
+            _elmt.setAttribute('nav-temp-x', (Math.abs(x) > 2e-9 ? x : 0).toString())
             _elmt.addEventListener('blur', ()=>
                 _elmt.removeAttribute('nav-temp-x'))
         } else if (!_elmt.hasAttribute('nav-y')) {
-            _elmt.setAttribute('nav-temp-y', y.toString())
+            _elmt.setAttribute('nav-temp-y', (Math.abs(y) > 2e-9 ? y : 0).toString())
             _elmt.addEventListener('blur', ()=>
                 _elmt.removeAttribute('nav-temp-y'))
         }
