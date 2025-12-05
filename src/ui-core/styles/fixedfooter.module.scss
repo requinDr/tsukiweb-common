@@ -1,13 +1,12 @@
 .footer {
   margin-top: auto;
-  min-height: 40px;
+  min-height: 60px;
   width: 100%;
-  background: rgb(0 35 115);
-  padding: 0 1em;
+  background: var(--focus);
+  border-top: 2px solid var(--separator);
+  padding: 0.2em 1em 0 1em;
   padding-bottom: var(--safe-area-max-inset-bottom);
   display: flex;
-  align-items: center;
-  box-shadow: 0 -1px 2px #00000059;
   z-index: 2;
 }
 .footerContent {
