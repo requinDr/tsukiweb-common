@@ -24,6 +24,18 @@ export type KeymapKeyFilter = ({
 	[KeyMap.editing]?: boolean
 } & Partial<NoMethods<Omit<KeyboardEvent, KeyAttr>>> // other parameters to filter keyboard events (repeat, ctrlKey, etc)
 
+function isEditableElement(el: EventTarget|null) {
+  if (el instanceof HTMLElement && el.isContentEditable) return true;
+  if (el instanceof HTMLInputElement) {
+    // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#input_types
+    if (/text|email|number|password|search|tel|url/.test(el.type)) {
+      return !(el.disabled || el.readOnly);
+    }
+  }
+  else if (el instanceof HTMLTextAreaElement) return !(el.disabled || el.readOnly);
+  return false;
+}
+
 export default class KeyMap {
 	private mapping: Map<string, Array<{ keyEventFilter: KeymapKeyFilter, action: any }>>
 	private callback: KeyMapCallback|null
@@ -52,6 +64,7 @@ export default class KeyMap {
 			for (let {keyEventFilter: filter, action} of actions) {
 				if (this.callback(action, event, ...(filter[KeyMap.args] ?? []))) {
 					event.preventDefault()
+					event.stopPropagation()
 					break
 				}
 			}
@@ -62,28 +75,35 @@ export default class KeyMap {
 		this.clearMapping();
 		for (const [action, evtFilter] of Object.entries(mapping)) {
 			if (Array.isArray(evtFilter)) {
-				let common = null
-				for (let i = 0; i < evtFilter.length; i++) {
-					let filter = evtFilter[i]
+				let common: Omit<KeymapKeyFilter, KeyAttr> = { }
+				let noKey = true
+				for (let filter of evtFilter) {
 					if (typeof filter == "function") {
-						if (i == 0)
-							common = {[KeyMap.condition]: filter}
-						else
-							throw Error("Condition functions can only specified as the first element of the array")
+						if (!noKey)
+							throw Error(`Cannot add common condition after first key element`)
+						if (Object.hasOwn(common, KeyMap.condition))
+							throw Error("Condition can only be specified once")
+						common[KeyMap.condition] = filter
 					} else if (!Object.hasOwn(filter, 'key') && !Object.hasOwn(filter, 'code')) {
-						if (i == 0)
-							common = filter
-						else
-							throw Error("Common filters can only be specified in first element of the array (missing key or code)")
-					} else {
-						if (common?.[KeyMap.condition]) {
-							if (KeyMap.condition in filter)
-								throw Error("cannot accumulate global condition and local condition")
-							filter = { ...common, ...filter }
+						if (!noKey)
+							throw Error(`Common filters cannot cannot be added after first key element`)
+						const props = [...Object.getOwnPropertySymbols(common),
+									   ...Object.keys(common)]
+						for (let key of props) {
+							if (Object.hasOwn(filter, key))
+								throw Error(`Common filter attribute '${key.toString()}' specified twice`)
 						}
-						this.setAction(filter as KeymapKeyFilter, action);
+						common = { ...common, ...filter }
+					} else {
+						if (noKey)
+							noKey = false
+						if (common[KeyMap.condition] && KeyMap.condition in filter)
+							throw Error("Cannot have both global and local condition")
+						this.setAction({ ...common, ...filter as KeymapKeyFilter }, action);
 					}
 				}
+				if (noKey)
+					throw Error(`No 'key' or 'code' specified for action ${action}`)
 			} else {
 				this.setAction(evtFilter, action);
 			}
@@ -166,6 +186,7 @@ export default class KeyMap {
 	private getActions(evt: KeyboardEvent) {
 		let key = evt.key;
 		const code = evt.code;
+		let editable: boolean|undefined = undefined
 
 		if (/^[a-z]$/.test(key)) // one lowercase letter
 			key = key.toUpperCase()
@@ -175,10 +196,16 @@ export default class KeyMap {
 			return []
 
 		// filter actions based on conditions (specified function and event attributes)
-		actions = actions.filter(({keyEventFilter: filter, action})=> {
-			const attrs = Object.keys(filter) as Iterable<keyof KeymapKeyFilter>
+		actions = actions.filter(({keyEventFilter: {key, code, ...filter}, action})=> {
+			const attrs = Object.keys(filter) as Iterable<Exclude<keyof KeymapKeyFilter, KeyAttr>>
 			for (let attr of attrs) {
 				if (filter[attr] != evt[attr as keyof typeof evt])
+					return false
+			}
+			if (Object.hasOwn(filter, KeyMap.editing)) {
+				if (editable == undefined)
+					editable = isEditableElement(evt.target)
+				if (editable != filter[KeyMap.editing])
 					return false
 			}
 			const condition = filter[KeyMap.condition]
