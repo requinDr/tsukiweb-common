@@ -1,29 +1,86 @@
 
-function searchNavElmtUp(from: HTMLElement | null) {
-    let e: HTMLElement | null = from
+type NavElement = HTMLElement | SVGElement
+
+function searchNavElmtUp(from: NavElement | null) {
+    let e: NavElement | null = from
     while (e && !(e.hasAttribute('nav-x') || e.hasAttribute('nav-y'))) {
         e = e.parentElement
     }
     return e
 }
-function searchNavElmtsDown(from: HTMLElement) {
-    let elements = [...(from?.children ?? [])] as HTMLElement[]
+function searchNavElmtsDown(from: NavElement) {
+    let elements = [...(from?.children ?? [])] as NavElement[]
     const result = []
     let e
     while (e = elements.pop()) {
-        if (e.offsetParent && (e.hasAttribute('nav-x') || e.hasAttribute('nav-y')))
+        if ((e instanceof SVGElement || e.offsetParent) && (e.hasAttribute('nav-x') || e.hasAttribute('nav-y')))
             result.push(e)
         else
-            elements.push(...e.children as Iterable<HTMLElement>)
+            elements.push(...e.children as Iterable<NavElement>)
     }
     return result
+}
+
+function getNavAttr(elmt: NavElement, axe: 'x'|'y'): [number, number, number] {
+    const fixedAttr = elmt.getAttribute(`nav-${axe}`)
+    const tempAttr = elmt.getAttribute(`nav-temp-${axe}`)
+    let min: number, max: number, temp: number
+    if (fixedAttr == null) // no attribute => [-inf; +inf]
+        min = -Infinity, max = +Infinity
+    else if (fixedAttr.match(/^-?[\d.]+$/))
+        min = max = parseFloat(fixedAttr) // n => [n; n]
+    else {
+        const m = fixedAttr.match(/^(\*|-?[\d.]+)\s?-\s?(\*|-?[\d.]+)$/)
+        if (m) { // n1-n2 | n1-* | *-n2 | *-* => [n1; n2] (* = +-inf)
+            min = (m[1] == '*') ? -Infinity : parseFloat(m[1])
+            max = (m[2] == '*') ? +Infinity : parseFloat(m[2])
+        } else
+            throw Error(`Unsupported nav-${axe} pattern "${fixedAttr}"`)
+    }
+    if (tempAttr != null)          temp = parseFloat(tempAttr)
+    else if (min == max)           temp = min
+    else if (min <= 0 && 0 <= max) temp = 0
+    else if (min == -Infinity)     temp = max
+    else                           temp = min
+    return [min, max, temp]
+}
+
+function getNavValues(elmt: NavElement, direction: Exclude<Direction, 'in'|'out'>,
+                      current?: [number, number]): [number, number] {
+    let [minX, maxX, tempX] = getNavAttr(elmt, 'x'),
+        [minY, maxY, tempY] = getNavAttr(elmt, 'y')
+    if (current == null) { // elmt is the source
+        switch (direction) {
+            case 'up'    : return [tempX, maxY]
+            case 'down'  : return [tempX, minY]
+            case 'left'  : return [minX, tempY]
+            case 'right' : return [maxX, tempY]
+        }
+    }
+    else {
+        tempX = Math.min(Math.max(minX, current[0]), maxX)
+        tempY = Math.min(Math.max(minY, current[1]), maxY)
+        switch(direction) {
+            case 'up'    : return [tempX, minY]
+            case 'down'  : return [tempX, maxY]
+            case 'left'  : return [maxX, tempY]
+            case 'right' : return [minX, tempY]
+        }
+    }
+
+}
+
+function setTempNavAttr(elmt: NavElement, axe: 'x'|'y', value: number) {
+    const attr = `nav-temp-${axe}`
+    elmt.setAttribute(attr, (Math.abs(value) > 2e-9 ? value : 0).toString())
+    elmt.addEventListener('blur', elmt.removeAttribute.bind(elmt, attr))
 }
 
 type Direction = 'up'|'down'|'left'|'right'|'in'|'out'
 
 export type NavigationProps = {
-    'nav-x'?: number
-    'nav-y'?: number
+    'nav-x'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
+    'nav-y'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
     'nav-noscroll'?: 1 // cannot use boolean on custom props
 }
 
@@ -35,25 +92,25 @@ export type NavigationProps = {
  */
 export function directionalNavigate(direction: Direction) {
     // Search the closest navigation element
-    let elmt = searchNavElmtUp(document.activeElement as HTMLElement)
+    let elmt = searchNavElmtUp(document.activeElement as NavElement)
                ?? document.body
 
     // If navigating towards child elements, get all navigation children,
-    // and chose the one with lowest nav-y and nav-x
+    // and chose the one with lowest absolute nav-y and nav-x
     if (direction == 'in') {
         let children = searchNavElmtsDown(elmt)
         let minY = Infinity, minX = Infinity
-        let first: Element | null = null
+        let first: NavElement | null = null
         for (let child of children) {
-            let x: number = parseFloat(child.getAttribute('nav-x') ?? '-1')
-            let y: number = parseFloat(child.getAttribute('nav-y') ?? '-1')
+            let x: number = Math.abs(parseFloat(child.getAttribute('nav-x') ?? '-1'))
+            let y: number = Math.abs(parseFloat(child.getAttribute('nav-y') ?? '-1'))
             if (y < minY || (y == minY && x < minX)) {
                 minY = y
                 minX = x
                 first = child
             }
         }
-        if (first && first instanceof HTMLElement) {
+        if (first) {
             first.focus()
             return true
         } else {
@@ -64,7 +121,7 @@ export function directionalNavigate(direction: Direction) {
     // get its parent navigation element
     let parent = searchNavElmtUp(elmt.parentElement)
     if (direction == 'out') {
-        if (parent && parent instanceof HTMLElement) {
+        if (parent && parent != document.body) {
             parent.focus()
             return true
         } else {
@@ -74,68 +131,50 @@ export function directionalNavigate(direction: Direction) {
     if (!parent)
         parent = document.body
     const neighbours = searchNavElmtsDown(parent)
-    
-    const attrX = elmt.getAttribute('nav-x') ?? elmt.getAttribute('nav-temp-x'),
-          attrY = elmt.getAttribute('nav-y') ?? elmt.getAttribute('nav-temp-y')
-    const x = attrX ? parseFloat(attrX) : (direction == 'left') ? 1e-9 : -1e-9
-    const y = attrY ? parseFloat(attrY) : (direction == 'up') ? 1e-9 : -1e-9
-
+    let x, y
+    if (elmt == document.body) { // will select item at [0, 0] from the opposite direction
+        x = direction == 'left' ? 1e-9 : -1e-9
+        y = direction == 'up' ? 1e-9 : -1e-9
+    } else {
+        // get best x and y attributes for element
+        [x, y] = getNavValues(elmt, direction)
+    }
     let _y = null, _x = null, _elmt = null
     for (const n of neighbours) {
         if (n == elmt)
             continue
-        const nx = parseFloat(n.getAttribute('nav-x') ?? '0')
-        const ny = parseFloat(n.getAttribute('nav-y') ?? '0')
+        const [nx, ny] = getNavValues(n, direction, [x, y])
         switch (direction) {
             case 'up' :
-                if (ny >= y || (_y != null && ny < _y))
-                    continue
-                if (_y == null || ny > _y)
-                    [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(x - nx) < Math.abs(x - _x!))
-                    [_x, _elmt] = [nx, n]
+                if (ny >= y || (_y != null && ny < _y)) break
+                if (_y == null || ny > _y) [_x, _y, _elmt] = [nx, ny, n]
+                else if (Math.abs(x - nx) < Math.abs(x - _x!)) [_x, _elmt] = [nx, n]
                 break
             case 'down' :
-                if (ny <= y || (_y != null && ny > _y))
-                    continue
-                if (_y == null || ny < _y)
-                    [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(x - nx) < Math.abs(x - _x!))
-                    [_x, _elmt] = [nx, n]
+                if (ny <= y || (_y != null && ny > _y)) break
+                if (_y == null || ny < _y) [_x, _y, _elmt] = [nx, ny, n]
+                else if (Math.abs(x - nx) < Math.abs(x - _x!)) [_x, _elmt] = [nx, n]
                 break
             case 'left' :
-                if (nx >= x || (_x != null && nx < _x))
-                    continue
-                if (_x == null || nx > _x)
-                    [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(y - ny) < Math.abs(y - _y!))
-                    [_y, _elmt] = [ny, n]
+                if (nx >= x || (_x != null && nx < _x)) break
+                if (_x == null || nx > _x) [_x, _y, _elmt] = [nx, ny, n]
+                else if (Math.abs(y - ny) < Math.abs(y - _y!)) [_y, _elmt] = [ny, n]
                 break
             case 'right' :
-                if (nx <= x || (_x != null && nx > _x))
-                    continue
-                if (_x == null || nx < _x)
-                    [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(y - ny) < Math.abs(y - _y!))
-                    [_y, _elmt] = [ny, n]
+                if (nx <= x || (_x != null && nx > _x)) break
+                if (_x == null || nx < _x) [_x, _y, _elmt] = [nx, ny, n]
+                else if (Math.abs(y - ny) < Math.abs(y - _y!)) [_y, _elmt] = [ny, n]
                 break
         }
     }
-    if (_elmt instanceof HTMLElement) {
+    if (_elmt) {
         if (_elmt.hasAttribute('nav-noscroll'))
             _elmt.focus({preventScroll: true})
         else
             _elmt.focus()
         
-        if (!_elmt.hasAttribute('nav-x')) {
-            _elmt.setAttribute('nav-temp-x', (Math.abs(x) > 2e-9 ? x : 0).toString())
-            _elmt.addEventListener('blur', ()=>
-                _elmt.removeAttribute('nav-temp-x'))
-        } else if (!_elmt.hasAttribute('nav-y')) {
-            _elmt.setAttribute('nav-temp-y', (Math.abs(y) > 2e-9 ? y : 0).toString())
-            _elmt.addEventListener('blur', ()=>
-                _elmt.removeAttribute('nav-temp-y'))
-        }
+        setTempNavAttr(_elmt, 'x', _x!)
+        setTempNavAttr(_elmt, 'y', _y!)
         return true
     }
     return false
