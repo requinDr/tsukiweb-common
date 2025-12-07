@@ -4,6 +4,7 @@ export { default as MessageContainer } from "./components/MessageContainer"
 export { default as Modal } from "./components/Modal"
 export { default as ModalPrompt } from "./components/ModalPrompt"
 export { default as Particles } from "./components/Particles"
+export { default as SnowfallCanvas } from "./components/SnowfallCanvas"
 export { default as TabsBar } from "./components/TabsBar"
 export { default as TitleMenuButton } from "./components/TitleMenuButton"
 

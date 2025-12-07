@@ -3,7 +3,7 @@
 .particles {
 	position: absolute;
 	inset: 0;
-	-webkit-mask-image: linear-gradient(to top, black 0%, transparent 80%);
+	-webkit-mask-image: linear-gradient(to top, black 0%, transparent 60%);
 	mask-image: linear-gradient(to top, black 0%, transparent 60%);
 	pointer-events: none;
 	overflow: hidden;
@@ -89,8 +89,15 @@
 	}
 }
 
+.snowfall {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.particles {
+	.particles, .snowfall {
 		display: none;
 	}
 }
