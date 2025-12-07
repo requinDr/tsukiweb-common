@@ -1,10 +1,28 @@
 
 type NavElement = HTMLElement | SVGElement
 
+type Direction = 'up'|'down'|'left'|'right'|'in'|'out'
+
+export type NavigationProps = ({
+    'nav-x'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
+    'nav-y'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
+} | {
+    'nav-auto'?: 1
+}) & {
+    'nav-noscroll'?: 1 // cannot use boolean on custom props
+}
+
+function isNavElmt(elmt: NavElement | null): elmt is NavElement {
+    return elmt != null && (
+        elmt.hasAttribute('nav-x') ||
+        elmt.hasAttribute('nav-y') ||
+        elmt.hasAttribute('nav-auto'))
+}
+
 function searchNavElmtUp(from: NavElement | null) {
     let e: NavElement | null = from
-    while (e && !(e.hasAttribute('nav-x') || e.hasAttribute('nav-y'))) {
-        e = e.parentElement
+    while (e && !isNavElmt(e)) {
+        e = (e as NavElement).parentElement
     }
     return e
 }
@@ -13,7 +31,7 @@ function searchNavElmtsDown(from: NavElement) {
     const result = []
     let e
     while (e = elements.pop()) {
-        if ((e instanceof SVGElement || e.offsetParent) && (e.hasAttribute('nav-x') || e.hasAttribute('nav-y')))
+        if ((e instanceof SVGElement || e.offsetParent) && isNavElmt(e))
             result.push(e)
         else
             elements.push(...e.children as Iterable<NavElement>)
@@ -25,8 +43,17 @@ function getNavAttr(elmt: NavElement, axe: 'x'|'y'): [number, number, number] {
     const fixedAttr = elmt.getAttribute(`nav-${axe}`)
     const tempAttr = elmt.getAttribute(`nav-temp-${axe}`)
     let min: number, max: number, temp: number
-    if (fixedAttr == null) // no attribute => [-inf; +inf]
-        min = -Infinity, max = +Infinity
+    if (fixedAttr == null) {
+        if (elmt.hasAttribute('nav-auto')) { // nav-auto => use client rect
+            const rect = elmt.getClientRects()[0]
+            switch (axe) {
+                case 'x' : min = rect.left; max = rect.right; break
+                case 'y' : min = rect.top; max = rect.bottom; break
+            }
+        } else {// no attribute => [-inf; +inf]
+            min = -Infinity, max = +Infinity
+        }
+    }
     else if (fixedAttr.match(/^-?[\d.]+$/))
         min = max = parseFloat(fixedAttr) // n => [n; n]
     else {
@@ -51,8 +78,8 @@ function getNavValues(elmt: NavElement, direction: Exclude<Direction, 'in'|'out'
         [minY, maxY, tempY] = getNavAttr(elmt, 'y')
     if (current == null) { // elmt is the source
         switch (direction) {
-            case 'up'    : return [tempX, maxY]
-            case 'down'  : return [tempX, minY]
+            case 'up'    : return [tempX, minY]
+            case 'down'  : return [tempX, maxY]
             case 'left'  : return [minX, tempY]
             case 'right' : return [maxX, tempY]
         }
@@ -61,8 +88,8 @@ function getNavValues(elmt: NavElement, direction: Exclude<Direction, 'in'|'out'
         tempX = Math.min(Math.max(minX, current[0]), maxX)
         tempY = Math.min(Math.max(minY, current[1]), maxY)
         switch(direction) {
-            case 'up'    : return [tempX, minY]
-            case 'down'  : return [tempX, maxY]
+            case 'up'    : return [tempX, maxY]
+            case 'down'  : return [tempX, minY]
             case 'left'  : return [maxX, tempY]
             case 'right' : return [minX, tempY]
         }
@@ -76,14 +103,6 @@ function setTempNavAttr(elmt: NavElement, axe: 'x'|'y', value: number) {
     elmt.addEventListener('blur', elmt.removeAttribute.bind(elmt, attr))
 }
 
-type Direction = 'up'|'down'|'left'|'right'|'in'|'out'
-
-export type NavigationProps = {
-    'nav-x'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
-    'nav-y'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
-    'nav-noscroll'?: 1 // cannot use boolean on custom props
-}
-
 /**
  * Change the focused element to the next one in the specified direction, based
  * on the `"nav-x"` and `"nav-y"` html attributes and the specified direction.
@@ -92,7 +111,9 @@ export type NavigationProps = {
  */
 export function directionalNavigate(direction: Direction) {
     // Search the closest navigation element
-    let elmt = searchNavElmtUp(document.activeElement as NavElement)
+    let elmt: NavElement = document.activeElement as NavElement
+    if (!isNavElmt(elmt))
+        elmt = searchNavElmtUp(elmt)
                ?? document.body
 
     // If navigating towards child elements, get all navigation children,
@@ -102,8 +123,8 @@ export function directionalNavigate(direction: Direction) {
         let minY = Infinity, minX = Infinity
         let first: NavElement | null = null
         for (let child of children) {
-            let x: number = Math.abs(parseFloat(child.getAttribute('nav-x') ?? '-1'))
-            let y: number = Math.abs(parseFloat(child.getAttribute('nav-y') ?? '-1'))
+            let x = Math.abs(getNavAttr(child, 'x')[0])
+            let y = Math.abs(getNavAttr(child, 'y')[0])
             if (y < minY || (y == minY && x < minX)) {
                 minY = y
                 minX = x
