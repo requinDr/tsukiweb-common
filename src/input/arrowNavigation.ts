@@ -9,7 +9,7 @@ export type NavigationProps = ({
 } | {
     'nav-auto'?: 1
 }) & {
-    'nav-noscroll'?: 1 // cannot use boolean on custom props
+    'nav-scroll'?: 'none'|'smooth' // cannot use boolean on custom props
 }
 
 function isNavElmt(elmt: NavElement | null): elmt is NavElement {
@@ -97,10 +97,14 @@ function getNavValues(elmt: NavElement, direction: Exclude<Direction, 'in'|'out'
 
 }
 
-function setTempNavAttr(elmt: NavElement, axe: 'x'|'y', value: number) {
-    const attr = `nav-temp-${axe}`
-    elmt.setAttribute(attr, (Math.abs(value) > 2e-9 ? value : 0).toString())
-    elmt.addEventListener('blur', elmt.removeAttribute.bind(elmt, attr))
+function setTempNavAttrs(elmt: NavElement, x: number, y: number) {
+    
+    elmt.setAttribute('nav-temp-x', (Math.abs(x) > 2e-9 ? x : 0).toString())
+    elmt.setAttribute('nav-temp-y', (Math.abs(y) > 2e-9 ? y : 0).toString())
+    elmt.addEventListener('blur', ()=> {
+        elmt.removeAttribute('nav-temp-x')
+        elmt.removeAttribute('nav-temp-y')
+    })
 }
 
 /**
@@ -155,47 +159,41 @@ export function directionalNavigate(direction: Direction) {
     let x, y
     if (elmt == document.body) { // will select item at [0, 0] from the opposite direction
         x = direction == 'left' ? 1e-9 : -1e-9
-        y = direction == 'up' ? 1e-9 : -1e-9
+        y = direction == 'up'   ? 1e-9 : -1e-9
     } else {
         // get best x and y attributes for element
         [x, y] = getNavValues(elmt, direction)
     }
-    let _y = null, _x = null, _elmt = null
+    let minDist = Infinity, _elmt = null, _x, _y
     for (const n of neighbours) {
         if (n == elmt)
             continue
         const [nx, ny] = getNavValues(n, direction, [x, y])
         switch (direction) {
-            case 'up' :
-                if (ny >= y || (_y != null && ny < _y)) break
-                if (_y == null || ny > _y) [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(x - nx) < Math.abs(x - _x!)) [_x, _elmt] = [nx, n]
-                break
-            case 'down' :
-                if (ny <= y || (_y != null && ny > _y)) break
-                if (_y == null || ny < _y) [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(x - nx) < Math.abs(x - _x!)) [_x, _elmt] = [nx, n]
-                break
-            case 'left' :
-                if (nx >= x || (_x != null && nx < _x)) break
-                if (_x == null || nx > _x) [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(y - ny) < Math.abs(y - _y!)) [_y, _elmt] = [ny, n]
-                break
-            case 'right' :
-                if (nx <= x || (_x != null && nx > _x)) break
-                if (_x == null || nx < _x) [_x, _y, _elmt] = [nx, ny, n]
-                else if (Math.abs(y - ny) < Math.abs(y - _y!)) [_y, _elmt] = [ny, n]
-                break
+            case 'up'    : if (ny >= y) continue; break
+            case 'down'  : if (ny <= y) continue; break
+            case 'left'  : if (nx >= x) continue; break
+            case 'right' : if (nx <= x) continue; break
         }
+        const dx = x - nx, dy = y - ny
+        const d = Math.sqrt(dx*dx + dy*dy)
+        if (d < minDist)
+            [_elmt, minDist, _x, _y] = [n, d, nx, ny]
     }
     if (_elmt) {
-        if (_elmt.hasAttribute('nav-noscroll'))
-            _elmt.focus({preventScroll: true})
-        else
-            _elmt.focus()
+        switch (_elmt.getAttribute('nav-scroll')) {
+            case null : _elmt.focus(); break
+            case 'none' : _elmt.focus({preventScroll: true}); break
+            case 'smooth' :
+                _elmt.focus({preventScroll: true})
+                _elmt.scrollIntoView({behavior: "smooth", block: 'nearest'})
+                break
+            default :
+                throw Error(`Unexpected nav-scroll value "${
+                    _elmt.getAttribute('nav-scroll')}"`)
+        }
         
-        setTempNavAttr(_elmt, 'x', _x!)
-        setTempNavAttr(_elmt, 'y', _y!)
+        setTempNavAttrs(_elmt, _x!, _y!)
         return true
     }
     return false
