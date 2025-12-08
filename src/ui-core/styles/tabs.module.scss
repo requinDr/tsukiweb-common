@@ -6,6 +6,7 @@
 	padding-bottom: 8px;
 	overflow-x: auto;
 	flex: none;
+	gap: .1px; // Fix overlapping tabs
 
 	@media (pointer: coarse) {
 		&::-webkit-scrollbar {
