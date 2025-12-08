@@ -23,6 +23,7 @@ const TabsBar = ({ tabs, selected, setSelected }: TabsProps) => (
 			<TabBtn key={tab.value}
 				active={selected === tab.value}
 				onClick={() => setSelected(tab.value)}
+				nav-auto={1}
 				{...tab}
 			/>
 		)}
