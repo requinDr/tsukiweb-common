@@ -7,6 +7,11 @@ export function assetPath(basePath: string) {
 		return basePath
 }
 
+export function isImage(str: string) {
+	const c = str.charAt(0)
+	return c != '#' && c != '$'
+}
+
 /**
  * Preload an image.
  * @param src full url of the image to preload
