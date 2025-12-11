@@ -52,9 +52,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 		overlay = (
 			<div
 				className="text"
-				{...{
-					"vertical-align": vAlign ?? "c",
-				}}
+				vertical-align={vAlign ?? "c"}
 			>
 				{bb(str ?? "[color=red][u]/!\\ Ill-formed text")}
 			</div>
