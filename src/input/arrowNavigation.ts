@@ -1,7 +1,4 @@
 
-import { Dir } from "fs"
-import { distance } from "motion"
-
 type NavElement = HTMLElement | SVGElement
 
 type Direction = 'up'|'down'|'left'|'right'|'in'|'out'
@@ -13,7 +10,7 @@ export type NavigationProps = ({
     'nav-auto'?: 1
 }) & {
     'nav-scroll'?: 'none'|'smooth' // cannot use boolean on custom props
-    'nav-up'?: string
+    'nav-up'?: string // selector for forced navigation
     'nav-down'?: string
     'nav-left'?: string
     'nav-right'?: string
@@ -42,11 +39,11 @@ function readNavGridAttr(attr: string | null): [number, number] {
 function readNavTempAttr(attr: string | null): [number, number] | undefined {
     return attr?.split(',').map(parseFloat) as [number, number] ?? undefined
 }
+
 function computeTempGridValue(min: number, max: number) {
-    if (min == max)                return min
-    else if (min <= 0 && 0 <= max) return 0
-    else if (min == -Infinity)     return max
-    else                           return min
+    return (min <= 0 && 0 <= max) ? 0
+         : (min == -Infinity) ? max
+         : min
 }
 
 class NavHandler {
@@ -55,10 +52,8 @@ class NavHandler {
     grid?: Record<'top'|'bottom'|'left'|'right', number>
     gridTemp?: [number, number] // [x, y]
     absolute: Record<'top'|'bottom'|'left'|'right', number>
-    absTemp?: [number, number]
+    center?: [number, number]
 
-    constructor(elmt: NavElement, direction: Exclude<Direction, 'out'>);
-    constructor(elmt: NavElement);
     constructor(elmt: NavElement, direction?: Exclude<Direction, 'out'>) {
         this.elmt = elmt
         if (elmt == document.body || direction == 'in') {
@@ -75,7 +70,7 @@ class NavHandler {
             // with the specified direction
             this.grid = {left: 1e-9, top: 1e-9, right: -1e-9, bottom: -1e-9}
 
-            this.absTemp = [rect.left, rect.top]
+            this.center = [rect.left, rect.top]
             this.gridTemp = [0, 0]
             
         } else {
@@ -94,8 +89,7 @@ class NavHandler {
                 this.grid = undefined
             }
             if (direction) {
-                this.absTemp = readNavTempAttr(elmt.getAttribute('nav-temp-abs')) ??
-                    [(this.absolute.left + this.absolute.right)/2,
+                this.center = [(this.absolute.left + this.absolute.right)/2,
                     (this.absolute.top + this.absolute.bottom)/2]
                 
                 if (this.grid) {
@@ -104,40 +98,41 @@ class NavHandler {
                     computeTempGridValue(this.grid.top, this.grid.bottom)]
                 }
             } else {
-                this.absTemp = undefined
+                this.center = undefined
                 this.gridTemp = undefined
             }
         }
         this.direction = direction
     }
+
     private getGridDistance(handler: NavHandler): [number, number]|null {
         
         // case direction == 'in' or from <body>
-        if (this.grid!.left > this.grid!.right) {
-            if (handler.grid!.left <= 0 && handler.grid!.right >= 0 &&
-                handler.grid!.top <= 0 && handler.grid!.right >= 0) {
+        const r1 = this.grid!, r2 = handler.grid!
+        if (r1.left > r1.right) {
+            if (r2.left <= 0 && r2.right >= 0 &&
+                r2.top <= 0 && r2.right >= 0) {
                 return [1e-9, 1e-9] // element contains 0,0. No need to look further.
             }
         }
         let dM: number // main (direction-aligned) distance
         switch (this.direction!) {
-            case 'up'   : dM = this.grid!.top - handler.grid!.bottom; break
-            case 'down' : dM = handler.grid!.top - this.grid!.bottom; break
-            case 'left' : dM = this.grid!.left - handler.grid!.right; break
-            case 'right': dM = handler.grid!.left - this.grid!.right; break
+            case 'up'   : dM = r1.top - r2.bottom; break
+            case 'down' : dM = r2.top - r1.bottom; break
+            case 'left' : dM = r1.left - r2.right; break
+            case 'right': dM = r2.left - r1.right; break
         }
         if (dM < 0) return null
         switch (this.direction!) {
             case 'up' : case 'down' :
                 const x = this.gridTemp![0]
-                const closestX = clamp(handler.grid!.left, handler.grid!.right, x)
-                return [dM, Math.abs(x - closestX)]
+                return [dM, Math.abs(x - clamp(r2.left, r2.right, x))]
             case 'left' : case 'right' :
                 const y = this.gridTemp![1]
-                const closestY = clamp(handler.grid!.top, handler.grid!.bottom, y)
-                return [dM, Math.abs(y - closestY)]
+                return [dM, Math.abs(y - clamp(r2.top, r2.bottom, y))]
         }
     }
+
     private getAbsoluteDistance(handler: NavHandler): [number, number, number] | null {
         let dM // main (direction-aligned) distance
         const r1 = this.absolute, r2 = handler.absolute
@@ -156,22 +151,23 @@ class NavHandler {
             return null
         switch (this.direction!) {
             case 'up' : case 'down' :
-                const closestX = clamp(r2.left, r2.right, this.absTemp![0])
+                const closestX = clamp(r2.left, r2.right, this.center![0])
                 return [dM, (r2.right < r1.left) ? r1.left - r2.right
                           : (r2.left > r1.right) ? r2.left - r1.right
                           : 0, // 0 because at least one point aligned
-                        Math.abs(this.absTemp![0] - closestX)]
+                        Math.abs(this.center![0] - closestX)]
             case 'left' : case 'right' :
-                const closestY = clamp(r2.top, r2.bottom, this.absTemp![1])
+                const closestY = clamp(r2.top, r2.bottom, this.center![1])
                 return [dM, (r2.bottom < r1.top) ? r1.top - r2.bottom
                           : (r2.top > r1.bottom) ? r2.top - r1.bottom
                           : 0,
-                        Math.abs(this.absTemp![1] - closestY)]
+                        Math.abs(this.center![1] - closestY)]
         }
     }
-    searchBestTarget(elements: NavElement[]) {
+
+    searchBestTarget(elements: NavElement[]): [NavElement|null, [number, number]|null] {
         let minGridDistance = [Infinity, 0], minAbsDistance = Infinity,
-            minAngle = 4, minTempDist = 0, bestElmt = null // pi ~= 4
+            minAngle = 2, minTempDist = 0, bestElmtHandler = null // max angle = pi/2 < 2
 
         for (const elmt of elements) {
             if (elmt == this.elmt)
@@ -183,7 +179,7 @@ class NavHandler {
                     if (dist[0] < minGridDistance[0] ||
                         (dist[0] == minGridDistance[0] && dist[1] < minGridDistance[1])) {
                         minGridDistance = dist
-                        bestElmt = elmt
+                        bestElmtHandler = handler
                     }
                 }
             // consider absolute distance only if grid distance has not found any appropriate element
@@ -195,23 +191,32 @@ class NavHandler {
                         minAngle = angle
                         minAbsDistance = dist[0] // don't care for secondary axis if angle is lower
                         minTempDist = dist[2]
-                        bestElmt = elmt
+                        bestElmtHandler = handler
                     } else if (angle == minAngle) {
                         if (dist[0] < minAbsDistance) {
                             minAbsDistance = dist[0]
                             minTempDist = dist[2]
-                            bestElmt = elmt
+                            bestElmtHandler = handler
                         } else if (dist[0] == minAbsDistance) {
                             if (dist[2] < minTempDist) {
                                 minTempDist = dist[2]
-                                bestElmt = elmt
+                                bestElmtHandler = handler
                             }
                         }
                     }
                 }
             }
         }
-        return bestElmt
+        let gridTemp: [number, number]|null = null
+        if (minGridDistance[0] < Infinity) {
+            let gridX = null, gridY = null
+            const {left, top, right, bottom} = bestElmtHandler!.grid!
+            if (left != right) gridX = clamp(left, right, this.gridTemp![0])
+            if (top != bottom) gridY = clamp(top, bottom, this.gridTemp![1])
+            if (gridX != null || gridY != null)
+                gridTemp = [gridX ?? left, gridY ?? top]
+        }
+        return [bestElmtHandler?.elmt ?? null, gridTemp]
     }
 }
 
@@ -243,19 +248,7 @@ function searchNavElmtsIn(from: NavElement) {
     return result
 }
 
-function setTempNavAttrs(elmt: NavElement, abs?: [number, number],
-                         grid?: [number, number]) {
-    if (abs)
-        elmt.setAttribute('nav-temp-abs', abs.join(','))
-    if (grid)
-        elmt.setAttribute('nav-temp-grid',
-            grid.map(x => Math.abs(x) > 2e9 ? x : 0).join(','))
-    elmt.addEventListener('blur', ()=> {
-        elmt.removeAttribute('nav-temp-grid')
-        elmt.removeAttribute('nav-temp-abs')
-    })
-}
-function moveToTarget(elmt: NavElement, tempGrid?: [number, number], tempAbs?: [number, number]) {
+function moveToTarget(elmt: NavElement, tempGrid?: [number, number]) {
     
     switch (elmt.getAttribute('nav-scroll')) {
         case null : elmt.focus(); break
@@ -268,8 +261,11 @@ function moveToTarget(elmt: NavElement, tempGrid?: [number, number], tempAbs?: [
             throw Error(`Unexpected nav-scroll value "${
                 elmt.getAttribute('nav-scroll')}"`)
     }
-    if (tempGrid || tempAbs) {
-        setTempNavAttrs(elmt, tempGrid, tempAbs)
+    if (tempGrid) {
+        elmt.setAttribute('nav-temp-grid',
+            tempGrid.map(x => Math.abs(x) > 2e-9 ? x : 0).join(','))
+        elmt.addEventListener('blur',
+            elmt.removeAttribute.bind(elmt, 'nav-temp-grid'))
     }
 }
 
@@ -287,6 +283,7 @@ export function directionalNavigate(direction: Direction) {
                ?? document.body
     
     let target: NavElement | null = null
+    let gridTemp: [number, number]|null = null
     const designated = elmt.getAttribute(`nav-${direction}`)
     if (designated) {
         let node = elmt
@@ -304,15 +301,14 @@ export function directionalNavigate(direction: Direction) {
         const parent = ((direction == 'in') ? elmt
                      : searchNavElmtOut(elmt.parentElement)) ?? document.body
         const nav = new NavHandler(elmt, direction)
-        const candidates = searchNavElmtsIn(parent)
-        target = nav.searchBestTarget(candidates)
+        const candidates = searchNavElmtsIn(parent);
+        [target, gridTemp] = nav.searchBestTarget(candidates)
     }
     if (target) {
-        if (!['in', 'out'].includes(direction)) { // no temporary position for in/out
-            moveToTarget(target) //TODO search temp grid and absolute coordinates
-        } else {
+        if (!['in', 'out'].includes(direction) && gridTemp != null) // no temporary position for in/out
+            moveToTarget(target, gridTemp)
+        else
             moveToTarget(target)
-        }
         return true
     }
     return false
