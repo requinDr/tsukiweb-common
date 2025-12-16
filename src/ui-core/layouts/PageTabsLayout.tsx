@@ -27,8 +27,7 @@ const PageTabsLayout = ({
 		(selected: any) => {
 			setSelectedTab(selected)
 			requestAnimationFrame(() => {
-				const selectedTabElement = tabsRef.current?.querySelector(`[data-tab='${selected}']`)
-				selectedTabElement?.scrollIntoView({ behavior: "smooth" })
+				tabsRef.current?.scrollTo({ top: 0, behavior: "instant" })
 			})
 		},
 		[setSelectedTab]

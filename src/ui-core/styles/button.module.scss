@@ -64,8 +64,8 @@
 	}
 
 	&.active, &:hover, &:focus-visible {
-		--border-color: rgb(0 152 225);
-		--shadow-color: rgba(0, 180, 225, 0.2);
+		--border-color: hsl(199 100% 53% / 1);
+		--shadow-color: rgb(0 57 136);
 		box-shadow: 0px 0px 90px 0px var(--shadow-color) inset;
 
 		&::before, &::after {
