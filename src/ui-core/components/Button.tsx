@@ -39,7 +39,7 @@ const Button = ({children, className, variant = "default",
 
 	if (to) {
 		return (
-			<Link className={classes} {...(props as LinkProps)} to={to}>
+			<Link role="button" className={classes} {...(props as LinkProps)} to={to}>
 				{children}
 			</Link>
 		)
@@ -47,14 +47,14 @@ const Button = ({children, className, variant = "default",
 
 	if (href) {
 		return (
-			<a className={classes} {...(props as AnchorProps)} href={href}>
+			<a role="button" className={classes} {...(props as AnchorProps)} href={href}>
 				{children}
 			</a>
 		)
 	}
 
 	return (
-		<button className={classes} onContextMenu={(e) => e.preventDefault()}
+		<button type="button" className={classes} onContextMenu={(e) => e.preventDefault()}
 				{...(props as ButtonProps)}>
 			{children}
 		</button>
