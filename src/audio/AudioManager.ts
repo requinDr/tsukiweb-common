@@ -33,7 +33,14 @@ const effects: Record<string, Sound> = {
         ],
         gain: [1, [0.3, 0, 'exp']],
         stop: 0.4
-    }
+    },
+    'close': {
+        osc: [
+            { type: 'sine', freq: [800, [0.08, 400, 'exp']] }
+        ],
+        gain: [1, [0.08, 0, 'exp']],
+        stop: 0.15
+    },
 }
 
 //#endregion ###################################################################
