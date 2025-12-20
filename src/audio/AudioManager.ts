@@ -250,7 +250,7 @@ export class AudioManager {
     }
 
     stopWave(wait = false) {
-        if (this._waveNode.playing) {
+        if (this._wave || this._waveNode.playing) {
             this._waveNode.stop()
             if (wait)
                 return this._waveNode.waitStop()
