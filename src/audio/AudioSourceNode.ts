@@ -49,6 +49,7 @@ export class AudioSourceNode extends GainNode {
     private _oscGainNode: GainNode | null
     private _bufferNode: AudioBufferSourceNode | null
     private _onEnded: VoidFunction
+    private _endPromises: VoidFunction[]
 
     constructor(context: AudioContext, options ?: GainOptions) {
         super(context, options)
@@ -57,12 +58,19 @@ export class AudioSourceNode extends GainNode {
         this._oscGainNode = null
         this._bufferNode = null
         this._onEnded = this.stop.bind(this)
+        this._endPromises = []
     }
     
     get numberOfInputs() { return 0 }
 
     get playing() {
         return this._descriptor != null
+    }
+
+    async waitStop() {
+        return new Promise<void>(resolve => {
+            this._endPromises.push(resolve)
+        })
     }
 
     stop() {
@@ -82,6 +90,13 @@ export class AudioSourceNode extends GainNode {
                 this._oscGainNode.disconnect()
                 this._oscGainNode = null
             }
+        }
+        // Copy end promises and clear list before calling them.
+        // Avoids added promises to be cleared accidentally.
+        const promises = [...this._endPromises]
+        this._endPromises.splice(0)
+        for (const resolve of promises) {
+            resolve()
         }
     }
     play(descriptor: Sound | null, delay: number = 0) {

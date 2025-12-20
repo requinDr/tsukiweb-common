@@ -236,19 +236,22 @@ export class AudioManager {
                 return
             this._waveLoop = id
         } else {
-            if (this._waveLoop)
-                this.stopWave()
-            this._waveLoop = null
+            await this.stopWave(true)
         }
         const buffer = await this._assetsMap.get(id)
         if (loop && this._waveLoop != id)
             return // looped se changed while loading buffer
         this._waveNode.play({buffer, loop})
     }
+    async waitWaveEnd() {
+        return this._waveNode.waitStop()
+    }
 
-    stopWave() {
+    stopWave(wait = false) {
         if (this._waveNode.playing) {
             this._waveNode.stop()
+            if (wait)
+                return this._waveNode.waitStop()
         }
         this._waveLoop = null
     }
