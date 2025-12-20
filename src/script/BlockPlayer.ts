@@ -6,6 +6,8 @@ import { ScriptPlayerBase } from "./ScriptPlayer";
 type BlockFinishCallback =
     (complete: boolean)=> void
 
+type SPB<LN extends string> = ScriptPlayerBase<LN, any, any>
+
 export class BlockPlayerBase<LabelName extends string> {
 
 //#endregion ###################################################################
@@ -14,11 +16,11 @@ export class BlockPlayerBase<LabelName extends string> {
     
 //_____________________________private attributes_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    private _script: ScriptPlayerBase<any>
+    private _script: SPB<LabelName>
     private _onFinish: (complete: boolean) => void
 //---------------status-----------------
     private _autoPlay: boolean = false
-    private _ffwStop: FFwStopPredicate<ScriptPlayerBase<LabelName>> | null = null
+    private _ffwStop: FFwStopPredicate<SPB<LabelName>> | null = null
     private _ffwDelay: number = 0
     private _stopped: boolean = false
     private _started: boolean = false
@@ -68,7 +70,7 @@ export class BlockPlayerBase<LabelName extends string> {
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(script: ScriptPlayerBase<any>, label: LabelName,
+    constructor(script: SPB<LabelName>, label: LabelName,
                 initPage: number = 0, onScriptLoaded: VoidFunction,
                 onFinish: BlockFinishCallback) {
         this._script = script

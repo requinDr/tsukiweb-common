@@ -27,10 +27,13 @@ class PropertyObserver<V> {
 
   constructor(parent: any, property: PropertyKey, onValueChange: VoidFunction) {
     let descriptor = Object.getOwnPropertyDescriptor(parent, property)
+    let proto = Object.getPrototypeOf(parent)
+    while (!descriptor && proto.constructor != Object) {
+      descriptor = Object.getOwnPropertyDescriptor(proto, property)
+      proto = Object.getPrototypeOf(proto)
+    }
     if (!descriptor)
-      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(parent), property)
-    if (!descriptor)
-      throw Error(`property ${property.toString()} is not a direct property of object ${parent}`)
+      throw Error(`property ${property.toString()} is not a property of object ${parent}`)
     descriptor = Object.seal(descriptor)
     if (!(descriptor.configurable && (descriptor.writable??true)))
       throw Error(`property ${property.toString()} of ${parent} must be configurable and writable to be observed`)

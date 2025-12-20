@@ -4,8 +4,11 @@ import {
 } from "./utils";
 import { BlockPlayerBase as BlockPlayer } from "./BlockPlayer";
 import Timer from "../utils/timer";
+import { simulateObserverChange } from "../utils/Observer";
+import { Graphics, JSONObject, PartialJSON, WithRequired } from "../types";
+import { deepAssign } from "../utils/utils";
 
-type SP = ScriptPlayerBase<any>
+type SP = ScriptPlayerBase<any, any, any>
 
 export type ScriptPlayerCallbacks<LN extends string> = {
     beforeBlock: (label: LN, initPage: number) => Promise<void>|void,
@@ -22,6 +25,36 @@ export type ScriptPlayerCallbacks<LN extends string> = {
 }
 
 type Callbacks<LN extends string> = ScriptPlayerCallbacks<LN>
+
+type Audio = {
+    track: string | null
+    looped_se : string | null
+}
+
+type InitContext<LN extends string> = PartialJSON<{
+    label: LN
+    page: number
+    audio: Audio
+    graphics: Graphics
+    flags: string[]
+    textPrefix: string
+    continueScript: boolean
+}>
+
+type PageContext<LN extends string, Content extends JSONObject> = {
+    page: number
+    label: LN
+    graphics: Graphics
+    audio: Audio
+    textPrefix: string
+    text: string
+} & Content
+
+type BlockContext<LN extends string, Content extends JSONObject> = {
+    label: LN
+    flags: string[]
+    continueScript: boolean
+} & Content
 
 //##############################################################################
 //#region                         BASE COMMANDS
@@ -132,14 +165,19 @@ function processVarCmd(arg: string, cmd: string, script: SP) {
 //#endregion
 //##############################################################################
 
-export abstract class ScriptPlayerBase<LN extends string> {
+export abstract class ScriptPlayerBase<
+        LN extends string,
+        PageContent extends JSONObject,
+        BlockContent extends JSONObject> {
 
 //##############################################################################
-//#region                         ATTRS & PROPS
+//#region                         ATTRS, PROPS
 //##############################################################################
     
 //_____________________________private attributes_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+//----------script execution------------
     private _blockPlayer: BlockPlayer<LN> | null = null;
     private _started: boolean = false;
     private _stopped: boolean = false;
@@ -148,6 +186,14 @@ export abstract class ScriptPlayerBase<LN extends string> {
     private _initPage: number
     private _commands: CommandMap<any>
     private _blockSkipped: boolean = false
+    private _continueScript: boolean
+
+//----------script variables------------
+    private _flags: Set<string>
+    private _textPrefix : string // add bbcode before text lines (for e.g., color or alignement)
+    private _text: string = ""
+    private _audio: Audio
+    private _graphics: WithRequired<Graphics, 'monochrome'>
 
 //--------------callbacks---------------
     private _onFinish?: Callbacks<LN>['onFinish']
@@ -162,30 +208,72 @@ export abstract class ScriptPlayerBase<LN extends string> {
 
 //______________________________public properties_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+//----------script execution------------
     get currentBlock() { return this._blockPlayer }
     get currentLabel() { return this._blockPlayer?.label ?? this._nextLabel }
     get currentPage() { return this._blockPlayer?.page ?? -1 }
+    
+    get fastForwarding() { return this._blockPlayer?.fastForwarding ?? false }
+    get paused() { return this._blockPlayer?.paused ?? false}
+    get continueScript() { return this._continueScript }
 
     get autoPlay() { return this._blockPlayer?.autoPlay ?? false}
     set autoPlay(value: boolean) {
         if (this._blockPlayer)
             this._blockPlayer.autoPlay = value
     }
-    get fastForwarding() { return this._blockPlayer?.fastForwarding ?? false }
 
-    get paused() { return this._blockPlayer?.paused ?? false}
+//----------script variables------------
+    get flags() { return this._flags }
+
+    get audio(): Audio { return this._audio }
+    set audio(value: Partial<Audio>) {
+        deepAssign(this._audio, value, {extend: false})
+    }
+    get graphics(): Graphics { return this._graphics }
+    set graphics(value: Partial<Graphics>) {
+        deepAssign(this._graphics, value, {extend: false})
+    }
+
+    get textPrefix() { return this._textPrefix }
+    set textPrefix(value: string) { this._textPrefix = value }
+    
+    get text() { return this._text }
+    set text(value: string) {
+        this._text = value
+    }
 
 //#endregion ###################################################################
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(initLabel: LN, initPage: number,
+    constructor(init: WithRequired<InitContext<LN>, 'label'>,
             callbacks: Partial<Callbacks<LN>> = {}) {
-        this._nextLabel = initLabel
-        this._initLabel = initLabel
-        this._initPage = initPage
-        this._commands = new Map();
-        ({
+        
+        const { graphics, audio, label, flags } = init
+        
+        this._commands = new Map()
+        this._flags = new Set(flags)
+
+        this._nextLabel = label as LN
+        this._initLabel = label as LN
+        ;({
+            page           : this._initPage       = 0,
+            continueScript : this._continueScript = true,
+            textPrefix     : this._textPrefix     = ""
+        } = init)
+
+        this._graphics = {
+            bg: '', l: '', c: '', r: '', monochrome: '',
+            ...(graphics ?? { })
+        }
+        this._audio = {
+            track: '', looped_se: '',
+            ...(audio ?? { })
+        }
+        
+        ;({
             beforeBlock    : this._beforeBlock,
             afterBlock     : this._afterBlock,
             onBlockStart   : this._onBlockStart,
@@ -196,6 +284,7 @@ export abstract class ScriptPlayerBase<LN extends string> {
             onAutoPlayStart: this._onAutoPlayStart,
             onAutoPlayStop : this._onAutoPlayStop,
         } = callbacks)
+        deepAssign(this._audio, init.audio ?? {})
 
         this.setCommands(base_commands)
     }
@@ -203,6 +292,9 @@ export abstract class ScriptPlayerBase<LN extends string> {
 //#endregion ###################################################################
 //#region                        PUBLIC METHODS
 //##############################################################################
+
+//______________________________script execution________________________________
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     skip(nb_lines: number) {
         this._blockPlayer?.skip(nb_lines)
@@ -254,6 +346,55 @@ export abstract class ScriptPlayerBase<LN extends string> {
             this._blockPlayer?.ffw(null)
     }
 
+//___________________________________context____________________________________
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    pageContext(): PageContext<LN, PageContent> {
+        if (!this.currentBlock)
+            throw Error(`no active block`)
+        return {
+            page: this.currentBlock.page,
+            label: this.currentLabel as LN,
+            graphics: {...this.graphics},
+            audio: this.audio,
+            textPrefix: this.textPrefix,
+            text: this.text,
+            ...this.pageContent()
+        }
+    }
+        
+    blockContext(): BlockContext<LN, BlockContent> {
+        const label = this.currentLabel
+        if (!label)
+            throw Error('no label')
+        return {
+            label: label,
+            flags: [...this.flags],
+            continueScript: this._continueScript,
+            ...this.blockContent()
+        }
+    }
+
+    static defaultPageContext() {
+        return {
+            page: 0,
+            graphics: {bg: "", l:"", c:"", r:"", monochrome: ""} as Graphics,
+            audio: {track: null, looped_se: null} as Audio,
+            textPrefix: "",
+            text: ""
+        }
+    }
+
+    static defaultBlockContext() {
+        return {
+            flags: [] as string[],
+            continueScript: true
+        }
+    }
+
+//_______________________________manage commands________________________________
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
     setCommand(name: string, handler: CommandProcessFunction<this>|null) {
         this._commands.set(name, handler)
     }
@@ -261,9 +402,12 @@ export abstract class ScriptPlayerBase<LN extends string> {
         for (const [name, handler] of Object.entries(commands))
             this.setCommand(name, handler)
     }
-    getCommand(cmd: string): CommandProcessFunction<this>|null|undefined {
+    getCommand(cmd: string) {
         return this._commands.get(cmd)
     }
+
+//______________________________script callbacks________________________________
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     setBeforeBlockCallback(callback: Callbacks<LN>['beforeBlock']|undefined) {
         this._beforeBlock = callback
@@ -301,6 +445,11 @@ export abstract class ScriptPlayerBase<LN extends string> {
         this._onAutoPlayStop = callback
     }
 
+//______________________abstract and internal use methods_______________________
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    abstract isScene(label: LN): boolean
+
     abstract readVariable(name: StrVarName): string
     abstract readVariable(name: NumVarName): number
     abstract readVariable(name: VarName): string|number
@@ -310,8 +459,11 @@ export abstract class ScriptPlayerBase<LN extends string> {
     
     abstract fetchLines(label: LN): Promise<string[]>
 
-    abstract isLinePageBreak(line: string, index: number, blockLines: string[],
-                             label: LN, playing: boolean): boolean
+    isLinePageBreak(line: string, index: number, blockLines: string[],
+                             label: LN, playing: boolean): boolean {
+        return line.startsWith('\\')
+    }
+    
     onBlockStart(label: LN, initPage: number) {
         this._onBlockStart?.(label, initPage)
     }
@@ -326,16 +478,22 @@ export abstract class ScriptPlayerBase<LN extends string> {
     }
     onAutoPlayStart(ffw: boolean) {
         this._onAutoPlayStart?.(ffw)
+        simulateObserverChange(this, 'autoPlay')
     }
     onAutoPlayStop(ffw: boolean) {
         this._onAutoPlayStop?.(ffw)
+        simulateObserverChange(this, 'autoPlay')
     }
 
 //#endregion ###################################################################
 //#region                        PRIVATE METHODS
 //##############################################################################
 
+    protected abstract blockContent(): BlockContent
+    protected abstract pageContent(): PageContent
+    
     protected abstract nextLabel(label: LN): LN|null
+
     protected async beforeBlock(label: LN, initPage: number) : Promise<void> {
         if (this._beforeBlock)
             return this._beforeBlock(label, initPage)

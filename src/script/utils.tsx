@@ -7,7 +7,7 @@ import { ScriptPlayerBase } from "./ScriptPlayer";
 //________________________________private types_________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-type SPB = ScriptPlayerBase<any>
+type SPB = ScriptPlayerBase<any, any, any>
 
 //________________________________public types__________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -18,7 +18,7 @@ export type Instruction = {
     handler?: CommandProcessFunction<any>
 }
 
-export type CommandProcessFunction<SP> = (
+export type CommandProcessFunction<SP extends SPB> = (
 	arg: string,
 	cmd: string,
 	script: SP,
@@ -39,9 +39,9 @@ export type CommandHandler = {
 	autoPlayDelay?: number,
 }
 
-export type CommandRecord<SP> =
+export type CommandRecord<SP extends SPB> =
 	Record<string, CommandProcessFunction<SP>|null>
-export type CommandMap<SP> = Map<string, CommandRecord<SP>[string]>
+export type CommandMap<SP extends SPB> = Map<string, CommandRecord<SP>[string]>
 
 export type NumVarName = `%${string}`
 export type StrVarName = `$${string}`

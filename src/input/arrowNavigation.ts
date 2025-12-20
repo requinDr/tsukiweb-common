@@ -187,18 +187,18 @@ class NavHandler {
                 const dist = this.getAbsoluteDistance(handler)
                 if (dist) {
                     const angle = Math.atan2(dist[1], dist[0])
-                    if (angle < minAngle) { // prefer minimum angle
+                    if (angle < minAngle) { // Prefer minimum angle, ...
                         minAngle = angle
-                        minAbsDistance = dist[0] // don't care for secondary axis if angle is lower
+                        minAbsDistance = dist[0]
                         minTempDist = dist[2]
                         bestElmtHandler = handler
                     } else if (angle == minAngle) {
-                        if (dist[0] < minAbsDistance) {
+                        if (dist[0] < minAbsDistance) { // ... direction-aligned distance, ...
                             minAbsDistance = dist[0]
                             minTempDist = dist[2]
                             bestElmtHandler = handler
                         } else if (dist[0] == minAbsDistance) {
-                            if (dist[2] < minTempDist) {
+                            if (dist[2] < minTempDist) { // ... and center-to-center distance
                                 minTempDist = dist[2]
                                 bestElmtHandler = handler
                             }
@@ -208,7 +208,7 @@ class NavHandler {
             }
         }
         let gridTemp: [number, number]|null = null
-        if (minGridDistance[0] < Infinity) {
+        if (minGridDistance[0] < Infinity) { // compute grid position memory
             let gridX = null, gridY = null
             const {left, top, right, bottom} = bestElmtHandler!.grid!
             if (left != right) gridX = clamp(left, right, this.gridTemp![0])

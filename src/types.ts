@@ -1,6 +1,5 @@
 import { Choice } from "types";
 import { POSITIONS } from "./constants";
-import { ScriptPlayer } from "script/ScriptPlayer";
 import { PageType } from "utils/history";
 
 //##############################################################################
@@ -22,9 +21,8 @@ export type KeysMatching<T extends object, V> = {
 
 export type RecursivePartial<T> = T|{
   [P in keyof T]?:
-    T[P] extends string|number|boolean|null|undefined ? T[P]
-    : T[P] extends Iterable<string|number|boolean|null|undefined> ? T[P]
-    : T[P] extends Iterable<any> ? Iterable<RecursivePartial<T[P][any]>>
+    T[P] extends Primitive | Iterable<Primitive> ? T[P]
+    : T[P] extends Array<any> ? Array<RecursivePartial<T[P][any]>>
     : RecursivePartial<T[P]>
 }
 export type PartialRecord<K extends keyof any, T> = {
@@ -69,14 +67,11 @@ export type JSONObject = {
 }
 export type JSONParent = JSONObject | (JSONPrimitive | JSONObject)[]
 
-export type PartialJSON<T extends PartialJSON|JSONObject=JSONObject> =
-  T extends JSONObject ? {
-    [P in keyof T]?: PartialJSONEntry<T[P]>
-  } : T extends PartialJSON<infer U extends JSONObject> ? {
-    [P in keyof U]?: PartialJSONEntry<U[P]>
-  } : never
+export type PartialJSON<T extends PartialJSON|JSONObject=JSONObject> = {
+  [P in keyof T]?: (T[P] extends PartialJSON ? PartialJSON<T[P]> : T[P]) | never
+}
 
-export type JSONDiff<O extends PartialJSON, R extends PartialJSON<O>> = {
+export type JSONDiff<O extends PartialJSON<any>, R extends PartialJSON<any>> = {
   // non-optional keys of O that are not in R
 	[K in Exclude<NonUndefinedKeys<O>, keyof R>]: O[K]
 } & {
@@ -92,7 +87,7 @@ export type JSONDiff<O extends PartialJSON, R extends PartialJSON<O>> = {
     : O[K]
 }
 
-export type JSONMerge<T1 extends PartialJSON, T2 extends PartialJSON> =
+export type JSONMerge<T1 extends PartialJSON<any>, T2 extends PartialJSON<any>> =
   OptionalUndefine<{
     [K in (keyof T1 | keyof T2)]:
       K extends keyof T1 ?
@@ -115,18 +110,10 @@ export type JSONMerge<T1 extends PartialJSON, T2 extends PartialJSON> =
       : never
   }>
 
-type PageContent<T extends PageType = PageType> = (
-  T extends 'text' | 'skip' | 'phase' ? { } :
-  T extends 'choice' ? {choices: Choice[], selected: number} :
-  never
-)
-type PageContext = NonNullable<ReturnType<ScriptPlayer['pageContext']>>
-type Test2 = JSONMerge<PageContent & RecursivePartial<PageContext> & {type: PageType}, PageContext>
-type T = Test2['label']
 export type SpritePos = typeof POSITIONS[number]
 
 export type Graphics = Record<SpritePos, string> & {
-  monochrome ?: string
+  monochrome: string
 }
 
 export type Quake = {

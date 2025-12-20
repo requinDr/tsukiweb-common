@@ -119,10 +119,14 @@ export function deepFreeze<T extends Record<PropertyKey, any>>(object: T): Reado
 	return Object.freeze(object)
 }
 
+export function jsonDiff<T extends PartialJSON>
+	(obj: Readonly<T|PartialJSON<T>>, ref: Readonly<T|PartialJSON<T>>): PartialJSON<T>
+export function jsonDiff<T1 extends PartialJSON, T2 extends PartialJSON<T1>>
+	(obj: Readonly<T1>, ref: Readonly<T2>): JSONDiff<T1, T2>
 export function jsonDiff<T1 extends PartialJSON, T2 extends PartialJSON<T1>>(
-	obj: T1, ref: Readonly<T2>): JSONDiff<T1, T2> {
-	const result: PartialJSON = {}
-	for (const p of Object.keys(obj)) {
+	obj: Readonly<T1>, ref: Readonly<T2>): JSONDiff<T1, T2> {
+	const result: any = {}
+	for (const p of Object.keys(obj) as Array<keyof T1>) {
 		if (!Object.hasOwn(ref, p) || ref[p] === undefined)
 			result[p] = structuredClone(obj[p])
 		else if (obj[p] == ref[p])
@@ -134,21 +138,36 @@ export function jsonDiff<T1 extends PartialJSON, T2 extends PartialJSON<T1>>(
 			const objArray = obj[p] as any[]
 			if (objArray.length != refArray.length ||
 					objArray.some((v, i) => v != refArray[i])) {
-				result[p] = Array.from(objArray)
+				result[p] = Array.from(objArray) as T1[typeof p]
 			}
 		} else {
 			const val = jsonDiff(obj[p], ref[p] as PartialJSON)
 			if (Object.keys(val).length > 0)
-				result[p] = val
+				result[p] = val as T1[typeof p]
 		}
 	}
 	return result as JSONDiff<T1, T2>
 }
 
+type jsonMergeOpts = {inplace?: boolean, override?: boolean}
+
+export function jsonMerge<T extends JSONObject>( // full object first
+	dest: T, src: PartialJSON<T>, opts?: jsonMergeOpts) : T
+export function jsonMerge<T extends JSONObject>( // full object second
+	dest: PartialJSON<T>, src: T, opts?: jsonMergeOpts) : T
+export function jsonMerge<T extends JSONObject>( // both partial
+	dest: PartialJSON<T>, src: PartialJSON<T>, opts?: jsonMergeOpts) : PartialJSON<T>
+export function jsonMerge<T extends JSONObject,
+	T1 extends Partial<JSONObject>,
+	T2 extends Omit<T, keyof T1>>( // attrs from T shared across T1 and T2
+	dest: T1, src: T2, opts?: jsonMergeOpts): T
+export function jsonMerge<T1 extends PartialJSON<any>, T2 extends PartialJSON<any>>(
+	dest: T1, src: T2, opts?: {inplace?: boolean, override?: boolean}) : JSONMerge<T1, T2>
+
 export function jsonMerge<T1 extends PartialJSON, T2 extends PartialJSON>(
 	dest: T1, src: T2, {inplace = false, override = false} = {}) : JSONMerge<T1, T2> {
 	const result = inplace ? dest : structuredClone(dest)
-	for (const p of Object.keys(src) as (keyof T1)[]) {
+	for (const p of Object.keys(src) as (keyof T2 & keyof T1)[]) {
 		const value = src[p] as unknown as T1[typeof p]
 		if (!Object.hasOwn(dest, p) || dest[p] === undefined) {
 			result[p] = structuredClone(value)
@@ -235,11 +254,11 @@ export function subTextCount(full: string, sub: string) : number {
 		let n = 0, pos = 0
 
 		do {
-				pos = full.indexOf(sub, pos)
-				if (pos < 0)
-					break
-				n++
-				pos += step
+			pos = full.indexOf(sub, pos)
+			if (pos < 0)
+				break
+			n++
+			pos += step
 		} while (true);
 		return n;
 }
@@ -368,28 +387,25 @@ export async function requestJSONs({ multiple = false, accept = ''}) : Promise<J
 	return jsons
 }
 
-function isFullscreenOn() {
-	return document.fullscreenElement !== null
-}
-async function setFullScreenOn() {
-	console.log('request fullscreen')
-	return document.documentElement.requestFullscreen()
-		.catch((err) => {
+export namespace fullscreen {
+	export const isSupported = Boolean(document.fullscreenEnabled)
+	export function isOn() {
+		return document.fullscreenElement !== null
+	}
+	export async function toggle() {
+		if (isOn()) return setOn()
+		else return setOff()
+	}
+	export async function setOn() {
+		return document.documentElement.requestFullscreen().catch((err) => {
 			console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
 		})
-}
-async function setFullScreenOff() {
-	return document.exitFullscreen()
-		.catch((err) => {
+	}
+	export async function setOff() {
+		return document.exitFullscreen().catch((err) => {
 			console.error(`Error attempting to disable full-screen mode: ${err.message} (${err.name})`);
 		})
-}
-export const fullscreen = {
-	isSupported: Boolean(document.fullscreenEnabled),
-	isOn: isFullscreenOn,
-	toggle: () => isFullscreenOn() ? setFullScreenOff() : setFullScreenOn(),
-	setOn: setFullScreenOn,
-	setOff: setFullScreenOff
+	}
 }
 
 export function resettable<T extends Record<PropertyKey, any>>(resetValue: Readonly<T>): [T, VoidFunction, Readonly<T>] {
