@@ -75,7 +75,8 @@ export class AudioManager {
     private _trackFadeout: number
     private _gameTrack: string | null
     private _menuTrack: string | null
-    private _waveLoop: string | null
+    private _waveLoop: boolean
+    private _wave: string | null // /!\ attr not updated when wave finishes.
     private _uiVolume: number
     private _context: AutoMuteAudioContext
     private _masterGainNode: GainNode
@@ -88,7 +89,8 @@ export class AudioManager {
         this._trackFadeout = 0
         this._gameTrack = null
         this._menuTrack = null
-        this._waveLoop = null
+        this._waveLoop = false
+        this._wave = null
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
         this._assetsMap = new AudioAssetsMap(this._context, idToUrl)
@@ -155,7 +157,7 @@ export class AudioManager {
         else
             this.stopMenuTrack()
     }
-    get waveLoop() { return this._waveLoop }
+    get waveLoop() { return this._waveLoop ? this._wave : null}
     set waveLoop(id: string | null) {
         if (id)
             this.playWave(id, true)
@@ -229,20 +231,20 @@ export class AudioManager {
     }
     
     async playWave(id: string, loop: boolean = false) {
-        if (loop && this._waveLoop == id)
+        if (loop && this.waveLoop == id)
             return
-        if (loop) {
-            if (this._waveLoop == id)
-                return
-            this._waveLoop = id
-        } else {
-            await this.stopWave(true)
+        this._wave = id
+        this._waveLoop = loop
+        if (this._waveNode.playing) {
+            this._waveNode.stop()
+            await this._waveNode.waitStop()
         }
         const buffer = await this._assetsMap.get(id)
-        if (loop && this._waveLoop != id)
-            return // looped se changed while loading buffer
+        if (this._wave != id || this._waveLoop != loop )
+            return // wave changed while stopping prev. one and loading buffer
         this._waveNode.play({buffer, loop})
     }
+
     async waitWaveEnd() {
         return this._waveNode.waitStop()
     }
@@ -253,7 +255,8 @@ export class AudioManager {
             if (wait)
                 return this._waveNode.waitStop()
         }
-        this._waveLoop = null
+        this._wave = null
+        this._waveLoop = false
     }
 
     clearBuffers(restartTrack: boolean = false) {
