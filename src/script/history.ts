@@ -99,7 +99,7 @@ export abstract class HistoryBase<
     DS extends JSONObject,
     > extends Stored {
 
-  protected pages: PagesQueue<DP, PageContext<SP> & {type: string}>
+  protected pages: PagesQueue<DP, PageContext<SP> & {type: PageType}>
   protected scenes: ScenesQueue<DS, BlockContext<SP>>
   protected pageContext: PartialJSON<ReturnType<SP['pageContext']>>|null
   
