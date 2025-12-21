@@ -8,16 +8,21 @@ import { ScriptPlayerBase } from "./ScriptPlayer"
 //#region                             TYPES
 //##############################################################################
 
+type ScriptPlayer = ScriptPlayerBase<any, any, any>
+
+type PageContext<SP extends ScriptPlayer = ScriptPlayer> = ReturnType<SP['pageContext']>
+type BlockContext<SP extends ScriptPlayer = ScriptPlayer> = ReturnType<SP['blockContext']>
+
 type SPB<DP extends JSONObject = JSONObject, DS extends JSONObject = JSONObject>
   = ScriptPlayerBase<any, JSONObject, JSONObject> & {
-    ['pageContext']: ()=> Omit<PageContent, 'type'> & PartialJSON<DP> & unknown,
-    ['blockContext']: ()=> SceneContent & PartialJSON<DS> & unknown,
+    ['pageContext']: ()=> PageContext & PartialJSON<DP> & unknown,
+    ['blockContext']: ()=> BlockContext & PartialJSON<DS> & unknown,
   }
-type PageContext<SP extends SPB> = ReturnType<SP['pageContext']>
-type BlockContext<SP extends SPB> = ReturnType<SP['blockContext']>
-type PageContent = { type: string, label: string, page: number }
-type SceneContent = { label: string }
 type SceneLabel<SP extends SPB> = Exclude<SP['currentLabel'], null|undefined>
+
+type PageAdds<PageType extends string> = { type: PageType|'text'|'skip' }
+
+type SceneEntry<SP extends SPB> = ReturnType<SP['blockContext']>
 
 //##############################################################################
 //#region                            QUEUES
@@ -62,7 +67,9 @@ class DiffSaveQueue<D extends JSONObject, T extends PartialJSON<D>> extends Queu
 }
 
 
-class PagesQueue<D extends JSONObject, T extends PartialJSON<D> & PageContent>
+class PagesQueue<SP extends SPB, PageType extends string,
+      PE extends PageAdds<PageType|'text'|'skip'>, D extends JSONObject,
+      T extends PartialJSON<D> = PE & ReturnType<SP['pageContext']>>
     extends DiffSaveQueue<D, T> {
                   
   protected diff(current: T, previous: T|D): PartialJSON<T> {
@@ -75,8 +82,9 @@ class PagesQueue<D extends JSONObject, T extends PartialJSON<D> & PageContent>
   }
 }
 
-class ScenesQueue<D extends JSONObject, T extends PartialJSON<D> & SceneContent>
-  extends DiffSaveQueue<D, T> {
+class ScenesQueue<SP extends SPB, D extends JSONObject,
+                  T extends SceneEntry<SP> = SceneEntry<SP>>
+    extends DiffSaveQueue<D, T> {
   // base diff and merge are fine for scene entries
 }
 
@@ -93,15 +101,16 @@ type Params<DP extends JSONObject, DS extends JSONObject> = {
 }
 
 export abstract class HistoryBase<
-    SP extends SPB<DP, DS>,
-    PageType extends string,
-    DP extends JSONObject,
-    DS extends JSONObject,
+    SP extends SPB<DP, DS>, PageType extends string,
+    DP extends JSONObject, DS extends JSONObject,
+    PE extends PageAdds<PageType|'text'|'skip'>
     > extends Stored {
 
-  protected pages: PagesQueue<DP, PageContext<SP> & {type: PageType}>
-  protected scenes: ScenesQueue<DS, BlockContext<SP>>
-  protected pageContext: PartialJSON<ReturnType<SP['pageContext']>>|null
+  protected pages: PagesQueue<SP, PageType, PE, DP>
+  protected scenes: ScenesQueue<SP, DS>
+  protected pageContext: PartialJSON<PageContext<SP>>|null
+
+  private _script: SP|undefined
   
 
   constructor({limit, storageId, restore = false, defaultPage, defaultBlock}: Params<DP, DS>) {
@@ -111,6 +120,7 @@ export abstract class HistoryBase<
     this.pageContext = null
     if (restore)
       this.restoreFromStorage()
+    this._script = undefined
   }
 
 //#endregion ###################################################################
@@ -128,6 +138,10 @@ export abstract class HistoryBase<
   }
   get empty() {
     return this.scenes.empty
+  }
+  get script() { return this._script }
+  set script(value: SP|undefined) {
+    this._script = value
   }
 
 //#endregion ###################################################################
@@ -151,7 +165,7 @@ export abstract class HistoryBase<
     this.scenes.clear()
   }
 
-  onPageStart(context: WithRequired<PartialJSON<PageContext<SP>>, 'page' | 'label'>) {
+  onPageStart(context: PartialJSON<PageContext<SP>>) {
     this.pageContext = context
     if (this.pages.length > 0) { // remove duplicate last page if necessary
       const lastPage = this.lastPage
@@ -167,23 +181,44 @@ export abstract class HistoryBase<
       this.scenes.push(context)
     }
   }
+    
+  onSceneSkip(script: ScriptPlayer, label: SP['currentLabel']) {
+    
+    this.onPageStart({...this.pages.default, label, page: 0} as PageContext<SP>)
+    this.setPage({type: 'skip', label, page: 0})
+  }
+
+  onTextChange(script: SP) {
+    if (script.text.length == 0)
+      return
+    const text = script.text.replace(/^\[\r\n]*/, '')
+    if (this.pages.length > 0) {
+      let lastPage = this.lastPage
+      if (lastPage.page == script.currentBlock?.page &&
+          lastPage.label == script.currentBlock!.label)
+        lastPage.text = text
+      else
+        this.setPage({type: 'text', text})
+    } else {
+      this.setPage({type: 'text'})
+    }
+  }
 
 //#endregion ###################################################################
 //#region                        PRIVATE METHODS
 //##############################################################################
   
-  protected abstract isScene(label: PageContext<SP>['label']): boolean
+  protected abstract isScene(label: SP['currentLabel']): boolean
 
-  protected setPage(content: {type: PageType} & JSONObject) {
+  protected setPage(content: (PE|PageAdds<'text'|'skip'>) & PartialJSON<PageContext<SP>>) {
     if (this.pageContext) {
       const c = jsonMerge(content, this.pageContext)
-      this.pages.push(c as ({type: PageType} & PageContext<SP>))
+      this.pages.push(c as PE & PageContext<SP>)
       this.pageContext = null
     } else {
       throw Error(`Page context already used`)
     }
   }
-
 
   protected getSceneIndexAtPage(pageIndex: number): number {
     const page = this.pages.get(pageIndex)!
@@ -216,7 +251,7 @@ export abstract class HistoryBase<
     }
   }
 
-  protected import(obj: ReturnType<HistoryBase<SP, PageType, DP, DS>['export']>){
+  protected import(obj: ReturnType<HistoryBase<SP, PageType, DP, DS, PE>['export']>){
     this.clear()
     // TODO filter scenes and pages (jsonDiff with default)
     if (obj.scenes.length == 0) {

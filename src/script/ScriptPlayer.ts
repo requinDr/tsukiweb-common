@@ -177,6 +177,8 @@ export abstract class ScriptPlayerBase<
 //_____________________________private attributes_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    private _uid: number
+
 //----------script execution------------
     private _blockPlayer: BlockPlayer<LN> | null = null;
     private _started: boolean = false;
@@ -208,6 +210,8 @@ export abstract class ScriptPlayerBase<
 
 //______________________________public properties_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    
+    get uid() { return this._uid }
 
 //----------script execution------------
     get currentBlock() { return this._blockPlayer }
@@ -250,6 +254,8 @@ export abstract class ScriptPlayerBase<
 
     constructor(init: WithRequired<InitContext<LN>, 'label'>,
             callbacks: Partial<Callbacks<LN>> = {}) {
+        
+        this._uid = Date.now()
         
         const { graphics, audio, label, flags } = init
         
