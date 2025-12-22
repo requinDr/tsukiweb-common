@@ -1,9 +1,30 @@
 
-type NavElement = HTMLElement | SVGElement
+interface _NavXElement extends Element {
+    getAttribute(qualifiedName: 'nav-x'): `${number}`
+    getAttribute(qualifiedName: string): string | null
+}
+interface _NavYElement extends Element {
+    getAttribute(qualifiedName: 'nav-y'): `${number}`
+    getAttribute(qualifiedName: string): string | null
+}
+interface _NavAutoElement extends Element {
+    getAttribute(qualifiedName: 'nav-auto'): '1'
+    getAttribute(qualifiedName: string): string | null
+}
+interface _NavRootElement extends Element {
+    getAttribute(qualifiedName: 'nav-root'): '1'
+    getAttribute(qualifiedName: string): string | null
+}
+type NavXElement = (HTMLElement | SVGElement) & _NavXElement
+type NavYElement = (HTMLElement | SVGElement) & _NavYElement
+type NavAutoElement = (HTMLElement | SVGElement) & _NavAutoElement
+type NavRootElement = ((HTMLElement | SVGElement) & _NavRootElement) | HTMLBodyElement
+
+type NavElement = (NavXElement | NavYElement | NavAutoElement | NavRootElement)
 
 type Direction = 'up'|'down'|'left'|'right'|'in'|'out'
 
-export type NavigationProps = ({
+export type NavigationProps = (({
     'nav-x'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
     'nav-y'?: number | `${number}` | `${number|'*'}${' - '|'-'}${number|'*'}`
 } | {
@@ -14,6 +35,8 @@ export type NavigationProps = ({
     'nav-down'?: string
     'nav-left'?: string
     'nav-right'?: string
+}) | {
+    'nav-root'?: 1
 }
 
 function clamp(min: number, max: number, value: number) {
@@ -56,7 +79,7 @@ class NavHandler {
 
     constructor(elmt: NavElement, direction?: Exclude<Direction, 'out'>) {
         this.elmt = elmt
-        if (elmt == document.body || direction == 'in') {
+        if (isNavRoot(elmt) || direction == 'in') {
             const rect = elmt.getClientRects()[0]
             if (direction == 'in')
                 direction = 'down'
@@ -220,30 +243,60 @@ class NavHandler {
     }
 }
 
-function isNavElmt(elmt: NavElement | null, gridOnly = false): elmt is NavElement {
+function isElmentVisible(elmt: Element) {
+    if (elmt instanceof HTMLElement)
+        return elmt.offsetParent != null
+    else if (elmt instanceof SVGElement)
+        return (elmt.ownerSVGElement! as unknown as HTMLElement)
+                .offsetParent != null
+    return false
+}
+
+function getNavParent(elmt: Element | null): NavElement {
+    let parent: Element = elmt?.parentElement ?? document.body
+    let roots = Array(parent.querySelectorAll('*[nav-root]')).reverse()
+    if (roots.length > 0) {
+        for (let r of roots) {
+            if (isElmentVisible(r as unknown as Element))
+                return r as unknown as NavElement
+        }
+    }
+    while (!isNavRoot(parent) && !isNavElmt(parent)) {
+        parent = parent.parentElement ?? document.body
+    }
+    return parent as NavElement
+}
+
+function isNavRoot(elmt: Element): elmt is NavRootElement | HTMLBodyElement {
+    return elmt.hasAttribute('nav-root') || elmt == document.body
+}
+
+function isNavElmt(elmt: Element, gridOnly = false): elmt is NavElement {
     return elmt != null && (
         elmt.hasAttribute('nav-x') ||
         elmt.hasAttribute('nav-y') ||
         ((!gridOnly) && elmt.hasAttribute('nav-auto')))
 }
 
-function searchNavElmtOut(from: NavElement | null) {
-    let e: NavElement | null = from
-    while (e && !isNavElmt(e)) {
+function searchNavElmtOut(from: Element | null) {
+    let e: Element | null = from
+    while (e && !isNavElmt(e) && !isNavRoot(e)) {
         e = (e as NavElement).parentElement
     }
-    return e
+    if (e && isNavElmt(e))
+        return e as NavElement
+    return null
 }
 
-function searchNavElmtsIn(from: NavElement) {
-    let elements = [...(from?.children ?? [])] as NavElement[]
+function searchNavElmtsIn(from: Element) {
+    let elements = [...(from?.children ?? [])] as (HTMLElement | SVGElement)[]
     const result = []
     let e
     while (e = elements.pop()) {
-        if ((e instanceof SVGElement || e.offsetParent) && isNavElmt(e))
+        if (isElmentVisible(e) && isNavElmt(e))
             result.push(e)
         else
-            elements.push(...e.children as Iterable<NavElement>)
+            elements.push(...e.children as Iterable<HTMLElement | SVGElement>)
     }
     return result
 }
@@ -279,17 +332,16 @@ export function directionalNavigate(direction: Direction) {
     // Search the closest navigation element
     let elmt: NavElement = document.activeElement as NavElement
     if (!isNavElmt(elmt))
-        elmt = searchNavElmtOut(elmt)
-               ?? document.body
-    
+        elmt = getNavParent(elmt)
+
     let target: NavElement | null = null
     let gridTemp: [number, number]|null = null
     const designated = elmt.getAttribute(`nav-${direction}`)
     if (designated) {
         let node = elmt
-        target = node.querySelector(designated)
+        target = node.querySelector(designated) as NavElement
         while (!target && node != document.body) {
-            node = node?.parentElement ?? document.body
+            node = (node?.parentElement ?? document.body) as NavElement
             target = node.querySelector(designated)
         }
     } else if (direction == 'out') {
@@ -298,8 +350,7 @@ export function directionalNavigate(direction: Direction) {
             target = parent
         }
     } else {
-        const parent = ((direction == 'in') ? elmt
-                     : searchNavElmtOut(elmt.parentElement)) ?? document.body
+        const parent = (direction == 'in') ? elmt : getNavParent(elmt)
         const nav = new NavHandler(elmt, direction)
         const candidates = searchNavElmtsIn(parent);
         [target, gridTemp] = nav.searchBestTarget(candidates)

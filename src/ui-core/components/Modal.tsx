@@ -15,9 +15,12 @@ const Modal = ({ show, setShow, children, className }: Props) => {
 			shouldCloseOnOverlayClick={true}
 			onRequestClose={()=>setShow(false)}
 			closeTimeoutMS={200}
-			className={`${styles.modal} modal ${className}`}
+			className={`${styles.modal} modal ${className||""}`}
 			overlayClassName={`${styles.overlay} overlay`}
 			ariaHideApp={false}
+			contentElement={(props, children) =>
+				<div {...props} nav-root={1}>{children}</div>
+			}
 		>
 			{children}
 		</ReactModal>
