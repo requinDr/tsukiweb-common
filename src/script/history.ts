@@ -1,6 +1,6 @@
 import { Stored } from "../utils/storage"
 import { Queue } from "../utils/queue"
-import { JSONDiff, JSONObject, PartialJSON, WithRequired } from "../types"
+import { JSONDiff, JSONObject, PartialJSON } from "../types"
 import { jsonDiff, jsonMerge } from "../utils/utils"
 import { ScriptPlayerBase } from "./ScriptPlayer"
 
@@ -69,7 +69,7 @@ class DiffSaveQueue<D extends JSONObject, T extends PartialJSON<D>> extends Queu
 
 class PagesQueue<SP extends SPB, PageType extends string,
       PE extends PageAdds<PageType|'text'|'skip'>, D extends JSONObject,
-      T extends PartialJSON<D> = PE & ReturnType<SP['pageContext']>>
+      T extends PartialJSON<D> = PE & PageContext<SP>>
     extends DiffSaveQueue<D, T> {
                   
   protected diff(current: T, previous: T|D): PartialJSON<T> {
@@ -105,12 +105,6 @@ export abstract class HistoryBase<
     DP extends JSONObject, DS extends JSONObject,
     PE extends PageAdds<PageType|'text'|'skip'>
     > extends Stored {
-
-  protected pages: PagesQueue<SP, PageType, PE, DP>
-  protected scenes: ScenesQueue<SP, DS>
-  protected pageContext: PartialJSON<PageContext<SP>>|null
-
-  private _script: SP|undefined
   
 
   constructor({limit, storageId, restore = false, defaultPage, defaultBlock}: Params<DP, DS>) {
@@ -124,8 +118,14 @@ export abstract class HistoryBase<
   }
 
 //#endregion ###################################################################
-//#region                          PROPERTIES
+//#region                         ATTRS, PROPS
 //##############################################################################
+
+  protected pages: PagesQueue<SP, PageType, PE, DP>
+  protected scenes: ScenesQueue<SP, DS>
+  protected pageContext: PartialJSON<PageContext<SP>>|null
+
+  private _script: SP|undefined
 
   get lastPage()    { return this.pages.head }
   get allPages()    { return this.pages.slice() }
@@ -152,7 +152,7 @@ export abstract class HistoryBase<
     return this.scenes.findLastIndex(s=>s.label == label)
   }
   
-  sceneContent(label: SceneLabel<SP>) : BlockContext<SP> | undefined {
+  sceneContext(label: SceneLabel<SP>) : BlockContext<SP> | undefined {
     return this.scenes.findLast(s => s.label == label)
   }
   
@@ -182,7 +182,7 @@ export abstract class HistoryBase<
     }
   }
     
-  onSceneSkip(script: ScriptPlayer, label: SP['currentLabel']) {
+  onSceneSkip(label: SP['currentLabel']) {
     
     this.onPageStart({...this.pages.default, label, page: 0} as PageContext<SP>)
     this.setPage({type: 'skip', label, page: 0})
@@ -268,6 +268,43 @@ export abstract class HistoryBase<
     } else {
         this.scenes.importJSON(obj.scenes)
         this.pages.importJSON(obj.pages)
+    }
+  }
+
+  protected getMergedContext(pageIndex: number = -1) {
+    let page: (PageContext<SP> & PE) | DP,
+        sceneIndex: number;
+    if (pageIndex == -1 || pageIndex == this.pages.length - 1) {
+      page = this.pages.get(-1) ?? this.pages.default
+      sceneIndex = this.scenes.length-1
+    } else {
+      page = this.pages.get(pageIndex)!
+      if (!page)
+        throw Error(`no page in history at index ${pageIndex}`)
+      sceneIndex = this.getSceneIndexAtPage(pageIndex)
+    }
+    if (sceneIndex < 0)
+      throw Error(`Unable to retrieve scene for page ${page} from history`)
+    const scene = this.scenes.get(sceneIndex)!
+    return {
+      ...scene, ...page
+    }
+  }
+
+  protected rollbackToPage(pageIndex: number) {
+    this.import(this.export(pageIndex))
+  }
+
+  protected rollbackToScene(label: SP['currentLabel']) {
+    // index of the first page of the scene
+    const pageIndex = this.pages.findIndex(p=>p.label == label && p.page == 0)
+    if (pageIndex >= 0)
+      this.rollbackToPage(pageIndex)
+    else {
+      this.import({
+        scenes: this.scenes.exportJSON(0, this.sceneIndex(label)+1),
+        pages: []
+      })
     }
   }
 

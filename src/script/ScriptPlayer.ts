@@ -454,8 +454,6 @@ export abstract class ScriptPlayerBase<
 //______________________abstract and internal use methods_______________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    abstract isScene(label: LN): boolean
-
     abstract readVariable(name: StrVarName): string
     abstract readVariable(name: NumVarName): number
     abstract readVariable(name: VarName): string|number
