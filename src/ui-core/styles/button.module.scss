@@ -103,14 +103,14 @@
 	padding: 2px 6px;
 	letter-spacing: 1px;
 	--text-shadow: 1px 0 5px rgb(14 79 187), 1px 0 6px rgba(28, 147, 147, 0.5);
-	--underline: linear-gradient(to right, rgb(12 170 217) 75%, rgba(10, 158, 171, 0));
+	--underline: linear-gradient(to right, rgb(0 197 255) 75%, rgba(10, 158, 171, 0));
 
 	&::after {
 		content: "";
 		position: absolute;
 		bottom: -2px;
 		left: 0;
-		width: 0;
+		width: 40%;
 		height: 2px;
 		transition: var(--transition);
 		transition-delay: 0.1s;
