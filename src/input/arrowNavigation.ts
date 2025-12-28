@@ -246,8 +246,8 @@ class NavHandler {
 function isElmentVisible(elmt: Element) {
     if (elmt instanceof HTMLElement)
         return elmt.offsetParent != null
-    else if (elmt instanceof SVGElement)
-        return (elmt.ownerSVGElement! as unknown as HTMLElement)
+    else if (elmt instanceof SVGElement && elmt.ownerSVGElement)
+        return (elmt.ownerSVGElement as unknown as HTMLElement)
                 .offsetParent != null
     return false
 }

@@ -7,8 +7,10 @@ import Timer from "../utils/timer";
 import { simulateObserverChange } from "../utils/Observer";
 import { Graphics, JSONObject, PartialJSON, WithRequired } from "../types";
 import { deepAssign } from "../utils/utils";
+import HistoryBase from "./history";
 
-type SP = ScriptPlayerBase<any, any, any>
+type Hist<S extends SP = SP> = HistoryBase<S, any, any, any, any>
+type SP = ScriptPlayerBase<any, any, any, Hist>
 
 export type ScriptPlayerCallbacks<LN extends string> = {
     beforeBlock: (label: LN, initPage: number) => Promise<void>|void,
@@ -168,7 +170,8 @@ function processVarCmd(arg: string, cmd: string, script: SP) {
 export abstract class ScriptPlayerBase<
         LN extends string,
         PageContent extends JSONObject,
-        BlockContent extends JSONObject> {
+        BlockContent extends JSONObject,
+        H extends Hist<ScriptPlayerBase<LN, PageContent, BlockContent, any>>> {
 
 //##############################################################################
 //#region                         ATTRS, PROPS
@@ -180,6 +183,7 @@ export abstract class ScriptPlayerBase<
     private _uid: number
 
 //----------script execution------------
+    private _history: H
     private _blockPlayer: BlockPlayer<LN> | null = null;
     private _started: boolean = false;
     private _stopped: boolean = false;
@@ -214,6 +218,8 @@ export abstract class ScriptPlayerBase<
     get uid() { return this._uid }
 
 //----------script execution------------
+    get history() { return this._history }
+
     get currentBlock() { return this._blockPlayer }
     get currentLabel() { return this._blockPlayer?.label ?? this._nextLabel }
     get currentPage() { return this._blockPlayer?.page ?? -1 }
@@ -246,17 +252,21 @@ export abstract class ScriptPlayerBase<
     get text() { return this._text }
     set text(value: string) {
         this._text = value
+        this._history.onTextChange(this)
     }
 
 //#endregion ###################################################################
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(init: WithRequired<InitContext<LN>, 'label'>,
+    constructor(history: H, init: WithRequired<InitContext<LN>, 'label'>,
             callbacks: Partial<Callbacks<LN>> = {}) {
         
         this._uid = Date.now()
         
+        this._history = history
+        history.script = this
+
         const { graphics, audio, label, flags } = init
         
         this._commands = new Map()
@@ -476,6 +486,8 @@ export abstract class ScriptPlayerBase<
     }
     onPageStart(line: string, index: number, blockLines: string[], label: LN) {
         this._onPageStart?.(line, index, blockLines, label)
+        this.history.onPageStart(this.pageContext()!)
+        this.text = ""
     }
     onPageEnd(line: string, index: number, blockLines: string[], label: LN) {
         this._onPageEnd?.(line, index, blockLines, label)
@@ -499,6 +511,7 @@ export abstract class ScriptPlayerBase<
     protected abstract nextLabel(label: LN): LN|null
 
     protected async beforeBlock(label: LN, initPage: number) : Promise<void> {
+        this.history.onBlockStart({...this.blockContext(), label})
         if (this._beforeBlock)
             return this._beforeBlock(label, initPage)
     }

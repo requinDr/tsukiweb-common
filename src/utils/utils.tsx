@@ -196,6 +196,10 @@ export function jsonMerge<T1 extends PartialJSON, T2 extends PartialJSON>(
 	return result as unknown as JSONMerge<T1, T2>
 }
 
+export function extract<T, K extends keyof T>(obj: T, props: Array<K>): {[P in K]: T[P]} {
+	return Object.fromEntries(props.map((k=> [k, obj[k]]))) as {[P in K]: T[P]}
+}
+
 //##############################################################################
 //#                              TEXT CONVERSION                               #
 //##############################################################################

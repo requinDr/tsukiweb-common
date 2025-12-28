@@ -8,13 +8,13 @@ import { ScriptPlayerBase } from "./ScriptPlayer"
 //#region                             TYPES
 //##############################################################################
 
-type ScriptPlayer = ScriptPlayerBase<any, any, any>
+type ScriptPlayer = ScriptPlayerBase<any, any, any, any>
 
 type PageContext<SP extends ScriptPlayer = ScriptPlayer> = ReturnType<SP['pageContext']>
 type BlockContext<SP extends ScriptPlayer = ScriptPlayer> = ReturnType<SP['blockContext']>
 
 type SPB<DP extends JSONObject = JSONObject, DS extends JSONObject = JSONObject>
-  = ScriptPlayerBase<any, JSONObject, JSONObject> & {
+  = ScriptPlayerBase<any, JSONObject, JSONObject, any> & {
     ['pageContext']: ()=> PageContext & PartialJSON<DP> & unknown,
     ['blockContext']: ()=> BlockContext & PartialJSON<DS> & unknown,
   }
@@ -123,7 +123,7 @@ export abstract class HistoryBase<
 
   protected pages: PagesQueue<SP, PageType, PE, DP>
   protected scenes: ScenesQueue<SP, DS>
-  protected pageContext: PartialJSON<PageContext<SP>>|null
+  protected pageContext: PageContext<SP>|null
 
   private _script: SP|undefined
 
@@ -165,7 +165,7 @@ export abstract class HistoryBase<
     this.scenes.clear()
   }
 
-  onPageStart(context: PartialJSON<PageContext<SP>>) {
+  onPageStart(context: PageContext<SP>) {
     this.pageContext = context
     if (this.pages.length > 0) { // remove duplicate last page if necessary
       const lastPage = this.lastPage

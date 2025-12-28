@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
 
-type ObserverCallback<T=any> = (value: T)=>void
+type ObserverCallback<T, K extends keyof T> = (value: T[K], key: K, obj: T)=>void
 type Observable = Record<PropertyKey, any>
 
-type Listener<T=any> = {
-  callback: ObserverCallback<T>,
+type Listener<T, K extends keyof T> = {
+  callback: ObserverCallback<T, K>,
   once: boolean
-  filter?: (v:T)=>boolean,
+  filter?: (value: T[K], key: K, obj: T)=>boolean,
 }
-type ObserverOptions<T> = Partial<Omit<Listener<T>, 'callback'>>
+type ObserverOptions<T, K extends keyof T> = Partial<Omit<Listener<T, K>, 'callback'>>
 
 type ChildrenListener<T> = {
   callback: (prop: keyof T, val: any)=>void,
@@ -20,12 +20,16 @@ type ChildrenObserverOptions<T> = Partial<Omit<ChildrenListener<T>, 'callback'>>
 //#region                        OBSERVER CLASSES
 //##############################################################################
 
-class PropertyObserver<V> {
+class PropertyObserver<T, K extends keyof T> {
   private originalDescriptor: PropertyDescriptor
   private changed: boolean
-  private listeners: Array<Listener<V>>
+  private listeners: Array<Listener<T, K>>
+  private key: K
+  private parent: T
 
-  constructor(parent: any, property: PropertyKey, onValueChange: VoidFunction) {
+  constructor(parent: T, property: K, onValueChange: VoidFunction) {
+    this.parent = parent
+    this.key = property
     let descriptor = Object.getOwnPropertyDescriptor(parent, property)
     let proto = Object.getPrototypeOf(parent)
     while (!descriptor && proto.constructor != Object) {
@@ -46,7 +50,7 @@ class PropertyObserver<V> {
     const self = this
     Object.defineProperty(parent, property, {
       get() { return descriptor.get?.call(this)??descriptor.value },
-      set(v: V) {
+      set(v: T[K]) {
         const oldValue = this[property]
         if (descriptor.set)
           descriptor.set.call(this, v)
@@ -67,20 +71,20 @@ class PropertyObserver<V> {
   simulateChange() {
     this.changed = true
   }
-  notifyChange(value : V) {
+  notifyChange(value : T[K]) {
     this.changed = false
-    const listeners = this.listeners.filter(({filter})=>filter?.(value)??true)
+    const listeners = this.listeners.filter(({filter})=>filter?.(value, this.key, this.parent)??true)
     for (const listener of listeners) {
-      listener.callback(value)
+      listener.callback(value, this.key, this.parent)
       if (listener.once)
         this.listeners.splice(this.listeners.indexOf(listener), 1)
     }
     return this.listeners.length == 0
   }
-  addListener(callback: ObserverCallback<V>, {filter=undefined, once=false}: ObserverOptions<V>) {
+  addListener(callback: ObserverCallback<T, K>, {filter=undefined, once=false}: ObserverOptions<T, K>) {
     this.listeners.push({callback, filter, once})
   }
-  removeListener(callback: ObserverCallback<V>) {
+  removeListener(callback: ObserverCallback<T, K>) {
     let index = this.listeners.findIndex(listener=>listener.callback == callback)
     if (index >= 0) {
       this.listeners.splice(index, 1)
@@ -117,7 +121,7 @@ const notifyTask = {
 
 class PropertiesObserver<T extends Observable> {
 
-  private observers: Map<keyof T, PropertyObserver<any>>
+  private observers: Map<keyof T, PropertyObserver<T, any>>
   private parent: T
   private notifyQueued: boolean
   private onValueChange: VoidFunction
@@ -166,13 +170,13 @@ class PropertiesObserver<T extends Observable> {
     }
   }
 
-  private getObserver<K extends keyof T>(prop: K): PropertyObserver<T[K]> {
+  private getObserver<K extends keyof T>(prop: K): PropertyObserver<T, K> {
     if (!this.observers.has(prop)) {
-      const observer = new PropertyObserver<T[K]>(this.parent, prop,
+      const observer = new PropertyObserver<T, K>(this.parent, prop,
           this.onValueChange)
       this.observers.set(prop, observer)
     }
-    return this.observers.get(prop) as PropertyObserver<T[K]>
+    return this.observers.get(prop) as PropertyObserver<T, K>
   }
 
   private onSizeChanged() {
@@ -180,12 +184,12 @@ class PropertiesObserver<T extends Observable> {
       delete this.parent[observerSymbol]
   }
 
-  observe<K extends keyof T>(property: K, callback: ObserverCallback<T[K]>,
-      options: ObserverOptions<T[K]> = {}) {
+  observe<K extends keyof T>(property: K, callback: ObserverCallback<T, K>,
+      options: ObserverOptions<T, K> = {}) {
     this.getObserver(property).addListener(callback, options)
   }
 
-  unobserve<K extends keyof T>(property: K, callback: ObserverCallback<T[K]>) {
+  unobserve<K extends keyof T>(property: K, callback: ObserverCallback<T, K>) {
     const observer = this.getObserver(property)
     const remainingListeners = observer.removeListener(callback)
     if (remainingListeners == 0) {
@@ -279,7 +283,7 @@ class ObservableContainer<T extends Object> {
  */
 export function observe<T extends Observable, P extends keyof T>(
     object: T|ObservableContainer<T>, property: P,
-    callback: ObserverCallback<T[P]>, options: ObserverOptions<T[P]> = {}) {
+    callback: ObserverCallback<T, P>, options: ObserverOptions<T, P> = {}) {
   const observer = PropertiesObserver.getObserver<T>(object, true)
   observer.observe(property, callback, options)
 }
@@ -291,7 +295,7 @@ export function observe<T extends Observable, P extends keyof T>(
  */
 export function unobserve<T extends Observable, P extends keyof T>
     (object: T|ObservableContainer<T>, property: P,
-    callback: ObserverCallback<T[P]>): boolean {
+    callback: ObserverCallback<T, P>): boolean {
   const observer = PropertiesObserver.getObserver(object, false)
   return observer?.unobserve(property, callback) ?? false
 }
@@ -324,13 +328,13 @@ export function isObserverNotifyPending<T extends Observable>(object: T, propert
  * @param options.filter if specified, called before the callback.
  *        If it returns false, the callback function is not called
  */
-export function observeChildren<T extends Record<string, any>>(parent: T, attr: keyof T,
-    callback: (prop: keyof T, value: T[keyof T])=>void,
-    options: ChildrenObserverOptions<T> = {}) {
+export function observeChildren<T extends Record<string, any>, K extends keyof T>(parent: T, attr: K,
+    callback: ChildrenListener<T[K]>['callback'],
+    options: ChildrenObserverOptions<T[K]> = {}) {
   if (!(callbacksSymbol in parent[attr])) {
     parent[attr] = new ObservableContainer(parent[attr]) as any
   }
-  const callbacks = parent[attr][callbacksSymbol as keyof ObservableContainer<T>] as ChildrenListener<T>[]
+  const callbacks = parent[attr][callbacksSymbol as keyof ObservableContainer<T[K]>] as ChildrenListener<T[K]>[]
   callbacks.push({callback, ...options})
 }
 
@@ -343,7 +347,7 @@ export function observeChildren<T extends Record<string, any>>(parent: T, attr: 
  * @returns true if the operation was successful, false if the callback was not registered
  */
 export function unobserveChildren<T extends Object>(parent: T, attr: keyof T,
-    callback: (prop: keyof T, value: T[keyof T])=>void): boolean {
+    callback: ChildrenListener<T[any]>['callback']): boolean {
   const callbacks = parent[attr][callbacksSymbol as keyof ObservableContainer<T>] as ChildrenListener<T>[]
   const index = callbacks?.findIndex(listener=> listener.callback = callback)??-1
   if (index == -1)
@@ -351,6 +355,23 @@ export function unobserveChildren<T extends Object>(parent: T, attr: keyof T,
   callbacks.splice(index, 1)
   if (callbacks.length == 0)
     parent[attr] = parent[attr][hiddenObjSymbol as keyof ObservableContainer<T>]
+  return true
+}
+
+export function observeMultiple<T extends Object, K extends keyof T>(object: T,
+    attrs: Iterable<K>, callback: ObserverCallback<T, K>,
+    options: ObserverOptions<T, K> = {}) {
+  const observer = PropertiesObserver.getObserver<T>(object, true)
+  for (const attr of attrs)
+    observer.observe(attr, callback, options)
+}
+export function unobserveMultiple<T extends Object, K extends keyof T>(object: T,
+    attrs: Iterable<K>, callback: ObserverCallback<T, K>) {
+  const observer = PropertiesObserver.getObserver(object, false)
+  if (!observer)
+    return false
+  for (const attr of attrs)
+    observer.unobserve(attr, callback)
   return true
 }
 
@@ -367,15 +388,15 @@ export function unobserveChildren<T extends Object>(parent: T, attr: keyof T,
  * @param options see {@link observe} for details on the available options
  */
 export function useObserver<T extends Observable, P extends keyof T>(
-    callback:ObserverCallback<T[P]>, object: T|ObservableContainer<T>, property: P,
-    options: ObserverOptions<T[P]> = {}) {
+    callback: ObserverCallback<T, P>, object: T|ObservableContainer<T>, property: P,
+    options: ObserverOptions<T, P> = {}) {
   useEffect(()=> {
     observe(object as T, property, callback, options)
     const val = (object as T)[property]
-    if (!options.once && (options.filter?.(val) ?? true)) {
-      callback(val)
+    if (!options.once && (options.filter?.(val, property, object as T) ?? true)) {
+      callback(val, property, object as T)
     }
-    return unobserve.bind(null, object as T, property, callback) as VoidFunction
+    return unobserve.bind(null, object, property, callback as any) as VoidFunction
   }, [object])
 }
 
@@ -425,9 +446,9 @@ export function useObserved<V,T extends Observable, P extends keyof T>(
  * @param options see {@link observeChildren} for details on the available options
  */
 
-export function useChildrenObserver<T extends Object>(
-    callback: (prop: keyof T, value: T[keyof T])=>void, parent: T, attr: keyof T,
-    options: ChildrenObserverOptions<T> = {}) {
+export function useChildrenObserver<T extends Object, K extends keyof T>(
+    callback: ChildrenListener<T[K]>['callback'], parent: T, attr: K,
+    options: ChildrenObserverOptions<T[K]> = {}) {
   useEffect(()=> {
     observeChildren(parent, attr, callback, options)
     return unobserveChildren.bind(null, parent, attr as any, callback as any) as VoidFunction
