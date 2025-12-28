@@ -208,7 +208,7 @@ export abstract class HistoryBase<
 //#region                        PRIVATE METHODS
 //##############################################################################
   
-  protected abstract isScene(label: SP['currentLabel']): boolean
+  protected abstract isScene(label: string): boolean
 
   protected setPage(content: (PE|PageAdds<'text'|'skip'>) & PartialJSON<PageContext<SP>>) {
     if (this.pageContext) {
