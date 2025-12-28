@@ -15,7 +15,6 @@ type Props = P & RefAttributes<HTMLDivElement> & {
 )
 
 export const AnimatedHideActivityDiv = ({show, showProps, hideProps, children, onTransitionEnd, ...props}: Props)=> {
-
     let [visible, setVisible] = useState<boolean>(show)
     const divRef = useRef<HTMLDivElement>(null)
 
