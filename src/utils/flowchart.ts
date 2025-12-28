@@ -39,8 +39,6 @@ export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<a
   }
 }
 
-type StrKey<T extends Record<string, any>> = Extract<keyof T, string>
-
 export abstract class Flowchart<N extends FlowchartNode<any, any>> {
   private _nodes: Map<N['id'], N>
 

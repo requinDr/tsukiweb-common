@@ -7,7 +7,7 @@ import { ScriptPlayerBase } from "./ScriptPlayer";
 //________________________________private types_________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-type SPB = ScriptPlayerBase<any, any, any>
+type SPB = ScriptPlayerBase<any, any, any, any>
 
 //________________________________public types__________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

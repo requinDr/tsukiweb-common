@@ -1,12 +1,12 @@
 
 import Timer from "../utils/timer"
-import { CommandHandler, extractInstructions, FFwStopPredicate, Instruction } from "./utils";
+import { CommandHandler, extractInstructions, FFwStopPredicate } from "./utils";
 import { ScriptPlayerBase } from "./ScriptPlayer";
 
 type BlockFinishCallback =
     (complete: boolean)=> void
 
-type SPB<LN extends string> = ScriptPlayerBase<LN, any, any>
+type SPB<LN extends string> = ScriptPlayerBase<LN, any, any, any>
 
 export class BlockPlayerBase<LabelName extends string> {
 
