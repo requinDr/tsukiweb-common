@@ -248,7 +248,7 @@ function isElmentVisible(elmt: Element) {
         return elmt.offsetParent != null
     else if (elmt instanceof SVGElement && elmt.ownerSVGElement)
         return (elmt.ownerSVGElement as unknown as HTMLElement)
-                .offsetParent != null
+                .checkVisibility()
     return false
 }
 
