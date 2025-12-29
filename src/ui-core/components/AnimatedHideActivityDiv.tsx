@@ -2,54 +2,46 @@
 import { Activity, RefAttributes, useCallback, useRef, useState } from "react"
 import { DivProps } from "../../types"
 
-type P = DivProps & {
-    [x: `${string}-${string}`]: any
+type Props = DivProps & RefAttributes<HTMLDivElement> & {
+	show: boolean
+	hideProps?: DivProps
+	showProps?: DivProps
 }
 
-type Props = P & RefAttributes<HTMLDivElement> & {
-    show: boolean
-    hideProps?: P
-    showProps?: P
-} & ( { showProps: P }
-    | { hideProps: P }
-)
-
 export const AnimatedHideActivityDiv = ({show, showProps, hideProps, children, onTransitionEnd, ...props}: Props)=> {
-    let [visible, setVisible] = useState<boolean>(show)
-    const divRef = useRef<HTMLDivElement>(null)
+	const [prevShow, setPrevShow] = useState(show)
+	const [visible, setVisible] = useState(show)
+	const divRef = useRef<HTMLDivElement>(null)
 
-    const transitionEndHandler = useCallback((evt: any)=> {
-        onTransitionEnd?.(evt)
-        if (evt.target == divRef.current) {
-            setVisible(show)
-        }
-    }, [props.onAnimationEnd])
+	let activeShow = show
+	if (show !== prevShow) {
+		setPrevShow(show)
+		if (show && !visible) {
+			requestAnimationFrame(() => setVisible(true))
+			activeShow = false 
+		}
+	}
 
-    if (show && !visible) {
-        // change activity mode before changing the properties
-        requestAnimationFrame(setVisible.bind(undefined, show))
-        show = false
-        visible = true
-    }
-    if (show) {
-        if (showProps) {
-            const className = [props.className, showProps.className].filter((c)=>c).join(' ')
-            props = {...props, ...showProps, className}
-        }
-    } else {
-        const className = [props.className, hideProps?.className].filter((c)=>c).join(' ')
-        props = {
-            ...props,
-            className,
-            onTransitionEnd: transitionEndHandler
-        } as Props
-    }
-    return (
-        <div ref={divRef} {...props}>
-            <Activity mode={visible || show ? "visible" : "hidden"}>
-                {children}
-            </Activity>
-        </div>
-    )
+	const handleTransitionEnd = useCallback((evt: React.TransitionEvent<HTMLDivElement>) => {
+		onTransitionEnd?.(evt)
+		if (evt.target === divRef.current && !show) setVisible(false)
+	}, [show, onTransitionEnd])
+
+	const extraProps = activeShow && visible ? showProps : hideProps
+	const className = [props?.className, extraProps?.className].filter(Boolean).join(' ')
+
+	return (
+		<div 
+			ref={divRef}
+			{...props}
+			{...extraProps}
+			className={className}
+			onTransitionEnd={handleTransitionEnd}
+		>
+			<Activity mode={(show || visible) ? "visible" : "hidden"}>
+				{children}
+			</Activity>
+		</div>
+	)
 }
 export default AnimatedHideActivityDiv

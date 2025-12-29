@@ -141,7 +141,9 @@ export type GraphicsTransition = {
 }
 export type NoMethods<T> = { [P in keyof T as T[P] extends Function ? never : P]: T[P] }
 
-export type DivProps = React.ComponentPropsWithoutRef<"div">
+export type DivProps = React.HTMLAttributes<HTMLDivElement> & {
+  [x: `${string}-${string}`]: any
+}
 
 export type NumVarName = `%${string}`
 export type StrVarName = `$${string}`
