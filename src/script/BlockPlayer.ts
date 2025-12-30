@@ -6,9 +6,9 @@ import { ScriptPlayerBase } from "./ScriptPlayer";
 type BlockFinishCallback =
     (complete: boolean)=> void
 
-type SPB<LN extends string> = ScriptPlayerBase<LN, any, any, any>
+type SPB = ScriptPlayerBase<any, any, any, any>
 
-export class BlockPlayerBase<LabelName extends string> {
+export class BlockPlayer<SP extends SPB> {
 
 //#endregion ###################################################################
 //#region                         ATTRS & PROPS
@@ -16,18 +16,15 @@ export class BlockPlayerBase<LabelName extends string> {
     
 //_____________________________private attributes_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    private _script: SPB<LabelName>
+    private _script: SP
     private _onFinish: (complete: boolean) => void
 //---------------status-----------------
-    private _autoPlay: boolean = false
-    private _ffwStop: FFwStopPredicate<SPB<LabelName>> | null = null
-    private _ffwDelay: number = 0
     private _stopped: boolean = false
     private _started: boolean = false
     private _pauseRequested: boolean = false
     private _resume: VoidFunction|undefined = undefined
 //-------------block info---------------
-    private _label: LabelName
+    private _label: SP['currentLabel']
     private _blockLines: string[]
 //-------------progression--------------
     private _page: number
@@ -49,28 +46,13 @@ export class BlockPlayerBase<LabelName extends string> {
 
     get loaded() { return this._blockLines.length > 0 }
 
-    get autoPlay() { return this._autoPlay || this.fastForwarding }
-    set autoPlay(value: boolean) {
-        this.ffw(null)
-        if (this._autoPlay != value) {
-            this._autoPlay = value
-            if (value) {
-                this._script.onAutoPlayStart(false)
-                this._makeAutoPlay()
-            } else {
-                this._script.onAutoPlayStop(false)
-            }
-        }
-    }
-    get fastForwarding() { return this._ffwStop != null }
-
     get paused() { return this._pauseRequested || this._resume != undefined }
 
 //#endregion ###################################################################
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(script: SPB<LabelName>, label: LabelName,
+    constructor(script: SP, label: SP['currentLabel'],
                 initPage: number = 0, onScriptLoaded: VoidFunction,
                 onFinish: BlockFinishCallback) {
         this._script = script
@@ -94,29 +76,6 @@ export class BlockPlayerBase<LabelName extends string> {
     next() {
         this._currCmd?.next()
     }
-    ffw(predicate: null): void
-    ffw(predicate: FFwStopPredicate<any>, delay?: number): void
-    ffw(predicate: FFwStopPredicate<any> | null, delay: number = 0) {
-        if (this._ffwStop) {
-            if (!predicate) {
-                this._script.onAutoPlayStop(true)
-            }
-            this._ffwStop = predicate
-            this._ffwDelay = delay
-        } else {
-            if (predicate) {
-                if (this._autoPlay) {
-                    this._autoPlay = false
-                    this._script.onAutoPlayStop(false)
-                }
-                this._ffwStop = predicate
-                this._script.onAutoPlayStart(true)
-                this._ffwDelay = delay
-            }
-        }
-        if (this._ffwStop)
-            this.next()
-    }
     start() {
         if (!this._started) {
             this._started = true
@@ -139,6 +98,10 @@ export class BlockPlayerBase<LabelName extends string> {
         if (this._pauseRequested)
             this._pauseRequested = false
         this._resume?.()
+    }
+    onAutoPlayChange() {
+        if (this._script.autoPlay || this._script.fastForwarding)
+            this._makeAutoPlay()
     }
 
 //#endregion ###################################################################
@@ -167,22 +130,16 @@ export class BlockPlayerBase<LabelName extends string> {
         const cmd = this._currCmd
         if (!cmd)
             return
-        const ffw = this._ffwStop != null
-        if (!ffw && typeof cmd.autoPlayDelay != "number")
+        const delay = this._script.fastForwarding ? this._script.ffwDelay : cmd.autoPlayDelay
+        if (delay == undefined)
             return
-        const next = cmd?.next.bind(cmd)
-        const delay = ffw ? this._ffwDelay : cmd.autoPlayDelay as number
+        const next = cmd.next.bind(cmd)
         const timer = new Timer(delay, () => {
-            if (this.autoPlay)
-                next?.()
+            if (this._script.autoPlay)
+                next()
         })
         timer.start()
-        cmd.next = () => { timer.cancel(); next?.() }
-        //const skip = skipCommand
-        //skipCommand = ()=> {
-        //    timer.cancel()
-        //    skip?.()
-        //}
+        cmd.next = () => { timer.cancel(); next() }
     }
 
 //_______________________________process script_________________________________
@@ -205,7 +162,7 @@ export class BlockPlayerBase<LabelName extends string> {
                     } else if (commandResult) {
                         this._currCmd = commandResult
                         //skipCommand = resolve // if the command must be skipped at some point
-                        if (this.autoPlay)
+                        if (this._script.autoPlay)
                             this._makeAutoPlay()
                     }
                     else
@@ -231,7 +188,7 @@ export class BlockPlayerBase<LabelName extends string> {
         if (this._lineIndex == -1)
             throw Error(`block not loaded`)
         const {_label: label, _blockLines: lines} = this
-        this._script.onBlockStart(label, this._page)
+        await this._script.dispatchEvent('blockStart', label, this._page)
         let newPage = true
         while (this._lineIndex < this._blockLines.length && !this._stopped) {
             const index = this._lineIndex
@@ -239,16 +196,16 @@ export class BlockPlayerBase<LabelName extends string> {
             let line = lines[index]
             console.debug(`${label}:${this._page}|${index}: ${line}`)
             if (newPage) {
-                this._script.onPageStart(line, index, lines, label)
+                await this._script.dispatchEvent('pageStart', line, index, lines, label)
                 newPage = false
             }
 
-            if (this._ffwStop?.(line, index, this._page, lines, this._label, this._script))
-                this.autoPlay = false
+            if (this._script.ffwStopCondition?.(line, index, this._page, lines, this._label, this._script))
+                this._script.ffw(null)
 
             await this._processLine(line)
             if (this.isPageBreak(line, index, true)) {
-                this._script.onPageEnd(line, index, lines, label)
+                await this._script.dispatchEvent('pageEnd', line, index, lines, label)
                 this.page++
                 newPage = true
             }
@@ -257,9 +214,9 @@ export class BlockPlayerBase<LabelName extends string> {
         }
         if (!this._stopped) {
             if (!newPage)
-                this._script.onPageEnd('return', lines.length, lines, label)
+                await this._script.dispatchEvent('pageEnd', 'return', lines.length, lines, label)
             this._onFinish(true)
-            this._script.onBlockEnd(label)
+            await this._script.dispatchEvent('blockEnd', label)
         } else {
             this._onFinish(false)
         }

@@ -1,29 +1,33 @@
 import {
     checkIfCondition, CommandMap, CommandProcessFunction, CommandRecord,
-    extractInstructions, FFwStopPredicate, NumVarName, StrVarName, VarName
+    extractInstructions, FFwStopPredicate, NumVarName, StrVarName, VarName,
+    VarType
 } from "./utils";
-import { BlockPlayerBase as BlockPlayer } from "./BlockPlayer";
+import { BlockPlayer } from "./BlockPlayer";
 import Timer from "../utils/timer";
 import { simulateObserverChange } from "../utils/Observer";
 import { Graphics, JSONObject, PartialJSON, WithRequired } from "../types";
 import { deepAssign } from "../utils/utils";
+import { AsyncEventsDispatcher } from "../utils/eventsDispatcher"
 import HistoryBase from "./history";
 
 type Hist<S extends SP = SP> = HistoryBase<S, any, any, any, any>
 type SP = ScriptPlayerBase<any, any, any, Hist>
 
+type PageCallback<LN> = (line: string, lineIndex: number, blockLines: string[], label: LN)=>void
+
 export type ScriptPlayerCallbacks<LN extends string> = {
     beforeBlock: (label: LN, initPage: number) => Promise<void>|void,
     afterBlock: (label: LN) => Promise<void>|void,
-    onBlockStart: (label: LN, initPage: number) => Promise<void>|void,
-    onBlockEnd: (label: LN) => Promise<void>|void,
-    onPageStart: (line: string, lineIndex: number, blockLines: string[],
-                label: LN)=>void
-    onPageEnd: (line: string, lineIndex: number, blockLines: string[],
-                  label: LN)=>void
-    onFinish: (complete: boolean) => void
-    onAutoPlayStart: (ffw: boolean)=>void
-    onAutoPlayStop: (ffw: boolean)=>void
+    blockStart: (label: LN, initPage: number) => Promise<void>|void,
+    blockEnd: (label: LN) => Promise<void>|void,
+    pageStart: PageCallback<LN>
+    pageEnd: PageCallback<LN>
+    finish: (complete: boolean) => void
+    autoPlayStart: VoidFunction
+    autoPlayStop: VoidFunction
+    ffwStart: VoidFunction
+    ffwStop: VoidFunction
 }
 
 type Callbacks<LN extends string> = ScriptPlayerCallbacks<LN>
@@ -65,7 +69,7 @@ type BlockContext<LN extends string, Content extends JSONObject> = {
 //________________________________commands list_________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-const base_commands: CommandRecord<SP> = {
+const base_commands: CommandRecord<any> = {
 
     'if'     : processIfCmd,
     'gosub'  : processGoto,
@@ -171,7 +175,8 @@ export abstract class ScriptPlayerBase<
         LN extends string,
         PageContent extends JSONObject,
         BlockContent extends JSONObject,
-        H extends Hist<ScriptPlayerBase<LN, PageContent, BlockContent, any>>> {
+        H extends Hist<ScriptPlayerBase<LN, PageContent, BlockContent, any>>>
+    extends AsyncEventsDispatcher<Callbacks<LN>> {
 
 //##############################################################################
 //#region                         ATTRS, PROPS
@@ -184,7 +189,7 @@ export abstract class ScriptPlayerBase<
 
 //----------script execution------------
     private _history: H
-    private _blockPlayer: BlockPlayer<LN> | null = null;
+    private _blockPlayer: BlockPlayer<this> | null = null;
     private _started: boolean = false;
     private _stopped: boolean = false;
     private _nextLabel: LN|null
@@ -194,23 +199,17 @@ export abstract class ScriptPlayerBase<
     private _blockSkipped: boolean = false
     private _continueScript: boolean
 
+    // not private because accessible by BlockPlayer. Do not use outside these classes
+    _ffwStopCondition: FFwStopPredicate<any>|undefined = undefined
+    _ffwDelay: number = 0
+    _autoPlay: boolean = false
+
 //----------script variables------------
     private _flags: Set<string>
     private _textPrefix : string // add bbcode before text lines (for e.g., color or alignement)
     private _text: string = ""
     private _audio: Audio
     private _graphics: WithRequired<Graphics, 'monochrome'>
-
-//--------------callbacks---------------
-    private _onFinish?: Callbacks<LN>['onFinish']
-    private _beforeBlock?: Callbacks<LN>['beforeBlock']
-    private _afterBlock?: Callbacks<LN>['afterBlock']
-    private _onBlockStart?: Callbacks<LN>['onBlockStart']
-    private _onBlockEnd?: Callbacks<LN>['onBlockEnd']
-    private _onPageStart?: Callbacks<LN>['onPageEnd']
-    private _onPageEnd?: Callbacks<LN>['onPageEnd']
-    private _onAutoPlayStart?: Callbacks<LN>['onAutoPlayStart']
-    private _onAutoPlayStop?: Callbacks<LN>['onAutoPlayStop']
 
 //______________________________public properties_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -221,17 +220,34 @@ export abstract class ScriptPlayerBase<
     get history() { return this._history }
 
     get currentBlock() { return this._blockPlayer }
-    get currentLabel() { return this._blockPlayer?.label ?? this._nextLabel }
+    get currentLabel(): LN { return (this._blockPlayer?.label ?? this._nextLabel) as LN }
     get currentPage() { return this._blockPlayer?.page ?? -1 }
     
-    get fastForwarding() { return this._blockPlayer?.fastForwarding ?? false }
     get paused() { return this._blockPlayer?.paused ?? false}
     get continueScript() { return this._continueScript }
+    
+    get fastForwarding() { return this._ffwStopCondition != undefined }
+    get ffwStopCondition() { return this._ffwStopCondition }
+    private set ffwStopCondition(value: FFwStopPredicate<any>|undefined) {
+        this._ffwStopCondition = value
+    }
+    get ffwDelay() { return this._ffwDelay }
+    private set ffwDelay(value: number) {
+        this._ffwDelay = value
+    }
 
-    get autoPlay() { return this._blockPlayer?.autoPlay ?? false}
+    get autoPlay() { return this._autoPlay || this.fastForwarding }
     set autoPlay(value: boolean) {
-        if (this._blockPlayer)
-            this._blockPlayer.autoPlay = value
+        this.ffw(null)
+        if (this._autoPlay != value) {
+            this._autoPlay = value
+            if (value) {
+                this.dispatchEvent('autoPlayStart')
+                this._blockPlayer?.onAutoPlayChange()
+            } else {
+                this.dispatchEvent('autoPlayStop')
+            }
+        }
     }
 
 //----------script variables------------
@@ -259,13 +275,19 @@ export abstract class ScriptPlayerBase<
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(history: H, init: WithRequired<InitContext<LN>, 'label'>,
-            callbacks: Partial<Callbacks<LN>> = {}) {
-        
+    constructor(history: H, init: WithRequired<InitContext<LN>, 'label'>) {
+        super()
         this._uid = Date.now()
         
         this._history = history
         history.script = this
+
+        this.addEventListener('pageStart', ()=>{
+            history.onPageStart(this.pageContext())
+        })
+        this.addEventListener('beforeBlock', (label)=> {
+            history.onBlockStart({...this.blockContext(), label})
+        })
 
         const { graphics, audio, label, flags } = init
         
@@ -288,18 +310,6 @@ export abstract class ScriptPlayerBase<
             track: '', looped_se: '',
             ...(audio ?? { })
         }
-        
-        ;({
-            beforeBlock    : this._beforeBlock,
-            afterBlock     : this._afterBlock,
-            onBlockStart   : this._onBlockStart,
-            onBlockEnd     : this._onBlockEnd,
-            onPageStart    : this._onPageStart,
-            onPageEnd      : this._onPageEnd,
-            onFinish       : this._onFinish,
-            onAutoPlayStart: this._onAutoPlayStart,
-            onAutoPlayStop : this._onAutoPlayStop,
-        } = callbacks)
         deepAssign(this._audio, init.audio ?? {})
 
         this.setCommands(base_commands)
@@ -352,14 +362,28 @@ export abstract class ScriptPlayerBase<
             this._blockSkipped = true // called in beforeBlock
         }
     }
-
-    ffw(stop: null):void
-    ffw(stop: FFwStopPredicate<this>, delay?: number):void
-    ffw(stop: FFwStopPredicate<this> | null, delay: number = 0) {
-        if (stop)
-            this._blockPlayer?.ffw(stop, delay)
-        else
-            this._blockPlayer?.ffw(null)
+    ffw(predicate: null): void
+    ffw(predicate: FFwStopPredicate<any>, delay?: number): void
+    ffw(predicate: FFwStopPredicate<any> | null, delay: number = 0) {
+        if (this._ffwStopCondition) {
+            this.ffwStopCondition = predicate ?? undefined
+            this.ffwDelay = delay
+            if (!predicate) {
+                this.dispatchEvent('ffwStop')
+                simulateObserverChange(this, 'autoPlay')
+                simulateObserverChange(this, 'fastForwarding')
+            }
+        } else if (predicate) {
+            if (this._autoPlay) {
+                this._autoPlay = false
+                this.dispatchEvent('autoPlayStop')
+            }
+            this.ffwStopCondition = predicate
+            this.ffwDelay = delay
+            this.dispatchEvent('ffwStart')
+        }
+        if (predicate)
+            this.next()
     }
 
 //___________________________________context____________________________________
@@ -422,83 +446,30 @@ export abstract class ScriptPlayerBase<
         return this._commands.get(cmd)
     }
 
-//______________________________script callbacks________________________________
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-    setBeforeBlockCallback(callback: Callbacks<LN>['beforeBlock']|undefined) {
-        this._beforeBlock = callback
-    }
-
-    setAfterBlockCallback(callback: Callbacks<LN>['afterBlock']|undefined) {
-        this._afterBlock = callback
-    }
-
-    setBlockStartCallback(callback: Callbacks<LN>['onBlockStart']|undefined) {
-        this._onBlockStart = callback
-    }
-    
-    setBlockEndCallback(callback: Callbacks<LN>['onBlockEnd']|undefined) {
-        this._onBlockEnd = callback
-    }
-
-    setPageStartCallback(callback: Callbacks<LN>['onPageEnd']|undefined) {
-        this._onPageStart = callback
-    }
-
-    setPageEndCallback(callback: Callbacks<LN>['onPageEnd']|undefined) {
-        this._onPageEnd = callback
-    }
-
-    setFinishCallback(callback: Callbacks<LN>['onFinish']|undefined) {
-        this._onFinish = callback
-    }
-
-    setAutoPlayStartCallback(callback: Callbacks<LN>['onAutoPlayStart']|undefined) {
-        this._onAutoPlayStart = callback
-    }
-
-    setAutoPlayStopCallback(callback: Callbacks<LN>['onAutoPlayStop']|undefined) {
-        this._onAutoPlayStop = callback
-    }
-
 //______________________abstract and internal use methods_______________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    abstract readVariable(name: StrVarName): string
-    abstract readVariable(name: NumVarName): number
-    abstract readVariable(name: VarName): string|number
-    abstract writeVariable(name: StrVarName, value: string): void
-    abstract writeVariable(name: NumVarName, value: number): void
-    abstract writeVariable(name: VarName, value: string|number): void
+    abstract readVariable<T extends VarName>(name: T): VarType<T>
+    abstract writeVariable<T extends VarName>(name: T, value: VarType<T>): void
     
     abstract fetchLines(label: LN): Promise<string[]>
 
-    isLinePageBreak(line: string, index: number, blockLines: string[],
-                             label: LN, playing: boolean): boolean {
+    isLinePageBreak(line: string, _index: number, _blockLines: string[],
+                    _label: LN, _playing: boolean): boolean {
         return line.startsWith('\\')
     }
-    
-    onBlockStart(label: LN, initPage: number) {
-        this._onBlockStart?.(label, initPage)
-    }
-    onBlockEnd(label: LN) {
-        this._onBlockEnd?.(label)
-    }
-    onPageStart(line: string, index: number, blockLines: string[], label: LN) {
-        this._onPageStart?.(line, index, blockLines, label)
-        this.history.onPageStart(this.pageContext()!)
-        this.text = ""
-    }
-    onPageEnd(line: string, index: number, blockLines: string[], label: LN) {
-        this._onPageEnd?.(line, index, blockLines, label)
-    }
-    onAutoPlayStart(ffw: boolean) {
-        this._onAutoPlayStart?.(ffw)
-        simulateObserverChange(this, 'autoPlay')
-    }
-    onAutoPlayStop(ffw: boolean) {
-        this._onAutoPlayStop?.(ffw)
-        simulateObserverChange(this, 'autoPlay')
+
+    async dispatchEvent<E extends keyof Callbacks<LN>>(event: E,
+            ...args: Parameters<Callbacks<LN>[E]>) {
+        await super.dispatchEvent(event, ...args)
+        switch(event) {
+            case 'autoPlayStart' : case 'autoPlayStop' :
+                simulateObserverChange(this, 'autoPlay')
+                break
+            case 'pageStart' :
+                this.text = ""
+                break
+        }
     }
 
 //#endregion ###################################################################
@@ -509,16 +480,6 @@ export abstract class ScriptPlayerBase<
     protected abstract pageContent(): PageContent
     
     protected abstract nextLabel(label: LN): LN|null
-
-    protected async beforeBlock(label: LN, initPage: number) : Promise<void> {
-        this.history.onBlockStart({...this.blockContext(), label})
-        if (this._beforeBlock)
-            return this._beforeBlock(label, initPage)
-    }
-    protected async afterBlock(label: LN) : Promise<void> {
-        if (this._afterBlock)
-            return this._afterBlock(label)
-    }
 
     private async _runLoop() {
         while (this._nextLabel != null) {
@@ -533,7 +494,7 @@ export abstract class ScriptPlayerBase<
             }
             this._blockPlayer = null
             this._blockSkipped = false
-            await this.beforeBlock(label, page)
+            await this.dispatchEvent('beforeBlock', label, page)
             if (this._stopped)
                 break
             if (!this._blockSkipped && label == this._nextLabel) {
@@ -549,7 +510,7 @@ export abstract class ScriptPlayerBase<
                 if (this._stopped)
                     break
             }
-            await this.afterBlock(label)
+            await this.dispatchEvent('afterBlock', label)
             if (this._stopped)
                 break
 
@@ -558,7 +519,7 @@ export abstract class ScriptPlayerBase<
                 this._nextLabel = this.nextLabel(label)
         }
         this._blockPlayer = null
-        this._onFinish?.(this._nextLabel == null)
+        await this.dispatchEvent('finish', this._nextLabel == null)
         this._started = false
     }
 

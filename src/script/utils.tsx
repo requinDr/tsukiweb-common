@@ -46,6 +46,10 @@ export type CommandMap<SP extends SPB> = Map<string, CommandRecord<SP>[string]>
 export type NumVarName = `%${string}`
 export type StrVarName = `$${string}`
 export type VarName = NumVarName | StrVarName
+export type VarType<T extends NumVarName|StrVarName> =
+	T extends NumVarName ? number :
+	T extends StrVarName ? string :
+	never
 
 //#endregion ###################################################################
 //#region                        COMMANDS TOOLS
