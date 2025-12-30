@@ -112,22 +112,37 @@ export class AudioManager {
     
     get masterVolume() { return this._masterGainNode.gain.value }
     set masterVolume(value: number) {
+        let previousVolume = this.masterVolume
         this._masterGainNode.gain.value = value
+        if (previousVolume == 0) {
+            if (this.gameTrackVolume > 0 && this.gameTrack) this.playGameTrack(this.gameTrack)
+            if (this.menuTrackVolume > 0 && this.menuTrack) this.playMenuTrack(this.menuTrack)
+            if (this.waveVolume > 0 && this.waveLoop) this.playWave(this.waveLoop, true)
+        }
     }
     
     get gameTrackVolume() { return this._gameTrackNode.gain.value }
     set gameTrackVolume(value: number) {
+        let previousVolume = this.gameTrackVolume
         this._gameTrackNode.gain.value = value
+        if (previousVolume == 0 && this.masterVolume > 0 && this.gameTrack)
+            this.playGameTrack(this.gameTrack)
     }
     
     get menuTrackVolume() { return this._menuTrackNode.gain.value }
     set menuTrackVolume(value: number) {
+        let previousVolume = this.menuTrackVolume
         this._menuTrackNode.gain.value = value
+        if (previousVolume == 0 && this.masterVolume > 0 && this.menuTrack)
+            this.playMenuTrack(this.menuTrack)
     }
     
     get waveVolume() { return this._waveNode.gain.value }
     set waveVolume(value: number) {
+        let previousVolume = this.waveVolume
         this._waveNode.gain.value = value
+        if (previousVolume == 0 && this.masterVolume > 0 && this.waveLoop)
+            this.playWave(this.waveLoop, true)
     }
     
     get uiVolume() { return this._uiVolume }
@@ -190,9 +205,11 @@ export class AudioManager {
     }
 
     async playGameTrack(id: string, forceRestart = false) {
-        if (!forceRestart && this._gameTrack == id)
+        if (!forceRestart && this._gameTrack == id && this._gameTrackNode.playing)
             return
         this._gameTrack = id
+        if (this.gameTrackVolume == 0 || this.masterVolume == 0)
+            return
         const buffer = await this._assetsMap.get(id)
         await this._stopTrack(this._gameTrackNode)
         if (this._gameTrack == id) { // check if track has not changed during delays
@@ -215,9 +232,11 @@ export class AudioManager {
     }
 
     async playMenuTrack(id: string, forceRestart = false) {
-        if (!forceRestart && this._menuTrack == id)
+        if (!forceRestart && this._menuTrack == id && this._menuTrackNode.playing)
             return
         this._menuTrack = id
+        if (this.menuTrackVolume == 0 || this.masterVolume == 0)
+            return
         const buffer = await this._assetsMap.get(id)
         await this._stopTrack(this._menuTrackNode)
         if (this._menuTrack == id) { // check if track has not changed during delays
@@ -231,7 +250,7 @@ export class AudioManager {
     }
     
     async playWave(id: string, loop: boolean = false) {
-        if (loop && this.waveLoop == id)
+        if (loop && this.waveLoop == id && (loop == this._waveLoop) && this._waveNode.playing)
             return
         this._wave = id
         this._waveLoop = loop
@@ -239,6 +258,8 @@ export class AudioManager {
             this._waveNode.stop()
             await this._waveNode.waitStop()
         }
+        if (this.waveVolume == 0 || this.masterVolume == 0)
+            return
         const buffer = await this._assetsMap.get(id)
         if (this._wave != id || this._waveLoop != loop )
             return // wave changed while stopping prev. one and loading buffer
