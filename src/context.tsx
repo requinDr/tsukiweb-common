@@ -1,21 +1,21 @@
 import { createContext, ReactNode, useContext } from "react"
 import { ResolutionId } from "./utils/lang"
 
-export type LibConfig<T = any> = {
+export type LibConfig = {
 	imageSrc: (src: string, res?: ResolutionId) => string
 	cg: {
 		shouldBlur: (img: string) => boolean
 	}
 }
 
-const CommonConfigContext = createContext<LibConfig<any> | null>(null)
+const CommonConfigContext = createContext<LibConfig | null>(null)
 
-export const CommonProvider = <T,>({ config, children }: { config: LibConfig<T>, children: ReactNode }) => (
+export const CommonProvider = ({ config, children }: { config: LibConfig, children: ReactNode }) => (
 	<CommonConfigContext.Provider value={config}>{children}</CommonConfigContext.Provider>
 )
 
-export const useGameConfig = <T,>() => {
+export const useGameConfig = () => {
 	const context = useContext(CommonConfigContext)
 	if (!context) throw new Error("Missing Provider")
-	return context as LibConfig<T>
+	return context
 }

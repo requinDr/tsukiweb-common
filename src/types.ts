@@ -108,6 +108,19 @@ export type JSONMerge<T1 extends PartialJSON<any>, T2 extends PartialJSON<any>> 
       : never
   }>
 
+export type NoMethods<T> = { [P in keyof T as T[P] extends Function ? never : P]: T[P] }
+
+export type DivProps = React.HTMLAttributes<HTMLDivElement> & {
+  [x: `${string}-${string}`]: any
+}
+
+export type NumVarName = `%${string}`
+export type StrVarName = `$${string}`
+export type VarName = NumVarName | StrVarName
+
+/*****************/
+/*   Graphics    */
+/*****************/
 export type SpritePos = typeof POSITIONS[number]
 
 export type Graphics = Record<SpritePos, string> & {
@@ -137,19 +150,10 @@ export type GraphicsTransition = {
   duration: number
   onFinish: VoidFunction
 }
-export type NoMethods<T> = { [P in keyof T as T[P] extends Function ? never : P]: T[P] }
 
-export type DivProps = React.HTMLAttributes<HTMLDivElement> & {
-  [x: `${string}-${string}`]: any
-}
-
-export type NumVarName = `%${string}`
-export type StrVarName = `$${string}`
-export type VarName = NumVarName | StrVarName
-
-/****************/
-/*   Flowchart	*/
-/****************/
+/*****************/
+/*   Flowchart   */
+/*****************/
 export type FcNodeAttrs = {
 	col: number
 	from: string[]
