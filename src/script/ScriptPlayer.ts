@@ -193,7 +193,7 @@ export abstract class ScriptPlayerBase<
     private _started: boolean = false;
     private _stopped: boolean = false;
     private _nextLabel: LN|null
-    private _initLabel: LN
+    private _initLabel: LN|null
     private _initPage: number
     private _commands: CommandMap<any>
     private _blockSkipped: boolean = false
@@ -275,7 +275,7 @@ export abstract class ScriptPlayerBase<
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(history: H, init: WithRequired<InitContext<LN>, 'label'>) {
+    constructor(history: H, init: InitContext<LN>) {
         super()
         this._uid = Date.now()
         
@@ -294,8 +294,8 @@ export abstract class ScriptPlayerBase<
         this._commands = new Map()
         this._flags = new Set(flags)
 
-        this._nextLabel = label as LN
-        this._initLabel = label as LN
+        this._nextLabel = label as LN|undefined ?? null
+        this._initLabel = label as LN|undefined ?? null
         ;({
             page           : this._initPage       = 0,
             continueScript : this._continueScript = true,

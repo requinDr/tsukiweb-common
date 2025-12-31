@@ -4,14 +4,17 @@ type ObserverCallback<T, K extends keyof T> = (value: T[K], key: K, obj: T)=>voi
 type Observable = Record<PropertyKey, any>
 
 type Listener<T, K extends keyof T> = {
-  callback: ObserverCallback<T, K>,
+  callback: ObserverCallback<T, K>
   once: boolean
-  filter?: (value: T[K], key: K, obj: T)=>boolean,
+  filter?: (value: T[K], key: K, obj: T)=>boolean
 }
 type ObserverOptions<T, K extends keyof T> = Partial<Omit<Listener<T, K>, 'callback'>>
+type ObserverHookOptions<T, K extends keyof T> = Omit<ObserverOptions<T, K>, 'once'> & (
+  { once?: false, skipFirst?: boolean } |
+  { once: true, skipFirst?: false })
 
 type ChildrenListener<T> = {
-  callback: (prop: keyof T, val: any)=>void,
+  callback: (prop: keyof T, val: any)=>void
   filter?: (prop: keyof T, v: T[keyof T])=>boolean
 }
 type ChildrenObserverOptions<T> = Partial<Omit<ChildrenListener<T>, 'callback'>>
@@ -389,11 +392,11 @@ export function unobserveMultiple<T extends Object, K extends keyof T>(object: T
  */
 export function useObserver<T extends Observable, P extends keyof T>(
     callback: ObserverCallback<T, P>, object: T|ObservableContainer<T>, property: P,
-    options: ObserverOptions<T, P> = {}) {
+    options: ObserverHookOptions<T, P> = {}) {
   useEffect(()=> {
     observe(object as T, property, callback, options)
     const val = (object as T)[property]
-    if (!options.once && (options.filter?.(val, property, object as T) ?? true)) {
+    if (!options.skipFirst && !options.once && (options.filter?.(val, property, object as T) ?? true)) {
       callback(val, property, object as T)
     }
     return unobserve.bind(null, object, property, callback as any) as VoidFunction
