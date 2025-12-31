@@ -397,8 +397,8 @@ export namespace fullscreen {
 		return document.fullscreenElement !== null
 	}
 	export async function toggle() {
-		if (isOn()) return setOn()
-		else return setOff()
+		if (isOn()) return setOff()
+		else return setOn()
 	}
 	export async function setOn() {
 		return document.documentElement.requestFullscreen().catch((err) => {
