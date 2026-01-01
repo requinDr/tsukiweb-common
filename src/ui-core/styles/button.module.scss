@@ -118,7 +118,7 @@
 	}
 
 	&:hover, &:focus-visible {
-		color: var(--active-hover);
+		color: var(--surface-light-active);
 		text-shadow: var(--text-color);
 
 		&::after {

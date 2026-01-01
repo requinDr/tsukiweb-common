@@ -27,11 +27,11 @@
 	white-space: nowrap;
 
 	&:hover, &.active:hover {
-		background-color: var(--active);
+		background-color: var(--surface-light);
 		color: var(--text-color);
 	}
 	&:focus-visible {
-		background-color: var(--focus);
+		background-color: var(--surface-dark);
 	}
 
 	&.active {
@@ -39,7 +39,7 @@
 		background-color: rgb(3 70 102 / 80%);
 	}
 	&:focus-visible.active {
-		background-color: var(--focus);
+		background-color: var(--surface-dark);
 	}
 
 	&:disabled {
