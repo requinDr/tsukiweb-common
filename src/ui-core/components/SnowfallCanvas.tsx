@@ -84,7 +84,7 @@ const SnowfallCanvas = ({ density = 100, speedMultiplier = 1}: Props) => {
 	return (
 		<canvas 
 			ref={canvasRef} 
-			className={styles.snowfall}
+			className={styles.particles}
 		/>
 	)
 }
