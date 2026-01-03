@@ -318,7 +318,8 @@ function moveToTarget(elmt: NavElement, tempGrid?: [number, number]) {
         elmt.setAttribute('nav-temp-grid',
             tempGrid.map(x => Math.abs(x) > 2e-9 ? x : 0).join(','))
         elmt.addEventListener('blur',
-            elmt.removeAttribute.bind(elmt, 'nav-temp-grid'))
+            elmt.removeAttribute.bind(elmt, 'nav-temp-grid'),
+            {once: true, passive: true})
     }
 }
 
