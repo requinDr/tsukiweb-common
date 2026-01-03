@@ -18,28 +18,28 @@ img {
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+	font-size: 3.2em;
+	line-height: 1.1;
 }
 
 a {
-  font-weight: 500;
-  color: var(--color-link);
-  text-decoration: inherit;
+	font-weight: 500;
+	color: var(--color-link);
+	text-decoration: inherit;
 
-  &:hover {
-    text-decoration: underline;
-  }
+	&:hover {
+		text-decoration: underline;
+	}
 }
 
 button {
-  all: unset;
-  user-select: none;
-  box-sizing: border-box;
+	all: unset;
+	user-select: none;
+	box-sizing: border-box;
 
-  &:hover {
-    cursor: pointer;
-  }
+	&:hover {
+		cursor: pointer;
+	}
 }
 
 // not touch devices
@@ -52,8 +52,11 @@ button {
 		border-radius: 4px;
 		background-image: var(--scrollbar-gradient);
 
-    &:hover {
-      background-image: var(--scrollbar-hover);
-    }
+		&:hover {
+			background-image: var(--scrollbar-hover);
+		}
+	}
+	*::-webkit-scrollbar-corner {
+		background: transparent;
 	}
 }
