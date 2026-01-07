@@ -31,7 +31,8 @@ async function applyTransparencyMaskToImage(inputPath, outputPath) {
 		// 3. Apply the mask to the left side (color image)
 		await image
 			.extract({ left: 0, top: 0, width: halfWidth, height: height })
-			.joinChannel(maskBuffer, { force: true })
+			.flatten({ background: { r: 0, g: 0, b: 0 } })
+			.joinChannel(maskBuffer)
 			.png()
 			.toFile(outputPath)
 		
@@ -57,7 +58,7 @@ export async function processImages(inputDir, outputDir) {
 
 		const imageFiles = files.filter(file => {
 			const ext = path.extname(file).toLowerCase()
-			return ext === '.jpg' || ext === '.jpeg'
+			return ext === '.jpg' || ext === '.jpeg' || ext === '.png'
 		})
 
 		const totalImages = imageFiles.length
