@@ -243,7 +243,7 @@ class NavHandler {
     }
 }
 
-function isElmentVisible(elmt: Element) {
+function isElmtVisible(elmt: Element) {
     if (elmt instanceof HTMLElement)
         return elmt.offsetParent != null
     else if (elmt instanceof SVGElement && elmt.ownerSVGElement)
@@ -252,23 +252,8 @@ function isElmentVisible(elmt: Element) {
     return false
 }
 
-function getNavParent(elmt: Element | null): NavElement {
-    let parent: Element = elmt?.parentElement ?? document.body
-    let roots = Array(parent.querySelectorAll('*[nav-root]')).reverse()
-    if (roots.length > 0) {
-        for (let r of roots) {
-            if (isElmentVisible(r as unknown as Element))
-                return r as unknown as NavElement
-        }
-    }
-    while (!isNavRoot(parent) && !isNavElmt(parent)) {
-        parent = parent.parentElement ?? document.body
-    }
-    return parent as NavElement
-}
-
 function isNavRoot(elmt: Element): elmt is NavRootElement | HTMLBodyElement {
-    return elmt.hasAttribute('nav-root') || elmt == document.body
+    return elmt.hasAttribute('nav-root') || elmt === document.body
 }
 
 function isNavElmt(elmt: Element, gridOnly = false): elmt is NavElement {
@@ -276,6 +261,23 @@ function isNavElmt(elmt: Element, gridOnly = false): elmt is NavElement {
         elmt.hasAttribute('nav-x') ||
         elmt.hasAttribute('nav-y') ||
         ((!gridOnly) && elmt.hasAttribute('nav-auto')))
+}
+
+function getNavParent(elmt: Element | null): NavElement {
+    // Walk up the tree to check if we're inside a nav-root
+    let current = elmt
+    while (current && current !== document.body) {
+        if (isNavRoot(current)) return current
+        current = current.parentElement
+    }
+    
+    // If not inside a nav-root, look for a nav-root in the document
+    const roots = document.querySelectorAll('[nav-root]')
+    for (let i = roots.length - 1; i >= 0; i--) {
+        if (isElmtVisible(roots[i])) return roots[i] as NavElement
+    }
+    
+    return document.body as NavElement
 }
 
 function searchNavElmtOut(from: Element | null) {
@@ -293,7 +295,7 @@ function searchNavElmtsIn(from: Element) {
     const result = []
     let e
     while (e = elements.pop()) {
-        if (isElmentVisible(e) && isNavElmt(e))
+        if (isElmtVisible(e) && isNavElmt(e))
             result.push(e)
         else
             elements.push(...e.children as Iterable<HTMLElement | SVGElement>)
