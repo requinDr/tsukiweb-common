@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useSearchParams } from "react-router";
+import { useCallback, useRef } from 'react'
+import { useSearch } from 'wouter'
 
 /**
  * Hook to manage a query parameter
@@ -8,22 +8,25 @@ import { useSearchParams } from "react-router";
  * @returns A tuple with the current value of the query parameter and a function to update it
  */
 function useQueryParam<T>(paramName: string, initialValue: T): [T, (newValue: T) => void] {
-	const [searchParams, setSearchParams] = useSearchParams()
-
-	const value = useMemo(() => {
-		const paramValue = searchParams.get(paramName)
-		return paramValue !== null ? (paramValue as unknown as T) : initialValue
-	}, [searchParams, paramName, initialValue])
-
-	const updateValue = (newValue: T) => {
-		setSearchParams(prevSearchParams => {
-			const newSearchParams = new URLSearchParams(prevSearchParams);
-			newSearchParams.set(paramName, String(newValue));
-			return newSearchParams;
-		})
+	const search = useSearch()
+	const lastValueRef = useRef<T>(initialValue)
+	
+	const searchParams = new URLSearchParams(search)
+	const paramValue = searchParams.get(paramName)
+	if (paramValue !== null) {
+		lastValueRef.current = paramValue as unknown as T
 	}
 
-	return [value, updateValue]
+	const updateValue = useCallback((newValue: T) => {
+		lastValueRef.current = newValue
+		const searchParams = new URLSearchParams(window.location.search)
+		searchParams.set(paramName, String(newValue))
+		const newUrl = `${window.location.pathname}?${searchParams.toString()}`
+		history.replaceState(null, '', newUrl)
+		window.dispatchEvent(new PopStateEvent('popstate'))
+	}, [paramName])
+
+	return [lastValueRef.current, updateValue]
 }
 
-export default useQueryParam;
+export default useQueryParam

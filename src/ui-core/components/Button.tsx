@@ -1,10 +1,11 @@
-import { Link, LinkProps } from "react-router"
+import { Link } from "wouter"
 import styles from "../styles/button.module.scss"
 import classNames from "classnames"
 import useButtonSounds from "../../hooks/useButtonSounds"
 import { AudioManager } from "../../audio/AudioManager"
 import { NavigationProps } from "../../input/arrowNavigation"
 import { WithRequired } from "../../types"
+import { ComponentProps } from "react"
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement>
@@ -16,10 +17,11 @@ type SoundProps =
 type Props = SoundProps & NavigationProps &{
 	variant?: "default" | "select" | "elevation" | "underline-left" | null
 	active?: boolean
+	className?: string
 } & (
-	| ButtonProps 
-	| WithRequired<LinkProps, 'to'> 
-	| WithRequired<AnchorProps, 'href'>
+	| ButtonProps
+	| (WithRequired<ComponentProps<typeof Link>, 'to'>)
+	| (WithRequired<AnchorProps, 'href'>)
 )
 
 const Button = ({children, className, variant = "default",
@@ -39,7 +41,7 @@ const Button = ({children, className, variant = "default",
 
 	if (to) {
 		return (
-			<Link role="button" className={classes} {...(props as LinkProps)} to={to}>
+			<Link role="button" {...(props as AnchorProps)} className={classes} href={to}>
 				{children}
 			</Link>
 		)
@@ -47,7 +49,7 @@ const Button = ({children, className, variant = "default",
 
 	if (href) {
 		return (
-			<a role="button" className={classes} {...(props as AnchorProps)} href={href}>
+			<a role="button" {...(props as AnchorProps)} className={classes} href={href}>
 				{children}
 			</a>
 		)

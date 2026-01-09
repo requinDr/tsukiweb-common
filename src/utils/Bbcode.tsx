@@ -1,4 +1,4 @@
-import { Link } from "react-router"
+import { Link } from "wouter"
 import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef, JSX, useCallback } from "react"
 import Timer from "./timer"
 import { innerText, TSForceType } from "./utils"
@@ -71,7 +71,7 @@ const url: TagTranslator = (_, content, arg, props?)=> {
 		)
 	else
 		return (
-			<Link to={arg} {...(props || {})} key={props?.key}>
+			<Link href={arg} {...(props || {})} key={props?.key}>
 				{content}
 			</Link>
 		)
