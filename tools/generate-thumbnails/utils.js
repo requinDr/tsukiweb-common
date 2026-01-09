@@ -107,7 +107,7 @@ export async function generateFlowchartImage({ bg, l, c, r, monochrome, width, h
 		// Create a monochrome layer (this mimics the CSS "mix-blend-mode: multiply")
 		const monochromeLayer = Buffer.from(
 			`<svg width="${width}" height="${height}">
-					<rect x="0" y="0" width="${width}" height="${height}" fill="rgb(${r},${g},${b})"/>
+				<rect x="0" y="0" width="${width}" height="${height}" fill="rgb(${r},${g},${b})"/>
 			</svg>`
 		)
 
@@ -124,10 +124,14 @@ export async function generateFlowchartImage({ bg, l, c, r, monochrome, width, h
 }
 
 // Helper function to generate a spritesheet
+// Returns { nw, nh } - natural width and height of the spritesheet
 export async function saveSpritesheet(thumbnails, outputDir, fileName, thumbWidth, thumbHeight) {
 	const cols = 10 // Number of thumbnails per row
 	const rows = Math.ceil(thumbnails.length / cols)
 	const spritesheetPath = path.join(outputDir, fileName)
+
+	const nw = cols * thumbWidth
+	const nh = rows * thumbHeight
 
 	const compositeImages = thumbnails.map((thumb, i) => ({
 		input: thumb,
@@ -137,8 +141,8 @@ export async function saveSpritesheet(thumbnails, outputDir, fileName, thumbWidt
 
 	const canvas = {
 		create: {
-			width: cols * thumbWidth,
-			height: rows * thumbHeight,
+			width: nw,
+			height: nh,
 			channels: 4,
 			background: { r: 0, g: 0, b: 0, alpha: 0 },
 		},
@@ -157,4 +161,6 @@ export async function saveSpritesheet(thumbnails, outputDir, fileName, thumbWidt
 		.toFile(spritesheetPath + ".webp")
 
 	await Promise.all([avifPromise, webpPromise])
+
+	return { nw, nh }
 }

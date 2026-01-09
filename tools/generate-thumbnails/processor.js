@@ -61,6 +61,7 @@ export async function processScenes(scenes, inputImagesPath, outputDir, outputDi
 	let jsonMetadata = {
 		d: { w: width, h: height },
 		f: [],
+		s: [], // spritesheet dimensions: [nw, nh] for each spritesheet
 		i: {}
 	}
 	let batchIndex = 0
@@ -70,7 +71,13 @@ export async function processScenes(scenes, inputImagesPath, outputDir, outputDi
 	const saveBatch = async () => {
 		if (thumbnailsInCurrentBatch.length === 0) return
 		const fileName = `spritesheet_${batchIndex}`
-		batchSavePromises.push(saveSpritesheet(thumbnailsInCurrentBatch, outputDir, fileName, width, height))
+		const currentBatchIndex = batchIndex
+		batchSavePromises.push(
+			saveSpritesheet(thumbnailsInCurrentBatch, outputDir, fileName, width, height)
+				.then(({ nw, nh }) => {
+					jsonMetadata.s[currentBatchIndex] = [nw, nh]
+				})
+		)
 		thumbnailsInCurrentBatch = []
 		batchIndex++
 	}
