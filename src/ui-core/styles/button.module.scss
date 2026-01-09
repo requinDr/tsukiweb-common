@@ -87,7 +87,7 @@
 	}
 	&:disabled {
 		--btn-select-accent: var(--text-color);
-		--btn-select-bg: rgba(255, 255, 255, 0.2);
+		--btn-select-bg: rgb(255 255 255 / 0.2);
 		opacity: 0.8;
 	}
 }
@@ -100,7 +100,7 @@
 	position: relative;
 	padding: 2px 6px;
 	letter-spacing: 1px;
-	--underline: linear-gradient(to right, var(--surface-light-active) 75%, rgba(10, 158, 171, 0));
+	--underline: linear-gradient(to right, var(--surface-light-active) 75%, rgb(10 158 171 / 0));
 
 	&::after {
 		content: "";
