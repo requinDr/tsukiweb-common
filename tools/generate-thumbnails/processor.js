@@ -59,9 +59,9 @@ export async function processScenes(scenes, inputImagesPath, outputDir, outputDi
 	console.log()
 	logProgress('Assembling spritesheets...')
 	let jsonMetadata = {
-		d: { w: width, h: height },
 		f: [],
 		s: [], // spritesheet dimensions: [nw, nh] for each spritesheet
+		d: [width, height],
 		i: {}
 	}
 	let batchIndex = 0
