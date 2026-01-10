@@ -1,54 +1,85 @@
-/* Overlay */
-.overlay {
-	position: fixed;
-	inset: 0;
-	display: flex;
-	justify-content: center;
-	z-index: 100;
-	backdrop-filter: blur(1px);
-}
 .modal {
-	background-color: var(--surface-dark);
-	flex: 1;
-	max-width: 880px;
-	width: 100%;
-	align-self: center;
-	border-radius: 3px;
-	min-height: min(100%, 54vh);
-	margin: 0.5rem;
-	padding: 2em;
-	border: 1px solid var(--surface-light);
-	max-height: 80vh;
-	overflow-y: auto;
+	position: fixed; 
+	inset: 0;
+
 	display: flex;
 	flex-direction: column;
+	align-self: center;
+	justify-self: center;
+	color: inherit;
+	background-color: var(--surface-dark);
+	border-radius: 3px;
+	border: 1px solid var(--surface-light);
+	max-width: 880px;
+	width: calc(100% - 1em);
+	min-height: min(100%, 54vh);
+	max-height: 80vh;
+	padding: 2em;
+	overflow-y: auto;
 	outline: none;
-	position: relative;
 	isolation: isolate;
-	font-size: 1.1em;
+	font-size: 1.1rem;
+
+	opacity: 0;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+
+	&[open] {
+		opacity: 1;
+		pointer-events: auto;
+		animation: fadeIn 0.2s ease forwards;
+
+		&::backdrop {
+			animation: fadeIn 0.2s ease forwards;
+		}
+	}
+
+	&.isClosing {
+		animation: fadeOut 0.2s ease forwards;
+		&::backdrop {
+			animation: fadeOut 0.2s ease forwards;
+		}
+	}
+
+	&::backdrop {
+		background: transparent;
+		backdrop-filter: blur(1px);
+		opacity: 0;
+	}
 }
 
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+
+
 .prompt {
-	// beautiful red #760101
 	--prompt-color: #012f76;
-	align-self: center;
-	margin: 1em;
+	padding: 0;
+	border: none;
 	width: min(500px, 100%);
+	min-height: unset;
 	display: grid;
 	text-align: center;
 	text-wrap: balance;
 	user-select: none;
 	font-size: 1.1em;
+	background-color: var(--prompt-color);
+	box-shadow: 0 0 1em hsl(0deg 0% 0% / 60%);
+	display: grid;
+	grid-template-rows: 1fr auto;
+
+	&[open] {
+		animation: popIn 0.2s ease forwards;
+	}
 
 	&:focus-visible {
 		outline: none;
-	}
-
-	.promptModal {
-		background-color: var(--prompt-color);
-		box-shadow: 0 0 1em hsl(0deg 0% 0% / 60%);
-		display: grid;
-		grid-template-rows: 1fr auto;
 	}
 
 	.body {
@@ -78,4 +109,9 @@
 			align-self: center;
 		}
 	}
+}
+
+@keyframes popIn {
+	from { opacity: 0; transform: translateY(-10px); }
+	to { opacity: 1; transform: translateY(0); }
 }

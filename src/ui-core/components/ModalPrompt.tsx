@@ -1,11 +1,9 @@
-import React, { ReactNode, useCallback, useState } from "react"
+import React, { ComponentProps, ReactNode, useCallback, useState } from "react"
 import classNames from "classnames"
 import Button from "./Button"
-import ReactModal, { Styles } from "react-modal"
 import styles from '../styles/modal.module.scss'
 import { createRoot } from 'react-dom/client'
-import { LazyMotion, domAnimation } from 'motion/react';
-import * as m from "motion/react-m"
+import Modal from "./Modal"
 
 type Props = {
 	display: boolean
@@ -14,7 +12,7 @@ type Props = {
 	labelNo: string
 	onYes: () => void
 	onNo: () => void
-	style?: Styles["content"]
+	style?: ComponentProps<typeof Modal>['style']
 }
 const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, style}: Props) => {
 
@@ -26,35 +24,24 @@ const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, style}: Pro
 	}
 
 	return (
-		<ReactModal
-			isOpen={display}
-			shouldCloseOnOverlayClick={true}
+		<Modal
+			show={display}
 			onRequestClose={handleNo}
 			className={classNames(styles.prompt)}
-			overlayClassName={classNames(`${styles.overlay} overlay`)}
-			ariaHideApp={false}
-			style={{content: style}}
+			style={style}
 		>
-			<m.div
-				className={styles.promptModal}
-				initial={{ translateY: "-1em", opacity: 0 }}
-				animate={{ translateY: 0, opacity: 1 }}
-			>
-				<div className={styles.body}>
-					{text}
-				</div>
+			<div className={styles.body}>
+				{text}
+			</div>
 
-				<div className={styles.buttons}>
-					<Button onClick={handleYes}>{labelYes}</Button>
-					{labelNo && (
-						<>
-							<div className={styles.separator} />
-							<Button onClick={handleNo}>{labelNo}</Button>
-						</>
-					)}
-				</div>
-			</m.div>
-		</ReactModal>
+			<div className={styles.buttons}>
+				<Button onClick={handleYes} nav-auto={1}>{labelYes}</Button>
+				{labelNo && (<>
+					<div className={styles.separator} />
+					<Button onClick={handleNo} nav-auto={1}>{labelNo}</Button>
+				</>)}
+			</div>
+		</Modal>
 	)
 }
 
@@ -205,9 +192,7 @@ export const mountModalManager = (): void => {
 	const { root } = initializeModalContainer()
 	if (root) {
 		root.render(
-			<LazyMotion features={domAnimation} strict>
-				<ModalManager />
-			</LazyMotion>
+			<ModalManager />
 		)
 	}
 }
