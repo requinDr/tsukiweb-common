@@ -88,7 +88,7 @@ export class StoredJSON extends Stored {
     return obj
   }
 
-  fromDiff(diff: JSONObject | PartialJSON) {
+  protected restore(diff: JSONObject | PartialJSON) {
     if (this.#diffRef)
       diff = jsonMerge(diff, this.#diffRef)
     deepAssign(this, diff)
@@ -105,7 +105,7 @@ export class StoredJSON extends Stored {
   }
 
   protected deserializeFromStorage(str: string): void {
-    this.fromDiff(JSON.parse(str))
+    this.restore(JSON.parse(str))
   }
 }
 
