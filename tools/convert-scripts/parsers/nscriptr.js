@@ -1,4 +1,4 @@
-import {StrReader, TextToken, CommandToken, ReturnToken, LabelToken, ConditionToken, ErrorToken} from "./utils.js"
+import {StrReader, Token, TextToken, CommandToken, ReturnToken, LabelToken, ConditionToken, ErrorToken} from "./utils.js"
 
 const CONDITION_REGEXP = /((^|\s*[&<>!=]*)\s*([%$\d-]\w*|fchk|"[^"]"))*/
 // [%$]X*|N* <=!> [%$]X*|N* (&& ...)*
@@ -151,6 +151,7 @@ const tokensRE = new Map(Object.entries({
 /**
  * @param {string} text 
  * @param {number} singleLineIndex
+ * @returns {Token[]}
  */
 function parseScript(text, singleLineIndex = -1) {
     const reader = new StrReader(text)

@@ -55,8 +55,8 @@ export type VarType<T extends NumVarName|StrVarName> =
 //#region                        COMMANDS TOOLS
 //##############################################################################
 
-// (%var|n) (op) (%var|n)
-const opRegexp = /\s*(?<lhs>(%\w+|\d+))\s*(?<op>[=!><]+)\s*(?<rhs>(%\w+|\d+))\s*/
+// (%var|n) [(op) (%var|n)]?
+const opRegexp = /\s*(?<lhs>(%\w+|\d+))\s*((?<op>[=!><]+)\s*(?<rhs>(%\w+|\d+)))?\s*/
 const sepRegexp = /(?<=&&|\|\|)|(?=&&|\|\|)/
 export function checkIfCondition(condition: string, script: SPB) {
 	let value = true
@@ -68,16 +68,20 @@ export function checkIfCondition(condition: string, script: SPB) {
 				`Unable to parse expression "${token}" in condition ${condition}`)
 
 			let {lhs: _lhs, op, rhs: _rhs} = match.groups as any
-			const lhs = _lhs.startsWith("%")? script.readVariable(_lhs) : parseInt(_lhs)
-			const rhs = _rhs.startsWith("%")? script.readVariable(_rhs) : parseInt(_rhs)
+			const lhs =
+				_lhs.startsWith("%")? script.readVariable(_lhs) : parseInt(_lhs)
+			const rhs = _rhs ?
+				_rhs.startsWith("%")? script.readVariable(_rhs) : parseInt(_rhs)
+				: undefined
 
 			switch (op) {
 				case '==' : value = (lhs == rhs); break
 				case '!=' : value = (lhs != rhs); break
-				case '<'  : value = (lhs <  rhs); break
-				case '>'  : value = (lhs >  rhs); break
-				case '<=' : value = (lhs <= rhs); break
-				case '>=' : value = (lhs >= rhs); break
+				case '<'  : value = (lhs <  rhs!); break
+				case '>'  : value = (lhs >  rhs!); break
+				case '<=' : value = (lhs <= rhs!); break
+				case '>=' : value = (lhs >= rhs!); break
+				case undefined : value = !!lhs; break // only one expression
 				default : throw Error (
 					`unknown operator ${op} in condition ${condition}`)
 			}
