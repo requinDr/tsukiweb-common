@@ -64,7 +64,6 @@
 	border: none;
 	width: min(500px, 100%);
 	min-height: unset;
-	display: grid;
 	text-align: center;
 	text-wrap: balance;
 	user-select: none;
@@ -73,6 +72,8 @@
 	box-shadow: 0 0 1em hsl(0deg 0% 0% / 60%);
 	display: grid;
 	grid-template-rows: 1fr auto;
+	height: fit-content;
+	margin: auto;
 
 	&[open] {
 		animation: popIn 0.2s ease forwards;

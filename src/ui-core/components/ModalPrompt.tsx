@@ -82,8 +82,6 @@ let rootInstance: Root | null = null
 export const mountDialogManager = () => {
 	if (typeof document !== 'undefined' && !rootInstance) {
 		const container = document.createElement('div')
-		container.id = 'dialog-prompt-container'
-		document.body.appendChild(container)
 		rootInstance = createRoot(container)
 		rootInstance.render(<DialogManager />)
 	}

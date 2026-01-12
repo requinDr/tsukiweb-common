@@ -12,7 +12,8 @@
 	justify-content: center;
 	color: var(--text-color);
 	padding: .3rem .8rem;
-	transition: 0.2s;
+	border-radius: 3px;
+	transition: box-shadow 0.2s;
 
 	&:hover,
 	&:focus-visible {
