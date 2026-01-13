@@ -32,10 +32,10 @@ export class Settings extends StoredJSON {
   savedHistoryLength: number = 10
 
   lastFullExport = {
-    date: 0,
+    date: Date.now(),
     hash: 0
   }
-  localStorageWarningDelay: number = 2 * 24 * 60 * 60 * 1000 // 2 days
+  localStorageWarningDelay: number = 3 * 24 * 60 * 60 * 1000 // 3 days
 
   completedScenes: Array<string> = new Array()
 
