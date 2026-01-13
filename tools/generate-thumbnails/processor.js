@@ -7,113 +7,81 @@ const IMAGE_FORMAT = 'avif'
 const BATCH_SIZE = 90
 const THUMB_WIDTH = 108
 const THUMB_HEIGHT = 72
-const ensureExtension = (filePath) => (filePath ? `${filePath}.${IMAGE_FORMAT}` : null)
 
-export async function processScenes(scenes, inputImagesPath, outputDir, outputDirMetadata, width = THUMB_WIDTH, height = THUMB_HEIGHT) {
-	if (!fs.existsSync(outputDir)) {
-		fs.mkdirSync(outputDir, { recursive: true })
-	}
+const getPath = (img, dir) => img && !isHexColor(img) ? path.join(dir, `${img}.${IMAGE_FORMAT}`) : img
+
+export async function processScenes(scenes, inputDir, outputDir, metaDir, width = THUMB_WIDTH, height = THUMB_HEIGHT) {
+	if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true })
 
 	// 1. Filter scenes that need processing
-	const validSceneEntries = Object.entries(scenes).filter(
+	const validScenes = Object.entries(scenes).filter(
 		([, sceneData]) => sceneData?.fc?.hasOwnProperty('col') && sceneData?.fc?.graph
 	)
+	const uniqueThumbs = new Map()
+	const sceneToKey = new Map()
 
-	const totalScenes = validSceneEntries.length
-	let processedCount = 0
-
-	const updateProgress = () => {
-		processedCount++
-		logProgress(`Generating thumbnails: ${processedCount}/${totalScenes}`)
+	// 2. Identify unique thumbnails
+	for (const [name, { fc }] of validScenes) {
+		const key = JSON.stringify({ ...fc.graph, bg: fc.graph.bg || '#000000' })
+		uniqueThumbs.set(key, null)
+		sceneToKey.set(name, key)
 	}
 
-	// 2. Create an array of promises for image generation
-	const thumbnailPromises = validSceneEntries.map(([sceneName, sceneData]) => {
-		const { graph } = sceneData.fc
-		const { l = null, c = null, r = null, monochrome = null } = graph
-		const bg = graph.bg || '#000000'
+	const uniqueCount = uniqueThumbs.size
+	const duplicateCount = validScenes.length - uniqueCount
+	let processed = 0
 
-		return generateFlowchartImage({
-			bg: isHexColor(bg) ? bg : path.join(inputImagesPath, ensureExtension(bg)),
-			l: l ? path.join(inputImagesPath, ensureExtension(l)) : null,
-			c: c ? path.join(inputImagesPath, ensureExtension(c)) : null,
-			r: r ? path.join(inputImagesPath, ensureExtension(r)) : null,
-			monochrome,
-			width,
-			height,
-		})
-			.then((buffer) => {
-				updateProgress()
-				return buffer
+	// 3. Generate sprites
+	await Promise.all([...uniqueThumbs.keys()].map(async (key) => {
+		try {
+			const g = JSON.parse(key)
+			const buffer = await generateFlowchartImage({
+				bg: getPath(g.bg, inputDir),
+				l: getPath(g.l, inputDir),
+				c: getPath(g.c, inputDir),
+				r: getPath(g.r, inputDir),
+				monochrome: g.monochrome,
+				width, height
 			})
-			.catch((error) => {
-				logError(`Error processing scene ${sceneName}: ${error.message}`)
-				return null
-			})
-	})
+			uniqueThumbs.set(key, buffer)
+			logProgress(`Generating thumbnails: ${++processed}/${uniqueCount} (${duplicateCount} duplicates)`)
+		} catch (e) { logError(`Error processing thumbnail: ${e.message}`) }
+	}))
 
-	// 3. Run all promises in parallel
-	const allThumbBuffers = await Promise.all(thumbnailPromises)
-
-	// 4. Assemble spritesheets from the results
 	console.log()
 	logProgress('Assembling spritesheets...')
-	let jsonMetadata = {
-		f: [],
-		s: [], // spritesheet dimensions: [nw, nh] for each spritesheet
-		d: [width, height],
-		i: {}
-	}
-	let batchIndex = 0
-	let thumbnailsInCurrentBatch = []
-	const batchSavePromises = []
 
-	const saveBatch = async () => {
-		if (thumbnailsInCurrentBatch.length === 0) return
-		const fileName = `spritesheet_${batchIndex}`
-		const currentBatchIndex = batchIndex
-		batchSavePromises.push(
-			saveSpritesheet(thumbnailsInCurrentBatch, outputDir, fileName, width, height)
-				.then(({ nw, nh }) => {
-					jsonMetadata.s[currentBatchIndex] = [nw, nh]
-				})
-		)
-		thumbnailsInCurrentBatch = []
-		batchIndex++
+	// 4. Assemble spritesheets and metadata
+	const meta = { f: [], s: [], d: [width, height], i: {} }
+	const thumbPositions = new Map()
+	let currentBatch = []
+	const saves = []
+
+	const flushBatch = () => {
+		const idx = meta.f.length
+		const name = `spritesheet_${idx}`
+		meta.f.push(name)
+		saves.push(saveSpritesheet([...currentBatch], outputDir, name, width, height).then(res => meta.s[idx] = [res.nw, res.nh]))
+		currentBatch = []
 	}
 
-	for (let i = 0; i < validSceneEntries.length; i++) {
-		const thumbBuffer = allThumbBuffers[i]
-		if (!thumbBuffer) continue
+	for (const [name] of validScenes) {
+		const key = sceneToKey.get(name)
+		const buffer = uniqueThumbs.get(key)
+		if (!buffer) continue
 
-		const [sceneName] = validSceneEntries[i]
-
-		thumbnailsInCurrentBatch.push(thumbBuffer)
-
-		// Metadata calculation
-		const batchPos = thumbnailsInCurrentBatch.length - 1
-		const fileName = `spritesheet_${batchIndex}`
-		let fileIndex = jsonMetadata.f.indexOf(fileName)
-		if (fileIndex === -1) {
-			fileIndex = jsonMetadata.f.push(fileName) - 1
+		if (!thumbPositions.has(key)) {
+			currentBatch.push(buffer)
+			const bIdx = currentBatch.length - 1
+			thumbPositions.set(key, [Math.floor(bIdx / 10) * height, (bIdx % 10) * width, meta.f.length])
+			if (currentBatch.length === BATCH_SIZE) flushBatch()
 		}
-		jsonMetadata.i[sceneName] = [
-			Math.floor(batchPos / 10) * height,
-			(batchPos % 10) * width,
-			fileIndex,
-		]
-
-		if (thumbnailsInCurrentBatch.length === BATCH_SIZE) {
-			saveBatch()
-		}
+		meta.i[name] = thumbPositions.get(key)
 	}
 
-	// Save remaining thumbnails in the last batch
-	saveBatch()
+	if (currentBatch.length) flushBatch()
+	await Promise.all(saves)
 
-	await Promise.all(batchSavePromises)
-
-	const metadataPath = path.join(outputDirMetadata, 'spritesheet_metadata.json')
-	fs.writeFileSync(metadataPath, JSON.stringify(jsonMetadata))
+	fs.writeFileSync(path.join(metaDir, 'spritesheet_metadata.json'), JSON.stringify(meta))
 	logProgress('Spritesheets assembled.\n')
 }
