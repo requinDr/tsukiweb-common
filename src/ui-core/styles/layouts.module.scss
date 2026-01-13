@@ -13,7 +13,7 @@
 
 .pageTitle {
 	padding-inline: var(--page-padding);
-	font-size: clamp(2.2rem, 8vmin, 3rem);
+	font-size: clamp(2.2rem, 5vmin, 3rem);
 	letter-spacing: -1px;
 	margin-block: 0;
 	font-family: "Times New Roman", "Times-Roman", serif;
@@ -57,6 +57,19 @@
 					"tabs content"
 					"back-button content";
 			grid-template-rows: auto 1fr auto;
+		}
+	}
+	@media screen and (max-width: 760px) and (orientation: portrait) {
+		.pageTitle {
+			margin-bottom: 0;
+		}
+		main {
+			grid-template-areas:
+				"tabs tabs"
+				"content content"
+				"back-button page-title";
+			grid-template-columns: 1fr min-content;
+			grid-template-rows: auto 3fr min-content;
 		}
 	}
 }
