@@ -7,15 +7,11 @@
 	z-index: -1;
 	pointer-events: none;
 	overflow: hidden;
+	opacity: 0.5;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.particles {
 		display: none;
-	}
-}
-@media (pointer: coarse) {
-	.particles {
-		opacity: 0.5;
 	}
 }

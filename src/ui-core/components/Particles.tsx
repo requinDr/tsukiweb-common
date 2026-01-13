@@ -119,7 +119,7 @@ const Particles = () => {
 		}
 	}, [])
 
-	return <canvas ref={canvasRef} className={styles.particles} style={{ opacity: 0.6 }} />
+	return <canvas ref={canvasRef} className={styles.particles} />
 }
 
 export default memo(Particles)
