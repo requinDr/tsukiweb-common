@@ -1,185 +1,125 @@
 import { memo, useEffect, useRef } from "react"
 import styles from "../styles/particles.module.scss"
 
-const PARTICLE_COUNT = 50
-const PARTICLE_BASE_SIZE = 8
-const PARTICLE_COLOR = { h: 180, s: 100, l: 80 }
+const PARTICLE_COUNT = 40
+const PARTICLE_BASE_SIZE = 3
+const COLOR = "153, 255, 255"
+const MOUSE_RADIUS = 100
 
 interface Particle {
-	size: number
-	fromX: number
-	toX: number
-	startY: number
-	endY: number
-	moveDuration: number
-	moveDelay: number
-	scaleDelay: number
-	startTime: number
+	x: number; y: number; vx: number; vy: number;
+	baseSize: number; life: number; vLife: number;
 }
 
-function createParticle(): Particle {
-	const size = Math.floor(Math.random() * PARTICLE_BASE_SIZE) + 1
-	const startY = 100 + Math.random() * 10
-	const endOvershoot = 10 + Math.random() * 20
-	const fromX = Math.random() * 100
-	const deltaX = Math.random() * 30 - 15
-	const toX = Math.max(0, Math.min(100, fromX + deltaX))
-
-	const oldTopOvershoot = Math.random() * 30
-	const oldLen = startY + (startY + oldTopOvershoot)
-	const newLen = startY + endOvershoot
-	const baseDuration = 22000 + Math.random() * 7000
-	const moveDuration = baseDuration * (newLen / oldLen)
-
-	return {
-		size,
-		fromX,
-		toX,
-		startY,
-		endY: endOvershoot,
-		moveDuration,
-		moveDelay: Math.random() * 37000,
-		scaleDelay: Math.random() * 4000,
-		startTime: 0,
-	}
-}
-
-function getScale(time: number, scaleDelay: number): number {
-	const scaleDuration = 2000
-	const adjustedTime = Math.max(0, time - scaleDelay)
-	const cycleTime = adjustedTime % scaleDuration
-	const t = cycleTime / scaleDuration
-
-	// 0% -> 0.4, 50% -> 2.2, 100% -> 0.4
-	if (t < 0.5) {
-		return 0.4 + (2.2 - 0.4) * (t / 0.5)
-	} else {
-		return 2.2 - (2.2 - 0.4) * ((t - 0.5) / 0.5)
-	}
-}
-
-function getMaskAlpha(yPercent: number): number {
-	// Mask: linear-gradient(to top, black 0%, transparent 60%)
-	// At y=100% (bottom), alpha=1; at y=40% and above, alpha=0
-	if (yPercent >= 100) return 1
-	if (yPercent <= 40) return 0
-	return (yPercent - 40) / 60
-}
-
+/**
+ * Interactive particles that react to the mouse and gyro
+ */
 const Particles = () => {
 	const canvasRef = useRef<HTMLCanvasElement>(null)
-	const particlesRef = useRef<Particle[]>([])
-	const animationRef = useRef<number>(0)
-	const reducedMotionRef = useRef(false)
+	const pointer = useRef({ x: -1000, y: -1000 })
+	const tilt = useRef(0)
+	const particles = useRef<Particle[]>([])
+	const dimensions = useRef({ width: 0, height: 0 })
+	const raf = useRef<number>(0)
 
 	useEffect(() => {
 		const canvas = canvasRef.current
 		if (!canvas) return
-
 		const ctx = canvas.getContext("2d", { alpha: true })
 		if (!ctx) return
 
-		const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
-		reducedMotionRef.current = mediaQuery.matches
+		const initParticle = (first = false): Particle => ({
+			x: Math.random() * dimensions.current.width,
+			y: dimensions.current.height + (first ? Math.random() * 600 : 20),
+			vx: (Math.random() - 0.5) * 0.4,
+			vy: -(Math.random() * 0.4 + 0.2),
+			baseSize: Math.random() * PARTICLE_BASE_SIZE + 1,
+			life: 0,
+			vLife: 0.001 + Math.random() * 0.002,
+		})
 
-		const handleMotionChange = (e: MediaQueryListEvent) => {
-			reducedMotionRef.current = e.matches
+		const onOrientation = (e: DeviceOrientationEvent) => {
+			if (e.gamma !== null) tilt.current = e.gamma / 45
 		}
-		mediaQuery.addEventListener("change", handleMotionChange)
 
-		particlesRef.current = Array.from({ length: PARTICLE_COUNT }, createParticle)
-
-		const handleResize = () => {
-			const dpr = window.devicePixelRatio || 1
+		const resize = () => {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2)
 			const rect = canvas.getBoundingClientRect()
-			canvas.width = rect.width * dpr
-			canvas.height = rect.height * dpr
+			dimensions.current.width = rect.width
+			dimensions.current.height = rect.height
+			canvas.width = Math.floor(rect.width * dpr)
+			canvas.height = Math.floor(rect.height * dpr)
+			ctx.setTransform(1, 0, 0, 1, 0, 0)
 			ctx.scale(dpr, dpr)
+			particles.current = Array.from({ length: PARTICLE_COUNT }, () => initParticle(true))
 		}
 
-		handleResize()
-		window.addEventListener("resize", handleResize)
-
-		let startTime: number | null = null
-
-		const draw = (timestamp: number) => {
-			if (reducedMotionRef.current) {
-				return
-			}
-
-			if (startTime === null) {
-				startTime = timestamp
-				// Initialize particle start times
-				particlesRef.current.forEach((p) => {
-					p.startTime = timestamp + p.moveDelay
-				})
-			}
-
+		const onPointerMove = (e: PointerEvent) => {
 			const rect = canvas.getBoundingClientRect()
-			ctx.clearRect(0, 0, rect.width, rect.height)
+			pointer.current.x = e.clientX - rect.left
+			pointer.current.y = e.clientY - rect.top
+		}
 
-			// Set blend mode for screen effect
-			ctx.globalCompositeOperation = "screen"
+		// Only listen to device orientation if permission is not required
+		// don't want to disrupt the user experience with a permission prompt
+		if (typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
+			window.addEventListener("deviceorientation", onOrientation)
+		}
 
-			particlesRef.current.forEach((particle) => {
-				const elapsed = timestamp - particle.startTime
+		resize()
+		window.addEventListener("resize", resize)
+		window.addEventListener("pointermove", onPointerMove)
 
-				if (elapsed < 0) {
-					// Particle hasn't started yet
-					return
+		const draw = () => {
+			ctx.clearRect(0, 0, dimensions.current.width, dimensions.current.height)
+
+			for (let i = 0; i < particles.current.length; i++) {
+				const p = particles.current[i]
+				const dx = pointer.current.x - p.x
+				const dy = pointer.current.y - p.y
+				const distSq = dx * dx + dy * dy
+
+				if (distSq < MOUSE_RADIUS * MOUSE_RADIUS) {
+					const force = (MOUSE_RADIUS - Math.sqrt(distSq)) / MOUSE_RADIUS
+					p.x -= dx * force * 0.05
+					p.y -= dy * force * 0.05
 				}
 
-				// Calculate progress (0 to 1) with looping
-				const cycleTime = elapsed % particle.moveDuration
-				const progress = cycleTime / particle.moveDuration
+				p.x += p.vx + tilt.current
+				p.y += p.vy
+				p.life += p.vLife
 
-				// Calculate position
-				const xPercent = particle.fromX + (particle.toX - particle.fromX) * progress
-				const yPercent = particle.startY + (particle.endY - particle.startY) * progress
+				if (p.y < -20 || p.life > 1) {
+					particles.current[i] = initParticle()
+					continue
+				}
 
-				const x = (xPercent / 100) * rect.width
-				const y = (yPercent / 100) * rect.height
+				let alpha = 1
+				if (p.life < 0.1) alpha = p.life / 0.1
+				else if (p.life > 0.8) alpha = 1 - (p.life - 0.8) / 0.2
 
-				// Calculate scale
-				const scale = getScale(elapsed, particle.scaleDelay)
-				const scaledSize = particle.size * scale
-
-				// Alpha mask based on Y position
-				const maskAlpha = getMaskAlpha((yPercent / 100) * 100)
-				if (maskAlpha <= 0) return
-
-				const gradient = ctx.createRadialGradient(x, y, 0, x, y, scaledSize)
-				const { h, s, l } = PARTICLE_COLOR
-
-				gradient.addColorStop(0, `hsla(${h}, ${s}%, ${l}%, ${maskAlpha})`)
-				gradient.addColorStop(0.1, `hsla(${h}, ${s}%, ${l}%, ${maskAlpha})`)
-				gradient.addColorStop(0.56, `hsla(${h}, ${s}%, ${l}%, 0)`)
-				gradient.addColorStop(1, `hsla(${h}, ${s}%, ${l}%, 0)`)
+				const opacity = Math.max(0, alpha * 0.6)
+				const size = p.baseSize * (Math.sin(p.life * 10) * 0.4 + 1)
 
 				ctx.beginPath()
-				ctx.arc(x, y, scaledSize, 0, Math.PI * 2)
-				ctx.fillStyle = gradient
+				ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
+				ctx.fillStyle = `rgba(${COLOR}, ${opacity})`
 				ctx.fill()
-			})
-
-			animationRef.current = requestAnimationFrame(draw)
+			}
+			raf.current = requestAnimationFrame(draw)
 		}
 
-		animationRef.current = requestAnimationFrame(draw)
+		raf.current = requestAnimationFrame(draw)
 
 		return () => {
-			cancelAnimationFrame(animationRef.current)
-			window.removeEventListener("resize", handleResize)
-			mediaQuery.removeEventListener("change", handleMotionChange)
+			cancelAnimationFrame(raf.current)
+			window.removeEventListener("resize", resize)
+			window.removeEventListener("pointermove", onPointerMove)
+			window.removeEventListener("deviceorientation", onOrientation)
 		}
 	}, [])
 
-	return (
-		<canvas
-			ref={canvasRef}
-			className={styles.particles}
-		/>
-	)
+	return <canvas ref={canvasRef} className={styles.particles} style={{ opacity: 0.6 }} />
 }
 
 export default memo(Particles)

@@ -1,5 +1,6 @@
 .particles {
 	position: absolute;
+	display: block;
 	inset: 0;
 	width: 100%;
 	height: 100%;
@@ -11,5 +12,10 @@
 @media (prefers-reduced-motion: reduce) {
 	.particles {
 		display: none;
+	}
+}
+@media (pointer: coarse) {
+	.particles {
+		opacity: 0.5;
 	}
 }
