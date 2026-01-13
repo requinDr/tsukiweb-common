@@ -4,8 +4,6 @@
 
 	display: flex;
 	flex-direction: column;
-	align-self: center;
-	justify-self: center;
 	color: inherit;
 	background-color: var(--surface-dark);
 	border-radius: 3px;
@@ -19,9 +17,12 @@
 	outline: none;
 	isolation: isolate;
 	font-size: 1.1rem;
-
 	opacity: 0;
-	transition: opacity 0.2s ease, transform 0.2s ease;
+
+	&::backdrop {
+		background: transparent;
+		backdrop-filter: blur(1px);
+	}
 
 	&[open] {
 		opacity: 1;
@@ -39,12 +40,6 @@
 			animation: fadeOut 0.2s ease forwards;
 		}
 	}
-
-	&::backdrop {
-		background: transparent;
-		backdrop-filter: blur(1px);
-		opacity: 0;
-	}
 }
 
 @keyframes fadeIn {
@@ -59,7 +54,7 @@
 
 
 .prompt {
-	--prompt-color: #012f76;
+	--prompt-color: #0058ae;
 	padding: 0;
 	border: none;
 	width: min(500px, 100%);
@@ -74,6 +69,10 @@
 	grid-template-rows: 1fr auto;
 	height: fit-content;
 	margin: auto;
+
+	&::backdrop {
+		backdrop-filter: unset;
+	}
 
 	&[open] {
 		animation: popIn 0.2s ease forwards;
