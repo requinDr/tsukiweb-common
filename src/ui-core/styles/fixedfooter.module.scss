@@ -3,11 +3,14 @@
   min-height: 60px;
   width: 100%;
   background: var(--surface-dark);
+  background: var(--transparent-layer);
   border-top: 2px solid var(--separator);
   padding: 0.2em 1em 0 1em;
   padding-bottom: var(--safe-area-max-inset-bottom);
   display: flex;
-  z-index: 2;
+  z-index: 10;
+  position: relative;
+  isolation: isolate;
 }
 .footerContent {
   width: var(--page-width);
