@@ -61,3 +61,8 @@ button {
 		background: transparent;
 	}
 }
+
+body.keyboard-navigating,
+body.keyboard-navigating * {
+	cursor: none !important;
+}

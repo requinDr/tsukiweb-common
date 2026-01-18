@@ -304,7 +304,25 @@ function searchNavElmtsIn(from: Element) {
     return result
 }
 
+const KEYBOARD_NAV_CLASS = 'keyboard-navigating'
+let mouseListenerAttached = false
+
+function showCursorOnMouseMove() {
+    document.body.classList.remove(KEYBOARD_NAV_CLASS)
+    window.removeEventListener('mousemove', showCursorOnMouseMove)
+    mouseListenerAttached = false
+}
+
+function hideCursorForKeyboardNav() {
+    document.body.classList.add(KEYBOARD_NAV_CLASS)
+    if (!mouseListenerAttached) {
+        mouseListenerAttached = true
+        window.addEventListener('mousemove', showCursorOnMouseMove)
+    }
+}
+
 function moveToTarget(elmt: NavElement, tempGrid?: [number, number]) {
+    hideCursorForKeyboardNav()
     
     switch (elmt.getAttribute('nav-scroll')) {
         case null : elmt.focus(); break
