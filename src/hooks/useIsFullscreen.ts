@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { fullscreen } from "../utils/utils"
-import { useDOMEvent } from "../hooks/useDOMEvent"
+import { useDOMEvent } from "./useDOMEvent"
 
-const useIsFullscreen = (): boolean => {
+export const useIsFullscreen = (): boolean => {
 	const [isFs, setIsFs] = useState<boolean>(fullscreen.isOn())
 
 	useDOMEvent((_evt)=> {
@@ -11,5 +11,3 @@ const useIsFullscreen = (): boolean => {
 
 	return isFs
 }
-
-export default useIsFullscreen

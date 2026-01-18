@@ -1,7 +1,7 @@
 import { AudioManager } from "../../audio/AudioManager";
 import styles from "../styles/title-menu-button.module.scss"
 import classNames from "classnames";
-import useButtonSounds from "../../hooks/useButtonSounds";
+import { useButtonSounds } from "../../hooks";
 
 type TitleMenuButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &{
 	active?: boolean

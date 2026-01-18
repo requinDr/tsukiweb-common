@@ -7,7 +7,7 @@ interface ButtonSoundConfig {
 	clickSound?: string
 }
 
-const useButtonSounds = <T extends HTMLElement>(
+export const useButtonSounds = <T extends HTMLElement>(
 	audio: AudioManager | undefined,
 	originalProps: HTMLAttributes<T>,
 	sounds: ButtonSoundConfig = {},
@@ -53,5 +53,3 @@ const useButtonSounds = <T extends HTMLElement>(
 		onClick: handleSoundClick,
 	}
 }
-
-export default useButtonSounds

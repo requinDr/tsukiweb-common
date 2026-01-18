@@ -18,7 +18,7 @@ type GraphicTransitionResult = {
 	onAnimationEnd: VoidFunction
 }
 
-function useGraphicTransition(
+export function useGraphicTransition(
 	pos: SpritePos,
 	image: string,
 	transition?: GraphicsTransition
@@ -112,5 +112,3 @@ function useGraphicTransition(
 		prev: undefined
 	}
 }
-
-export default useGraphicTransition

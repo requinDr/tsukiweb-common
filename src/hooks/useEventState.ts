@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Callback = (...args: any)=>void
 
@@ -36,5 +36,3 @@ export function useEventState<T extends EvtTarget>(target: T,
     }, [target, enterEvt, exitEvt])
 	return [status, setStatus] as const
 }
-
-export default useEventState

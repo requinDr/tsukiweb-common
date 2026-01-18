@@ -7,7 +7,7 @@ import { useSearch } from 'wouter'
  * @param initialValue - The initial value of the query parameter
  * @returns A tuple with the current value of the query parameter and a function to update it
  */
-function useQueryParam<T>(paramName: string, initialValue: T): [T, (newValue: T) => void] {
+export function useQueryParam<T>(paramName: string, initialValue: T): [T, (newValue: T) => void] {
 	const search = useSearch()
 	const lastValueRef = useRef<T>(initialValue)
 	
@@ -28,5 +28,3 @@ function useQueryParam<T>(paramName: string, initialValue: T): [T, (newValue: T)
 
 	return [lastValueRef.current, updateValue]
 }
-
-export default useQueryParam

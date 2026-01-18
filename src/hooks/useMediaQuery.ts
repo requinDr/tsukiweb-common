@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
  * @param query The media query string to monitor (e.g., "(min-width: 768px)")
  * @returns boolean indicating if the query matches
  */
-function useMediaQuery(query: string): boolean {
+export function useMediaQuery(query: string): boolean {
 	const [matches, setMatches] = useState<boolean>(() => {
 		if (typeof window !== 'undefined') {
 			return window.matchMedia(query).matches
@@ -31,5 +31,3 @@ function useMediaQuery(query: string): boolean {
 
 	return matches
 }
-
-export default useMediaQuery

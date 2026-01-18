@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react"
 import styles from "../styles/tabs.module.scss"
 import classNames from "classnames"
 import { AudioManager } from "../../audio/AudioManager"
-import useButtonSounds from "../../hooks/useButtonSounds"
+import { useButtonSounds } from "../../hooks"
 
 export type Tab = {
 	label: string,

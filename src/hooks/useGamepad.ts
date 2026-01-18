@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react"
 type Props = {
 	fct: () => void
 }
-const useGamepad = ({fct}: Props) => {
+export const useGamepad = ({fct}: Props) => {
 	const gameLoop = useRef<any>(null)
 
 	function loop() {
@@ -31,5 +31,3 @@ const useGamepad = ({fct}: Props) => {
 		stopLoop()
 	}
 }
-
-export default useGamepad

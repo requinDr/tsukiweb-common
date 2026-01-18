@@ -1,11 +1,11 @@
 import { Link } from "wouter"
 import styles from "../styles/button.module.scss"
 import classNames from "classnames"
-import useButtonSounds from "../../hooks/useButtonSounds"
 import { AudioManager } from "../../audio/AudioManager"
 import { NavigationProps } from "../../input/arrowNavigation"
 import { WithRequired } from "../../types"
 import { ComponentProps } from "react"
+import { useButtonSounds } from "../../hooks"
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 type AnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement>

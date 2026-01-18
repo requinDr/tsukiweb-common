@@ -7,19 +7,19 @@ import { useRef, useEffect } from "react";
  * @param props Properties to watch
  */
 export function useTraceUpdate(prefix: string, props: Record<string, any>) {
-	const prev = useRef<typeof props>(undefined);
+	const prev = useRef<typeof props>(undefined)
 	useEffect(() => {
 		const changedProps = prev.current ? Object.entries(props).reduce((ps, [k, v]) => {
 			if (prev.current![k] !== v) {
-				ps[k] = [prev.current![k], v];
+				ps[k] = [prev.current![k], v]
 			}
-			return ps;
-		}, {} as Record<string, any>) : props;
+			return ps
+		}, {} as Record<string, any>) : props
 		if (Object.keys(changedProps).length > 0) {
-				console.debug(prefix, 'Changed props:', changedProps);
+				console.debug(prefix, 'Changed props:', changedProps)
 			} else {
-			console.debug(prefix, 'No changed props');
+			console.debug(prefix, 'No changed props')
 		}
-		prev.current = props;
-	});
+		prev.current = props
+	})
 }

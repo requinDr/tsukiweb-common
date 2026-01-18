@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
 
+// hide mouse cursor when it has not moved for 5s
+
 type Props = {
 	hideDelay?: number
 }
-
-// hide mouse cursor when it has not moved for 5s
-const useMousePointer = ({hideDelay = 5000}: Props = {})=> {
+export const useMousePointer = ({hideDelay = 5000}: Props = {})=> {
 	const [mouseCursorVisible, setMouseCursorVisible] = useState<boolean>(true)
 
 	useEffect(()=> {
@@ -28,5 +28,3 @@ const useMousePointer = ({hideDelay = 5000}: Props = {})=> {
 
 	return mouseCursorVisible
 }
-
-export default useMousePointer
