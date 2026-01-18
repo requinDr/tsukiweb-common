@@ -50,7 +50,8 @@ class GestureHandler {
     if (scrollDir != "" && getScrollableParent(evt.target as HTMLElement, [scrollDir]) != null)
       this.cancel()
     else if (this.swipeListener?.(dir, dist, evt, dx, dy)) {
-      evt.preventDefault()
+      if (evt.cancelable)
+        evt.preventDefault()
       this.cancel()
     }
   }
