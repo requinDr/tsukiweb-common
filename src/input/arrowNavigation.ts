@@ -19,6 +19,7 @@ type NavXElement = (HTMLElement | SVGElement) & _NavXElement
 type NavYElement = (HTMLElement | SVGElement) & _NavYElement
 type NavAutoElement = (HTMLElement | SVGElement) & _NavAutoElement
 type NavRootElement = ((HTMLElement | SVGElement) & _NavRootElement) | HTMLBodyElement
+type DisableableElement = HTMLElement & {disabled: boolean}
 
 type NavElement = (NavXElement | NavYElement | NavAutoElement | NavRootElement)
 
@@ -257,7 +258,7 @@ function isNavRoot(elmt: Element): elmt is NavRootElement | HTMLBodyElement {
 }
 
 function isNavElmt(elmt: Element, gridOnly = false): elmt is NavElement {
-    return elmt != null && (
+    return elmt != null && (elmt instanceof HTMLElement ? !(elmt as DisableableElement).disabled : true) && (
         elmt.hasAttribute('nav-x') ||
         elmt.hasAttribute('nav-y') ||
         ((!gridOnly) && elmt.hasAttribute('nav-auto')))

@@ -46,11 +46,19 @@ export class Settings extends StoredJSON {
   constructor(name: string, saveOnBlur: boolean = true, saveDelay = 0) {
     super(name, false, saveOnBlur)
     this.#saveDelay = saveDelay
+    // If no child class, finish initialization now. Children classes
+    // should call `init()` after calling the constructor.
+    // It ensures that all attributes are created before listing the attributes,
+    // restoring the values and creating a reference to make diffs.
+    // If the child class can be a parent class, copy this test.
+    if (this.constructor == Settings)
+      this.init()
+  }
+  protected init() {
     this.setAsDiffReference()
     this.restoreFromStorage()
-    
-    const postPoneSave = this.postPoneSave.bind(this)
 
+    const postPoneSave = this.postPoneSave.bind(this)
     for (const key of this.listAttributes()) {
       if (typeof this[key] == "object")
         observeChildren(this, key, postPoneSave)
