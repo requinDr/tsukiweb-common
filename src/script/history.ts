@@ -41,7 +41,7 @@ class DiffSaveQueue<D extends JSONObject, T extends PartialJSON<D>> extends Queu
   exportJSON(start: number = 0, stop: number = this.length):
       [] | [JSONDiff<T, D>] | [JSONDiff<T, D>, ...PartialJSON<T>[], JSONDiff<T, D>]  {
     return Array.from(this.all().slice(start, stop), (e, i)=>
-      (i == 0 || i == stop-1) ? this.diff(e, this._defaultValue)
+      (i == 0 || i == (stop - start - 1)) ? this.diff(e, this._defaultValue)
                               : this.diff(e, this.get(i-1)!)
     ) as any
   }
