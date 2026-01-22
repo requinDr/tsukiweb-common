@@ -1,6 +1,7 @@
 import { AssetsMap } from "../utils/AssetsMap"
 import { asyncDelay } from "../utils/timer"
 import { AudioSourceNode, Sound} from "./AudioSourceNode"
+import { StreamingAudioNode } from "./StreamingAudioNode"
 import { AutoMuteAudioContext } from "./AutoMuteContext"
 
 const effects: Record<string, Sound> = {
@@ -72,6 +73,7 @@ export class AudioAssetsMap<Key> extends AssetsMap<Key, AudioBuffer> {
 
 export class AudioManager {
     private _assetsMap: AudioAssetsMap<string>
+    private _idToUrl: (id: string) => string
     private _trackFadeout: number
     private _gameTrack: string | null
     private _menuTrack: string | null
@@ -80,12 +82,13 @@ export class AudioManager {
     private _uiVolume: number
     private _context: AutoMuteAudioContext
     private _masterGainNode: GainNode
-    private _gameTrackNode: AudioSourceNode
+    private _gameTrackNode: StreamingAudioNode
     private _waveNode: AudioSourceNode
-    private _menuTrackNode: AudioSourceNode
+    private _menuTrackNode: StreamingAudioNode
     private _uiNodes: Array<AudioSourceNode>
 
     constructor(idToUrl: (id: string) => string) {
+        this._idToUrl = idToUrl
         this._trackFadeout = 0
         this._gameTrack = null
         this._menuTrack = null
@@ -94,8 +97,8 @@ export class AudioManager {
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
         this._assetsMap = new AudioAssetsMap(this._context, idToUrl)
-        this._gameTrackNode = new AudioSourceNode(this._context)
-        this._menuTrackNode = new AudioSourceNode(this._context)
+        this._gameTrackNode = new StreamingAudioNode(this._context)
+        this._menuTrackNode = new StreamingAudioNode(this._context)
         this._waveNode = new AudioSourceNode(this._context)
         this._uiNodes = new Array<AudioSourceNode>()
         this._uiVolume = 1
@@ -210,13 +213,14 @@ export class AudioManager {
         this._gameTrack = id
         if (this.gameTrackVolume == 0 || this.masterVolume == 0)
             return
-        const buffer = await this._assetsMap.get(id)
-        await this._stopTrack(this._gameTrackNode)
+        await this._stopStreamingTrack(this._gameTrackNode)
         if (this._gameTrack == id) { // check if track has not changed during delays
-            this._gameTrackNode.play({buffer, loop: true})
+            const url = this._idToUrl(id)
+            await this._gameTrackNode.play(url, true)
         }
     }
-    private async _stopTrack(node: AudioSourceNode) {
+
+    private async _stopStreamingTrack(node: StreamingAudioNode) {
         if (node.playing) {
             if (this._trackFadeout) {
                 node.gainRamp(0, this._trackFadeout)
@@ -227,7 +231,7 @@ export class AudioManager {
     }
     
     async stopGameTrack() {
-        await this._stopTrack(this._gameTrackNode)
+        await this._stopStreamingTrack(this._gameTrackNode)
         this._gameTrack = null
     }
 
@@ -237,15 +241,15 @@ export class AudioManager {
         this._menuTrack = id
         if (this.menuTrackVolume == 0 || this.masterVolume == 0)
             return
-        const buffer = await this._assetsMap.get(id)
-        await this._stopTrack(this._menuTrackNode)
+        await this._stopStreamingTrack(this._menuTrackNode)
         if (this._menuTrack == id) { // check if track has not changed during delays
-            this._menuTrackNode.play({buffer, loop: true})
+            const url = this._idToUrl(id)
+            await this._menuTrackNode.play(url, true)
         }
     }
     
     async stopMenuTrack() {
-        this._stopTrack(this._menuTrackNode)
+        this._stopStreamingTrack(this._menuTrackNode)
         this._menuTrack = null
     }
     
