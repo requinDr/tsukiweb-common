@@ -38,10 +38,6 @@ const Particles = () => {
 			vLife: 0.001 + Math.random() * 0.002,
 		})
 
-		const onOrientation = (e: DeviceOrientationEvent) => {
-			if (e.gamma !== null) tilt.current = e.gamma / 45
-		}
-
 		const resize = () => {
 			const dpr = Math.min(window.devicePixelRatio || 1, 2)
 			const rect = canvas.getBoundingClientRect()
@@ -60,9 +56,14 @@ const Particles = () => {
 			pointer.current.y = e.clientY - rect.top
 		}
 
+		const onOrientation = (e: DeviceOrientationEvent) => {
+			if (e.gamma !== null) tilt.current = e.gamma / 45
+		}
+
 		// Only listen to device orientation if permission is not required
 		// don't want to disrupt the user experience with a permission prompt
-		if (typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {
+		const DeviceOrientation = (window as any).DeviceOrientationEvent
+		if (DeviceOrientation && typeof DeviceOrientation.requestPermission !== 'function') {
 			window.addEventListener("deviceorientation", onOrientation)
 		}
 
