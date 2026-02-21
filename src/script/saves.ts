@@ -118,7 +118,7 @@ export abstract class SavesManager<SS extends SaveState> extends Stored {
         this._notifyListeners()
     }
     
-    add(...saves: SS[]) {
+    add(...saves: SS[]): void | Promise<void> {
         let id
         for (const save of saves) {
             id = save.id ?? save.date
@@ -146,7 +146,7 @@ export abstract class SavesManager<SS extends SaveState> extends Stored {
                         throw Error(`Cannot read save file ${(save as File).name}`)
             }
         })
-        this.add(JSON.parse(save) as SS)
+        await this.add(JSON.parse(save) as SS)
     }
     
     async importSaveFiles(saves: string[] | FileList | File[]): Promise<void> {
