@@ -124,7 +124,8 @@ export type VarName = NumVarName | StrVarName
 export type SpritePos = typeof POSITIONS[number]
 
 export type Graphics = Record<SpritePos, string> & {
-  monochrome: string
+  monochrome: string,
+  bgAlign?: 'top'|'bottom'|'center'
 }
 
 export type Quake = {

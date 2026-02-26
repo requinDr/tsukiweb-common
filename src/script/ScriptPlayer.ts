@@ -303,7 +303,7 @@ export abstract class ScriptPlayerBase<
         } = init)
 
         this._graphics = {
-            bg: '', l: '', c: '', r: '', monochrome: '',
+            bg: '', l: '', c: '', r: '', monochrome: '', bgAlign: undefined,
             ...(graphics ?? { })
         }
         this._audio = {
