@@ -54,21 +54,24 @@
 
 
 .prompt {
-	--prompt-color: #0058ae;
+	--prompt-color: var(--btn-select-accent);
 	padding: 0;
-	border: none;
-	width: min(500px, 100%);
+	width: min(600px, 100%);
+	display: grid;
+	grid-template-rows: 1fr auto;
+	height: fit-content;
 	min-height: unset;
 	text-align: center;
 	text-wrap: balance;
 	user-select: none;
 	font-size: 1.1em;
-	background-color: var(--prompt-color);
-	box-shadow: 0 0 1em hsl(0deg 0% 0% / 60%);
-	display: grid;
-	grid-template-rows: 1fr auto;
-	height: fit-content;
+	box-shadow: 0 0 1em hsl(0deg 0% 0% / 80%);
 	margin: auto;
+
+	color: #ffffffe8;
+	background-color: rgb(1 14 36);
+	background-color: color-mix(in srgb, rgb(1 14 36), var(--prompt-color) 25%);
+	border: 1px solid var(--prompt-color);
 
 	&::backdrop {
 		backdrop-filter: unset;
@@ -86,21 +89,21 @@
 		padding-inline: min(3em, 3vmin);
 		padding-top: 2em;
 		padding-bottom: 2em;
-		background-color: hsl(0deg 0% 0% / 50%);
 		line-height: 1.5;
 	}
 
 	.buttons {
 		display: grid;
 		grid-template-columns: 1fr 1px 1fr;
-		font-size: 1.1em;
+		font-size: 1.2em;
+		border-top: 1px solid var(--separator);
 
 		&:not(:has(.separator)) {
 			grid-template-columns: 1fr;
 		}
 
 		& > button {
-			padding-block: .6em;
+			padding: 1rem .6rem;
 		}
 		.separator {
 			width: 1px;
