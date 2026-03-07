@@ -34,29 +34,27 @@ const PageTabsLayout = ({
 	)
 
 	return (
-		<div {...props} className={`${styles.pageContent} ${styles.pageTabsLayout}`} ref={tabsRef}>
-			<main>
-				{title &&
-				<PageTitle>{title}</PageTitle>
-				}
+		<main {...props} className={`${styles.pageContent} ${styles.pageTabsLayout}`} ref={tabsRef}>
+			{title &&
+			<PageTitle>{title}</PageTitle>
+			}
 
-				<TabsBar
-					tabs={tabs}
-					selected={selectedTab}
-					setSelected={handleSetSelectedTab}
-				/>
+			<TabsBar
+				tabs={tabs}
+				selected={selectedTab}
+				setSelected={handleSetSelectedTab}
+			/>
 
-				<div className={styles.content}>
-					{children}
-				</div>
+			<div className={styles.content}>
+				{children}
+			</div>
 
-				{backButton &&
-				<div className={styles.backButton}>
-					{backButton}
-				</div>
-				}
-			</main>
-		</div>
+			{backButton &&
+			<div className={styles.backButton}>
+				{backButton}
+			</div>
+			}
+		</main>
 	)
 }
 

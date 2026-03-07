@@ -1,5 +1,5 @@
 .pageContent {
-	--page-padding: clamp(.8rem, 1.6vmin, 1.2rem);
+	--page-padding: .8rem;
 	max-width: var(--page-width);
 	margin-inline: auto;
 	padding-block: var(--page-padding);
@@ -7,13 +7,12 @@
 	width: inherit;
 	display: flex;
 	flex-direction: column;
-	font-size: 1rem;
 	align-self: center;
 }
 
 .pageTitle {
 	padding-inline: var(--page-padding);
-	font-size: clamp(2.2rem, 5vmin, 3rem);
+	font-size: clamp(2.1rem, 4.8vmin, 2.8rem);
 	letter-spacing: -1px;
 	margin-block: 0;
 	font-family: "Times New Roman", "Times-Roman", serif;
@@ -36,52 +35,47 @@
 }
 
 .pageTabsLayout {
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-template-areas:
+		"page-title"
+		"tabs"
+		"content"
+		"back-button";
+	grid-template-rows: auto auto 1fr auto;
+
 	.pageTitle {
 		margin-bottom: 0.2em;
 	}
-	main {
-		display: grid;
-		grid-template-columns: 1fr;
-		grid-template-areas:
-			"page-title"
-			"tabs"
-			"content"
-			"back-button";
-		grid-template-rows: auto auto 1fr auto;
-	}
 
 	@media screen and (orientation: landscape) and (max-height: 680px) {
-		main {
-			grid-template-columns: 180px 1fr;
-			grid-template-areas:
-					"page-title content"
-					"tabs content"
-					"back-button content";
-			grid-template-rows: auto 1fr auto;
-		}
+		grid-template-columns: 180px 1fr;
+		grid-template-areas:
+				"page-title content"
+				"tabs content"
+				"back-button content";
+		grid-template-rows: auto 1fr auto;
 	}
 	@media screen and (max-width: 760px) and (orientation: portrait) {
+		grid-template-areas:
+			"tabs tabs"
+			"content content"
+			"back-button page-title";
+		grid-template-columns: 1fr min-content;
+		grid-template-rows: auto 3fr min-content;
 		.pageTitle {
 			margin-bottom: 0;
-		}
-		main {
-			grid-template-areas:
-				"tabs tabs"
-				"content content"
-				"back-button page-title";
-			grid-template-columns: 1fr min-content;
-			grid-template-rows: auto 3fr min-content;
 		}
 	}
 }
 
 .pageSection {
 	padding-inline: var(--page-padding);
+	padding-block: .9rem;
 	border-block: 2px solid var(--separator);
 	position: relative;
-	padding: 1rem;
-	overflow-y: auto;
 	flex-grow: 1;
+	overflow-y: auto;
 	scrollbar-gutter: stable both-edges;
 	scroll-behavior: smooth;
 }
