@@ -7,6 +7,7 @@ export { default as Particles } from "./components/Particles"
 export { default as SnowfallCanvas } from "./components/SnowfallCanvas"
 export { default as TabsBar } from "./components/TabsBar"
 export { default as TitleMenuButton } from "./components/TitleMenuButton"
+export { default as SceneShortcut } from "./components/SceneShortcut"
 
 export { default as PageSection } from "./layouts/PageSection"
 export { default as PageTabsLayout } from "./layouts/PageTabsLayout"

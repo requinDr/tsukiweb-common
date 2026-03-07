@@ -1,0 +1,67 @@
+@use 'mixins' as *;
+
+.shortcut {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	font-size: 1.1em;
+	background-color: var(--menu-container);
+	overflow: clip;
+	height: 260px;
+	
+	&.attention {
+		overflow: hidden;
+		&:before {
+			content: "!";
+			font-size: 2.5em;
+			position: absolute;
+			top: 32px;
+			right: 0;
+			left: 0;
+			display: grid;
+			justify-content: center;
+			color: rgb(10, 164, 171);
+			text-shadow: 0 0 6px #005aff;
+			z-index: 1;
+
+			@include hover-scale("attention", 1.2);
+		}
+	}
+
+	&.unlocked {
+		@include active-shadow;
+	}
+
+	.image {
+		width: 100%;
+		mask-image: linear-gradient(180deg, black 0%, black, transparent);
+		flex: 1;
+		margin-bottom: 3em;
+
+		&.placeholder {
+			border: 1px solid #004f87;
+			background-color: rgb(0 0 0 / 0.4);
+		}
+	}
+	.text {
+		position: absolute;
+		bottom: 1.3em;
+		left: 0;
+		right: 0;
+		text-align: center;
+		line-height: 1.2;
+		margin-inline: .6em;
+		
+		.sceneTitle {
+			font-weight: 700;
+			text-wrap: pretty;
+			position: relative;
+			letter-spacing: -0.4px;
+		}
+		.sceneSubtitle {
+			margin-top: 0.2em;
+			font-size: .86em;
+			opacity: 0.8;
+		}
+	}
+}
