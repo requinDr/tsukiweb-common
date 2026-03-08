@@ -74,7 +74,7 @@
 			top: 0;
 			color: rgb(10 164 171);
 			pointer-events: none;
-			text-shadow: 0 0 6px #005aff;
+			text-shadow: 0 0 6px var(--attention);
 			-webkit-text-fill-color: initial;
 			@include hover-scale("attention", 1.2);
 		}
