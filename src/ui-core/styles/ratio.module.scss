@@ -1,0 +1,30 @@
+.parent-container {
+	aspect-ratio: var(--ratio);
+	width: 100%;
+	max-height: 100%;
+	
+	display: flex;
+	align-self: center;
+	justify-content: center;
+
+	&::before {
+		content: "";
+		position: fixed;
+		inset: 0;
+	}
+
+	.ratio-container {
+		aspect-ratio: var(--ratio);
+		height: 100%;
+		max-width: 100%;
+		
+		position: relative;
+	}
+
+	&[style*="--ratio: initial"] {
+		height: 100%;
+		.ratio-container {
+			width: 100%;
+		}
+	}
+}
