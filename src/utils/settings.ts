@@ -14,8 +14,8 @@ export class Settings extends StoredJSON {
   uiFont: string = "Ubuntu" // [not implemented]
   fixedRatio: ViewRatio = ViewRatio.unconstrained
   
-  blurThumbnails: boolean = true
-  warnHScenes: boolean = false
+  ero_blur: boolean = true
+  ero_skip: 'no' | 'ask' | 'yes' = 'ask'
   
   volume = {
     master: 6,
@@ -39,7 +39,7 @@ export class Settings extends StoredJSON {
 
   completedScenes: Array<string> = new Array()
 
-
+  // private attributes below are not exported
   #saveTimeout: NodeJS.Timeout|0 = 0
   #saveDelay: number
 

@@ -160,10 +160,14 @@ export class BlockPlayer<SP extends SPB> {
                         this._currCmd = null
                         resolve()
                     } else if (commandResult) {
-                        this._currCmd = commandResult
-                        //skipCommand = resolve // if the command must be skipped at some point
-                        if (this._script.autoPlay)
-                            this._makeAutoPlay()
+                        if (this._script.fastForwarding && this._script.ffwDelay == 0)
+                            resolve();
+                        else {
+                            this._currCmd = commandResult
+                            //skipCommand = resolve // if the command must be skipped at some point
+                            if (this._script.autoPlay)
+                                this._makeAutoPlay()
+                        }
                     }
                     else
                         resolve()
