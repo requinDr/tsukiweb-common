@@ -16,7 +16,7 @@ type SP = ScriptPlayerBase<any, any, any, Hist>
 
 type PageCallback<LN> = (line: string, lineIndex: number, blockLines: string[], label: LN)=>void
 
-export type ScriptPlayerCallbacks<LN extends string> = {
+type ScriptPlayerCallbacks<LN extends string> = {
     beforeBlock: (label: LN, initPage: number) => Promise<void>|void,
     afterBlock: (label: LN) => Promise<void>|void,
     blockStart: (label: LN, initPage: number) => Promise<void>|void,

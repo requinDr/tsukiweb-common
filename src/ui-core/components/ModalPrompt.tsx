@@ -39,8 +39,6 @@ const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, style}: Pro
 	)
 }
 
-export default ModalPrompt
-
 
 type DialogOptions = {
 	text: ReactNode

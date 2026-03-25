@@ -3,7 +3,7 @@ import { getScrollableParent } from "../utils/utils"
 
 type Direction = ""|"left"|"right"|"up"|"down"
 
-export type SwipeListener = (direction: Direction, distance: number, event: TouchEvent, dx: number, dy: number)=>boolean|void
+type SwipeListener = (direction: Direction, distance: number, event: TouchEvent, dx: number, dy: number)=>boolean|void
 
 const events = ["touchstart", "touchmove", "touchend", "touchcancel"]
 
