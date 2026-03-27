@@ -83,7 +83,7 @@ const line: TagTranslator = (_, content, arg, props?)=> {
 	let className = 'dash'
 	if (insertClass) className += insertClass
 	return <Fragment key={key}>
-		{simple('span', ["\u{2002}".repeat(n)/*en-dash-sized space*/], "",
+		{simple('span', ["\u{2013}".repeat(n)], "",
 						{className, ...attrs})}
 		{content}
 	</Fragment>
