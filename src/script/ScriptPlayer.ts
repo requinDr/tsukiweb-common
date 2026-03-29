@@ -362,6 +362,29 @@ export abstract class ScriptPlayerBase<
             this._blockSkipped = true // called in beforeBlock
         }
     }
+    skipPages(nb_pages: number, keepHistory: boolean = true) {
+        if (!this._blockPlayer)
+            return
+        const stopPage = this._blockPlayer.page + nb_pages
+        //TODO insert "skip n pages" in history (add argument for page text if necessary)
+        if (!keepHistory)
+            this._history.disable()
+        const prevPredicate = this._ffwStopCondition
+        const prevDelay = this._ffwDelay
+        const currentLabel = this.currentLabel
+        this.ffw((l, i, p, lines, label)=> {
+            if (p < stopPage && label == currentLabel)
+                return false
+            if (!keepHistory)
+                this._history.enable()
+            // restore previous ffw
+            if (prevPredicate && !prevPredicate(l, i, p, lines, label, this)) {
+                this.ffw(prevPredicate, prevDelay)
+                return false
+            }
+            return true
+        }, 0)
+    }
     ffw(predicate: null): void
     ffw(predicate: FFwStopPredicate<any>, delay?: number): void
     ffw(predicate: FFwStopPredicate<any> | null, delay: number = 0) {

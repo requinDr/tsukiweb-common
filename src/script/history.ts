@@ -126,6 +126,7 @@ export abstract class HistoryBase<
   protected pageContext: PageContext<SP>|null
 
   private _script: SP|undefined
+  private _enabled: boolean = true
 
   get lastPage()    { return this.pages.head }
   get allPages()    { return this.pages.slice() }
@@ -142,6 +143,16 @@ export abstract class HistoryBase<
   get script() { return this._script }
   set script(value: SP|undefined) {
     this._script = value
+  }
+
+  get enabled() { return this._enabled }
+  set enabled(value: boolean) {
+    if (value) {
+      if (!this._enabled)
+        this.enable()
+    } else if (this._enabled) {
+      this.disable()
+    }
   }
 
 //#endregion ###################################################################
@@ -166,6 +177,8 @@ export abstract class HistoryBase<
   }
 
   onPageStart(context: PageContext<SP>) {
+    if (!this._enabled)
+      return
     this.pageContext = context
     if (this.pages.length > 0) { // remove duplicate last page if necessary
       const lastPage = this.lastPage
@@ -176,6 +189,8 @@ export abstract class HistoryBase<
   }
 
   onBlockStart(context: BlockContext<SP>) {
+    if (!this._enabled)
+      return
     const {label} = context
     if (this.isScene(label as any) && label != this.lastScene.label) {
       this.scenes.push(context)
@@ -183,13 +198,14 @@ export abstract class HistoryBase<
   }
     
   onSceneSkip(label: SP['currentLabel']) {
-    
+    if (!this._enabled)
+      return
     this.onPageStart({...this.pages.default, label, page: 0} as PageContext<SP>)
     this.setPage({type: 'skip', label, page: 0})
   }
 
   onTextChange(script: SP) {
-    if (script.text.length == 0)
+    if (!this._enabled || script.text.length == 0)
       return
     const text = script.text.replace(/^\[\r\n]*/, '')
     if (this.pages.length > 0) {
@@ -202,6 +218,14 @@ export abstract class HistoryBase<
     } else {
       this.setPage({type: 'text'})
     }
+  }
+
+  enable() {
+    this._enabled = true
+  }
+
+  disable() {
+    this._enabled = false
   }
 
 //#endregion ###################################################################
