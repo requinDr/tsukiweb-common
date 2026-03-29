@@ -6,7 +6,7 @@ import 'dialog-polyfill/dist/dialog-polyfill.css'
 
 type Props = ComponentProps<'dialog'> & {
 	show: boolean
-	onRequestClose: () => void
+	onRequestClose?: () => void
 	children: React.ReactNode
 	shouldCloseOnEsc?: boolean
 }
@@ -21,7 +21,7 @@ const Modal = ({ show, onRequestClose, children, shouldCloseOnEsc = true, ...pro
 			if (e.key === 'Escape') {
 				e.preventDefault()
 				e.stopPropagation()
-				onRequestClose()
+				onRequestClose?.()
 			}
 		}
 
@@ -42,7 +42,7 @@ const Modal = ({ show, onRequestClose, children, shouldCloseOnEsc = true, ...pro
 		)
 
 		if (!isInDialog) {
-			onRequestClose()
+			onRequestClose?.()
 		}
 	}
 
@@ -53,7 +53,7 @@ const Modal = ({ show, onRequestClose, children, shouldCloseOnEsc = true, ...pro
 			{...props}
 			ref={setRef}
 			className={`${styles.modal} modal ${props.className||""}`}
-			onCancel={(e) => { e.preventDefault(); onRequestClose() }}
+			onCancel={(e) => { e.preventDefault(); onRequestClose?.() }}
 			onClick={handleBackdropClick}
 			nav-root={1}
 		>

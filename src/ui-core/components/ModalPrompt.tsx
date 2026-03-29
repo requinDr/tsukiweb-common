@@ -13,16 +13,17 @@ type Props = {
 	labelNo?: string
 	onYes: () => void
 	onNo: () => void
+	closeOnRequest?: boolean
 	style?: ComponentProps<typeof Modal>['style']
 }
-const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, style}: Props) => {
+const ModalPrompt = ({display, text, labelYes, labelNo, onYes, onNo, closeOnRequest, style}: Props) => {
 
 	return (
 		<Modal
 			show={display}
-			onRequestClose={onNo}
 			className={classNames(styles.prompt)}
 			style={style}
+			onRequestClose={closeOnRequest ? onNo : undefined}
 		>
 			<div className={styles.body}>
 				{text}
