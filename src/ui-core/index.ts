@@ -1,4 +1,5 @@
 export { default as Button } from "./components/Button"
+export { EndLineIndicator, FfwIndicator } from "./components/GameUI"
 export { default as FixedFooter } from "./components/FixedFooter"
 export { default as MessageContainer } from "./components/MessageContainer"
 export { default as Modal } from "./components/Modal"
