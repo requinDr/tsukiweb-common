@@ -20,23 +20,33 @@
 }
 
 .tab {
-	padding: .5em 1.4em;
+	padding: .5em 1.8em;
 	background-color: transparent;
 	transition: .2s ease-in-out;
-	border-radius: 4px;
+	border-radius: 3px;
 	white-space: nowrap;
 
-	&:hover, &.active:hover {
-		background-color: var(--surface-light);
-		color: var(--text-color);
+	@supports (corner-shape: scoop) {
+		padding-inline: 2.2em;
+		border-radius: 4em;
+		corner-shape: scoop;
+		position: relative;
+
+		&::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+		}
 	}
+
 	&:focus-visible {
 		background-color: var(--surface-dark);
 	}
 
-	&.active {
-		color: rgb(88 219 255);
-		background-color: rgb(3 70 102 / 80%);
+	&:hover, &.active:hover, &.active {
+		color: var(--text-color);
+		background-color: var(--surface-light);
+		text-shadow: 0 0 3px black;
 	}
 	&:focus-visible.active {
 		background-color: var(--surface-dark);
