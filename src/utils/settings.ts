@@ -2,6 +2,8 @@ import { observeChildren, observe } from "./Observer"
 import { StoredJSON } from "./storage"
 import { TEXT_SPEED, ViewRatio } from "../constants"
 
+export const DEFAULT_GAME_FONT = 'Ubuntu'
+
 export class Settings extends StoredJSON {
 
   textSpeed: TEXT_SPEED = TEXT_SPEED.normal
@@ -10,7 +12,7 @@ export class Settings extends StoredJSON {
   fastForwardDelay: number = 5
   enableSceneSkip: boolean = true
   
-  gameFont: string = "Ubuntu"
+  gameFont: string = DEFAULT_GAME_FONT
   uiFont: string = "Ubuntu"
   fixedRatio: ViewRatio = ViewRatio.unconstrained
   
