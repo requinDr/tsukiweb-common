@@ -10,8 +10,8 @@ export class Settings extends StoredJSON {
   fastForwardDelay: number = 5
   enableSceneSkip: boolean = true
   
-  gameFont: string = "Ubuntu" // [not implemented]
-  uiFont: string = "Ubuntu" // [not implemented]
+  gameFont: string = "Ubuntu"
+  uiFont: string = "Ubuntu"
   fixedRatio: ViewRatio = ViewRatio.unconstrained
   
   ero_blur: boolean = true
