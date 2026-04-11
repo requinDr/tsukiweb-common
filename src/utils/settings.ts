@@ -16,8 +16,8 @@ export class Settings extends StoredJSON {
   uiFont: string = "Ubuntu"
   fixedRatio: ViewRatio = ViewRatio.unconstrained
   
-  ero_blur: boolean = true
-  ero_skip: 'no' | 'ask' | 'yes' = 'ask'
+  eroBlur: boolean = true
+  eroSkip: 'no' | 'ask' | 'yes' = 'ask'
   
   volume = {
     master: 6,
