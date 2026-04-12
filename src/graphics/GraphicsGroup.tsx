@@ -3,7 +3,6 @@ import { POSITIONS } from "../constants";
 import { SpritePos, Graphics as GraphicsType, DivProps } from "../types";
 import GraphicElement from "../graphics/GraphicElement";
 import { ResolutionId } from "../utils/lang";
-// import { useLanguageRefresh } from "hooks";
 import { useGameConfig } from "../context";
 
 
@@ -21,7 +20,6 @@ const GraphicsGroup = ({
 	lazy = false,
 	...props}: GraphicsGroupProps)=> {
 	const { imageSrc, cg } = useGameConfig()
-	// useLanguageRefresh(true)
 	const monochrome = images.monochrome ?? ""
 	let {style, className, ...attrs} = props
 	const classes = ['graphics']
