@@ -13,7 +13,6 @@ export class Settings extends StoredJSON {
   enableSceneSkip: boolean = true
   
   gameFont: string = DEFAULT_GAME_FONT
-  uiFont: string = "Ubuntu"
   fixedRatio: ViewRatio = ViewRatio.unconstrained
   
   eroBlur: boolean = true
