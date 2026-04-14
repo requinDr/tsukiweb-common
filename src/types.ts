@@ -1,5 +1,3 @@
-import { POSITIONS } from "./constants";
-
 //##############################################################################
 //#region                          BASE TYPES
 //##############################################################################
@@ -117,51 +115,3 @@ export type DivProps = React.HTMLAttributes<HTMLDivElement> & {
 export type NumVarName = `%${string}`
 export type StrVarName = `$${string}`
 export type VarName = NumVarName | StrVarName
-
-/*****************/
-/*   Graphics    */
-/*****************/
-export type SpritePos = typeof POSITIONS[number]
-
-export type Graphics = Record<SpritePos, string> & {
-  monochrome: string,
-  bgAlign?: 'top'|'bottom'|'center'
-}
-
-export type Quake = {
-	duration: number
-	x: number
-	y: number
-	onFinish: VoidFunction
-}
-
-export type RocketProps = {
-  layer: 'l' | 'c' | 'r';
-  my: number;
-  magnify: number;
-  time: number;
-  accel: number;
-  opacity: number;
-  onAnimationEnd: VoidFunction;
-}
-
-export type GraphicsTransition = {
-  to: Partial<Graphics>
-  effect: string
-  duration: number
-  onFinish: VoidFunction
-}
-
-/*****************/
-/*   Flowchart   */
-/*****************/
-export type FcNodeAttrs = {
-	col: number
-	from: string[]
-	cutAt?: number
-	align?: string
-}
-
-export type FcSceneAttrs = FcNodeAttrs & {
-	graph: Graphics
-}

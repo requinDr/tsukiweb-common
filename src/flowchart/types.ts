@@ -1,3 +1,15 @@
+import { Graphics } from "../graphics/types"
+
+export type FcNodeAttrs = {
+	col: number
+	from: string[]
+	cutAt?: number
+	align?: string
+}
+
+export type FcSceneAttrs = FcNodeAttrs & {
+	graph: Graphics
+}
 
 export type FlowchartNodeAttrs<NodeId extends string> = {
 	from?: NodeId[]

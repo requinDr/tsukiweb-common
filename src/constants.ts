@@ -1,5 +1,3 @@
-export const POSITIONS = ['bg', 'l', 'c', 'r'] as const
-
 export enum ViewRatio {
   unconstrained = "",
   fourByThree = "4/3",

@@ -1,8 +1,7 @@
 import classNames from "classnames"
 import styles from "../styles/scene-shortcut.module.scss"
 import { ReactNode } from "react";
-import GraphicsGroup from "../../graphics/GraphicsGroup";
-import { Graphics } from "../../types";
+import { Graphics, GraphicsGroup } from "../../graphics"
 
 type Props = {
 	unlocked: boolean

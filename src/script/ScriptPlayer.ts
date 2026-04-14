@@ -1,15 +1,13 @@
-import {
-    checkIfCondition, CommandMap, CommandProcessFunction, CommandRecord,
-    extractInstructions, FFwStopPredicate, NumVarName, StrVarName, VarName,
-    VarType
-} from "./utils";
+import { checkIfCondition, extractInstructions } from "./utils";
 import { BlockPlayer } from "./BlockPlayer";
 import Timer from "../utils/timer";
 import { simulateObserverChange } from "../utils/Observer";
-import { Graphics, JSONObject, PartialJSON, WithRequired } from "../types";
+import { JSONObject, NumVarName, PartialJSON, StrVarName, VarName, WithRequired } from "../types";
 import { deepAssign } from "../utils/utils";
 import { AsyncEventsDispatcher } from "../utils/eventsDispatcher"
 import HistoryBase from "./history";
+import { Graphics } from "@tsukiweb-common/graphics";
+import { CommandMap, CommandProcessFunction, CommandRecord, FFwStopPredicate, VarType } from "./types";
 
 type Hist<S extends SP = SP> = HistoryBase<S, any, any, any, any>
 type SP = ScriptPlayerBase<any, any, any, Hist>

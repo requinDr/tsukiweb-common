@@ -1,7 +1,8 @@
 
 import Timer from "../utils/timer"
-import { CommandHandler, extractInstructions, FFwStopPredicate } from "./utils";
+import { extractInstructions } from "./utils";
 import { ScriptPlayerBase } from "./ScriptPlayer";
+import { CommandHandler } from "./types";
 
 type BlockFinishCallback =
     (complete: boolean)=> void

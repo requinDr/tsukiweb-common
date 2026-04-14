@@ -1,55 +1,4 @@
-import { ScriptPlayerBase } from "./ScriptPlayer";
-
-//#endregion ###################################################################
-//#region                            TYPES
-//##############################################################################
-
-//________________________________private types_________________________________
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-type SPB = ScriptPlayerBase<any, any, any, any>
-
-//________________________________public types__________________________________
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-export type Instruction = {
-	cmd?: string,
-	arg?: string,
-    handler?: CommandProcessFunction<any>
-}
-
-export type CommandProcessFunction<SP extends SPB> = (
-	arg: string,
-	cmd: string,
-	script: SP,
-	onFinish: VoidFunction,
-) => CommandHandler | Instruction[] | void
-
-export type FFwStopPredicate<SP extends SPB> = (
-	line: string,
-	index: number,
-	page: number,
-	lines: string[],
-	label: Exclude<SP['currentLabel'], null>,
-	script: SP,
-) => boolean
-
-export type CommandHandler = {
-	next: VoidFunction,
-	autoPlayDelay?: number,
-}
-
-export type CommandRecord<SP extends SPB> =
-	Record<string, CommandProcessFunction<SP>|null>
-export type CommandMap<SP extends SPB> = Map<string, CommandRecord<SP>[string]>
-
-export type NumVarName = `%${string}`
-export type StrVarName = `$${string}`
-export type VarName = NumVarName | StrVarName
-export type VarType<T extends NumVarName|StrVarName> =
-	T extends NumVarName ? number :
-	T extends StrVarName ? string :
-	never
+import { Instruction, SPB } from "./types";
 
 //#endregion ###################################################################
 //#region                        COMMANDS TOOLS
@@ -172,4 +121,29 @@ export function extractInstructions(line: string) {
 			break
 	}
 	return instructions
+}
+
+export function isLinePageBreak(line: string, index: number,
+		sceneLines: string[], playing: boolean = false): boolean {
+	if (playing) {
+		return line.startsWith('\\') || line.startsWith('phase ')
+	} else {
+		if (line.startsWith('\\'))
+			return true
+		else if (line.startsWith('phase'))
+			// prevents counting 2 pages for conditional phases
+			return !sceneLines[index+1].startsWith('skip')
+		else
+			return false
+	}
+}
+
+export function getPageAtLine(lines: string[], index: number) {
+	let p = 0
+	for (let i = 0; i < index; i++) {
+		const line = lines[i]
+		if (isLinePageBreak(line, i, lines))
+			p++
+	}
+	return p
 }

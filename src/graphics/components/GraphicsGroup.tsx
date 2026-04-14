@@ -1,10 +1,10 @@
 import { memo, useCallback } from "react"
 import { POSITIONS } from "../constants";
-import { SpritePos, Graphics as GraphicsType, DivProps } from "../types";
-import GraphicElement from "../graphics/GraphicElement";
-import { ResolutionId } from "../utils/lang";
-import { useGameConfig } from "../context";
-
+import { SpritePos, Graphics as GraphicsType } from "../types";
+import GraphicElement from "./GraphicElement";
+import { ResolutionId } from "../../utils/lang";
+import { useGameConfig } from "../../context";
+import { DivProps } from "../../types";
 
 type GraphicsGroupProps = DivProps & {
 	images: Partial<GraphicsType>

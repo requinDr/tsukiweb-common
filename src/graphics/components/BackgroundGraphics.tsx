@@ -1,5 +1,5 @@
 import { memo } from "react"
-import GraphicsElement from "../graphics/GraphicsElement"
+import GraphicsElement from "./GraphicsElement"
 
 type Props = {
 	image: string

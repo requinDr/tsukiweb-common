@@ -1,7 +1,7 @@
 import { memo } from "react"
-import GraphicsElement from "../graphics/GraphicsElement"
+import GraphicsElement from "./GraphicsElement"
 import { GraphicsTransition } from "../types"
-import { useGraphicTransition } from "../hooks"
+import { useGraphicTransition } from "../../hooks"
 
 type Props = {
 	image: string

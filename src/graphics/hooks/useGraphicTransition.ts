@@ -1,8 +1,8 @@
-import { useGameConfig } from "../context";
+import { useGameConfig } from "../../context";
 import { GraphicsTransition, SpritePos } from "../types";
-import { splitFirst } from "../utils/utils";
+import { splitFirst } from "../../utils/utils";
 import { useState, useRef, useEffect } from "react";
-import { isImage, preloadImage } from "../utils/images";
+import { isImage, preloadImage } from "../../utils/images";
 
 type GraphicTransitionResult = {
 	img: string

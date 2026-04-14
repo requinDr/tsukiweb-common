@@ -1,16 +1,17 @@
 import { CSSProperties, memo, useMemo } from "react"
-import GraphicElement from "../graphics/GraphicElement";
-import { DivProps, RocketProps, SpritePos } from "../types"
-import { ResolutionId } from "../utils/lang";
-import { isImage } from "../utils/images";
-import { useGameConfig } from "../context";
+import GraphicElement from "./GraphicElement";
+import { Rocket, SpritePos } from "../types"
+import { ResolutionId } from "../../utils/lang";
+import { isImage } from "../../utils/images";
+import { useGameConfig } from "../../context";
+import { DivProps } from "../../types";
 
 
 type Props = {
 	pos: SpritePos
 	image: string
 	resolution?: ResolutionId
-	rocket?: RocketProps
+	rocket?: Rocket
 } & ({
 	fadeIn?: undefined
 	fadeOut?: undefined

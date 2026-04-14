@@ -1,8 +1,9 @@
-import { DivProps, SpritePos } from "../types";
-import { bb } from "../utils/Bbcode";
-import { splitFirst } from "../utils/utils";
+import { DivProps } from "../../types";
+import { bb } from "../../utils/Bbcode";
+import { splitFirst } from "../../utils/utils";
 import classNames from "classnames";
 import { ReactNode } from "react";
+import { SpritePos } from "../types";
 
 type Props = {
 	pos: SpritePos
