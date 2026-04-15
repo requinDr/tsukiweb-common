@@ -78,3 +78,12 @@ export abstract class Flowchart<N extends FlowchartNode<any, any>> {
     return this._nodes.keys()
   }
 }
+
+export type SpritesheetMetadataType = {
+	f: string[] // file names
+	s: number[][] // spritesheet dimensions: [nw, nh] for each spritesheet
+	d: number[] // dimensions: [width, height]
+	i: {
+		[key: string]: number[] // [top, left, file index]
+	}
+}
