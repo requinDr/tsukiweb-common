@@ -3,7 +3,7 @@ import { BG_POSITIONS, POSITIONS } from "./constants"
 export type SpritePos = typeof POSITIONS[number]
 
 export type Graphics = Record<SpritePos, string> & {
-	monochrome: string,
+	monochrome?: string
 	bgAlign?: typeof BG_POSITIONS[number]
 }
 

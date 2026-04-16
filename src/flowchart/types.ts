@@ -8,7 +8,7 @@ export type FcNodeAttrs = {
 }
 
 export type FcSceneAttrs = FcNodeAttrs & {
-	graph: Graphics
+	graph: Partial<Graphics> & { bg: Graphics["bg"] }
 }
 
 export type FlowchartNodeAttrs<NodeId extends string> = {
