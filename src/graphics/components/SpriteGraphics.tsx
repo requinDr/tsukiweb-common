@@ -8,14 +8,16 @@ type SpriteGraphicsProps = {
 	image: string
 	transition?: GraphicsTransition
 	rocket?: Rocket
+	topLayer?: boolean
 }
 
 //.......... l, c, r sprites ...........
-const SpriteGraphics = ({pos, image, transition, rocket}: SpriteGraphicsProps)=> {
+const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: SpriteGraphicsProps)=> {
 	const {
 		img: currImg, prev: prevImg,
 		duration: fadeTime, effect, onAnimationEnd
 	} = useGraphicTransition(pos, image, transition)
+	const topLayerClass = topLayer ? "top-layer" : undefined
 
 	if (prevImg == undefined) // not loaded or no change
 		return (
@@ -24,6 +26,7 @@ const SpriteGraphics = ({pos, image, transition, rocket}: SpriteGraphicsProps)=>
 				pos={pos}
 				image={currImg}
 				rocket={rocket}
+				className={topLayerClass}
 			/>
 		)
 	return <>
@@ -35,6 +38,7 @@ const SpriteGraphics = ({pos, image, transition, rocket}: SpriteGraphicsProps)=>
 			fadeTime={fadeTime}
 			toImg={currImg}
 			onAnimationEnd={onAnimationEnd}
+			className={topLayerClass}
 		/>
 		<GraphicsElement
 			key={currImg}
@@ -44,6 +48,7 @@ const SpriteGraphics = ({pos, image, transition, rocket}: SpriteGraphicsProps)=>
 			fadeTime={fadeTime}
 			onAnimationEnd={onAnimationEnd}
 			rocket={rocket}
+			className={topLayerClass}
 		/>
 	</>
 }

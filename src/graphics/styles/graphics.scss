@@ -40,6 +40,10 @@
 			grid-column: 2;
 		}
 
+		&.top-layer {
+			z-index: 1;
+		}
+
 		.text {
 			--margin: 1em;
 			position: absolute;
