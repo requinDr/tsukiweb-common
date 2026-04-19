@@ -17,7 +17,7 @@
 	margin-block: 0;
 	font-family: "Times New Roman", "Times-Roman", serif;
 	font-weight: 700;
-	background: linear-gradient(180deg, #99bccf 0%, #71c1dc 100%);
+	background: var(--page-title);
 	background-clip: text;
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;

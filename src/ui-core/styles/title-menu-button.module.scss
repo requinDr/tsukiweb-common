@@ -33,9 +33,9 @@
 
 	&:hover, &:focus-visible, &.active {
 		text-decoration: none;
-		text-shadow: 0 0 6px #0095ff85;
+		text-shadow: 0 0 6px var(--btn-title-menu-shadow);
 		text-decoration: none;
-		background: linear-gradient(180deg, #0ff1ff, #004a86);
+		background: var(--btn-title-menu-bg);
 		background-clip: text;
 		-webkit-text-fill-color: transparent;
 	}
