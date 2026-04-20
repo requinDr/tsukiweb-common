@@ -199,15 +199,16 @@ export function bb(text: string, props?: Record<string, any>, dict=defaultBBcode
 }
 
 function innerBbText(node: BbNode): string {
-	if (node.tag == "hide")
-		return " "
-	if (node.tag == "line")
-		return "-".repeat(parseInt(node.arg))
-	return node.content.reduce<string>((str, child)=> {
+	const content = node.content.reduce<string>((str, child)=> {
 		if (child.constructor == String)
 			return str + child
 		return str + innerBbText(child as BbNode)
 	}, "")
+	if (node.tag == "hide" || node.tag == "br")
+		return " "
+	if (node.tag == "line")
+		return "-".repeat(parseInt(node.arg || "1")) + content
+	return content
 }
 
 /**
@@ -217,10 +218,7 @@ function innerBbText(node: BbNode): string {
  * @returns the extracted text
  */
 export function noBb(text: string): string {
-	if (text)
-		return innerBbText(createTree(text))
-	else
-		return ""
+	return text ? innerBbText(createTree(text)) : ""
 }
 
 //#endregion ###################################################################
