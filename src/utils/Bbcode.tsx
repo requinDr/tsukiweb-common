@@ -199,13 +199,13 @@ export function bb(text: string, props?: Record<string, any>, dict=defaultBBcode
 }
 
 function innerBbText(node: BbNode): string {
+	if (node.tag == "hide" || node.tag == "br")
+		return " "
 	const content = node.content.reduce<string>((str, child)=> {
 		if (child.constructor == String)
 			return str + child
 		return str + innerBbText(child as BbNode)
 	}, "")
-	if (node.tag == "hide" || node.tag == "br")
-		return " "
 	if (node.tag == "line")
 		return "-".repeat(parseInt(node.arg || "1")) + content
 	return content
