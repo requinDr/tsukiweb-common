@@ -7,9 +7,9 @@ export type FcNodeAttrs = {
 	align?: string
 }
 
-export type FcSceneAttrs = FcNodeAttrs & {
-	graph: Partial<Graphics> & { bg: Graphics["bg"] }
-}
+export type FcSceneGraphAttrs = Partial<Graphics> & { bg: Graphics["bg"] }
+
+export type FcSceneAttrs = FcNodeAttrs
 
 export type FlowchartNodeAttrs<NodeId extends string> = {
 	from?: NodeId[]
