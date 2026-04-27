@@ -158,7 +158,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 							<div className="popover-container" ref={refs.setFloating} style={floatingStyles}>
 								<m.div
 									key={currentItem.id}
-									className="scene-popover"
+									className="scene-popover-animated"
 									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
 									exit={{ opacity: 0 }}
