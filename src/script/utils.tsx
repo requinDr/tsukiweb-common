@@ -1,50 +1,81 @@
-import { Instruction, SPB } from "./types";
+import { Instruction, SPB, NumVarName } from "./types";
 
 //#endregion ###################################################################
 //#region                        COMMANDS TOOLS
 //##############################################################################
 
-// (%var|n) [(op) (%var|n)]?
-const opRegexp = /\s*(?<lhs>(%\w+|\d+))\s*((?<op>[=!><]+)\s*(?<rhs>(%\w+|\d+)))?\s*/
-const sepRegexp = /(?<=&&|\|\|)|(?=&&|\|\|)/
-export function checkIfCondition(condition: string, script: SPB) {
-	let value = true
-	for (let [i, token] of condition.split(sepRegexp).entries()) {
-		token = token.trim();
-		if (i % 2 == 0) {
-			const match = opRegexp.exec(token)
-			if (!match) throw Error(
-				`Unable to parse expression "${token}" in condition ${condition}`)
+function getTokenValue(token: string, script: SPB): number {
+	if (token.startsWith("%"))
+		return script.readVariable(token as NumVarName)
+	else
+		return parseInt(token)
+}
 
-			let {lhs: _lhs, op, rhs: _rhs} = match.groups as any
-			const lhs =
-				_lhs.startsWith("%")? script.readVariable(_lhs) : parseInt(_lhs)
-			const rhs = _rhs ?
-				_rhs.startsWith("%")? script.readVariable(_rhs) : parseInt(_rhs)
-				: undefined
+const opRegexp = /\s*([=!<>&|]{1,2}|[()])\s*/g
 
-			switch (op) {
-				case '==' : value = (lhs == rhs); break
-				case '!=' : value = (lhs != rhs); break
-				case '<'  : value = (lhs <  rhs!); break
-				case '>'  : value = (lhs >  rhs!); break
-				case '<=' : value = (lhs <= rhs!); break
-				case '>=' : value = (lhs >= rhs!); break
-				case undefined : value = !!lhs; break // only one expression
-				default : throw Error (
-					`unknown operator ${op} in condition ${condition}`)
+export function tokenizeCondition(condition: string): string[] {
+	
+	const tokens: string[] = []
+	let m: RegExpMatchArray | null
+	let lastIndex = 0
+	while ((m = opRegexp.exec(condition)) != null) {
+		if (m.index! > lastIndex)
+			tokens.push(condition.substring(lastIndex, m.index).trim())
+		tokens.push(m[0].trim())
+		lastIndex = opRegexp.lastIndex
+	}
+	if (lastIndex < condition.length)
+		tokens.push(condition.substring(lastIndex))
+	return tokens
+}
+
+function evaluateTokens(tokens: string[], script: SPB): number {
+	let lhs: number|null = null
+	if (tokens.length == 0)
+		return 0
+	let token = tokens.shift()!
+	if (token.match(opRegexp)) {
+		if (token == '(')
+			lhs = evaluateTokens(tokens, script)
+		else
+			throw Error(`invalid expression ${tokens.join(' ')}`)
+	} else {
+		lhs = getTokenValue(token, script)
+	}
+	while (tokens.length > 0) {
+		const token = tokens.shift()!
+		if (token.match(opRegexp)) {
+			if      (token == '(') lhs = evaluateTokens(tokens, script);
+			else if (token == ')') return lhs
+			else if (token == '&&') { if (lhs == 0) return 0 }
+			else if (token == '||') { if (lhs != 0) return 1 }
+			else { 
+				const rhs = getTokenValue(tokens.shift()!, script)
+				switch (token) {
+					case '>' : lhs = (lhs > rhs) ? 1 : 0; break
+					case '>=' : lhs = (lhs >= rhs) ? 1 : 0; break
+					case '<' : lhs = (lhs < rhs) ? 1 : 0; break
+					case '<=' : lhs = (lhs <= rhs) ? 1 : 0; break
+					case '==' : lhs = (lhs == rhs) ? 1 : 0; break
+					case '!=' : lhs = (lhs != rhs) ? 1 : 0; break
+					default : throw Error(`Unknown operator ${token}`)
+				}
 			}
 		} else {
-			switch (token) {
-				case "&&" : if (!value) return false; break
-				case "||" : if (value) return true; break
-				default : throw Error(
-					`Unable to parse operator "${token}" in condition ${condition}`)
-			}
+			if (lhs != null)
+				throw Error(`Unexpected identifier`)
+			lhs = getTokenValue(token, script)
 		}
 	}
-	return value
+	return lhs
 }
+
+export function evaluateCondition(condition: string, script: SPB) {
+	const tokens = tokenizeCondition(condition)
+	return (evaluateTokens(tokens, script) != 0)
+}
+
+export const checkIfCondition = evaluateCondition
 
 /**
  * Split inline commands (e.g., `!w1000`) into command and argument
