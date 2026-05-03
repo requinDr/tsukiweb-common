@@ -13,25 +13,21 @@ const getPath = (img, dir) => img && !isHexColor(img) ? path.join(dir, `${img}.$
 export async function processScenes(scenes, inputDir, outputDir, metaDir, width = THUMB_WIDTH, height = THUMB_HEIGHT) {
 	if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true })
 
-	// 1. Filter scenes that need processing
-	const validScenes = Object.entries(scenes).filter(
-		([, sceneData]) => sceneData?.fc?.hasOwnProperty('col') && sceneData?.fc?.graph
-	)
 	const uniqueThumbs = new Map()
 	const sceneToKey = new Map()
 
-	// 2. Identify unique thumbnails
-	for (const [name, { fc }] of validScenes) {
-		const key = JSON.stringify({ ...fc.graph, bg: fc.graph.bg || '#000000' })
+	// 1. Identify unique thumbnails
+	for (const [name, { graph }] of scenes) {
+		const key = JSON.stringify({ ...graph, bg: graph.bg || '#000000' })
 		uniqueThumbs.set(key, null)
 		sceneToKey.set(name, key)
 	}
 
 	const uniqueCount = uniqueThumbs.size
-	const duplicateCount = validScenes.length - uniqueCount
+	const duplicateCount = scenes.length - uniqueCount
 	let processed = 0
 
-	// 3. Generate sprites
+	// 2. Generate sprites
 	await Promise.all([...uniqueThumbs.keys()].map(async (key) => {
 		try {
 			const g = JSON.parse(key)
@@ -51,7 +47,7 @@ export async function processScenes(scenes, inputDir, outputDir, metaDir, width 
 	console.log()
 	logProgress('Assembling spritesheets...')
 
-	// 4. Assemble spritesheets and metadata
+	// 3. Assemble spritesheets and metadata
 	const meta = { f: [], s: [], d: [width, height], i: {} }
 	const thumbPositions = new Map()
 	let currentBatch = []
@@ -65,7 +61,7 @@ export async function processScenes(scenes, inputDir, outputDir, metaDir, width 
 		currentBatch = []
 	}
 
-	for (const [name] of validScenes) {
+	for (const [name] of scenes) {
 		const key = sceneToKey.get(name)
 		const buffer = uniqueThumbs.get(key)
 		if (!buffer) continue
