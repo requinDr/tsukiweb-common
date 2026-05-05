@@ -30,12 +30,14 @@ export function tokenizeCondition(condition: string): string[] {
 }
 
 function evaluateTokens(tokens: string[], script: SPB): number {
-	let lhs: number|null = null
+	let lhs: number
 	if (tokens.length == 0)
 		return 0
 	let token = tokens.shift()!
 	if (token.match(opRegexp)) {
-		if (token == '(')
+		if (token == '!')
+			lhs = getTokenValue(tokens.shift()!, script) ? 0 : 1
+		else if (token == '(')
 			lhs = evaluateTokens(tokens, script)
 		else
 			throw Error(`invalid expression ${tokens.join(' ')}`)
@@ -46,7 +48,7 @@ function evaluateTokens(tokens: string[], script: SPB): number {
 		const token = tokens.shift()!
 		if (token.match(opRegexp)) {
 			if      (token == '(') lhs = evaluateTokens(tokens, script);
-			else if (token == ')') return lhs
+			else if (token == ')') return lhs!
 			else if (token == '&&') { if (lhs == 0) return 0 }
 			else if (token == '||') { if (lhs != 0) return 1 }
 			else { 
