@@ -28,6 +28,7 @@ export class Settings extends StoredJSON {
   autoMute: boolean = true
 
   unlockEverything: boolean = false
+  flowchartBadges: boolean = true
 
   historyLength: number = 20
   savedHistoryLength: number = 10
