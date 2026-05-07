@@ -38,8 +38,7 @@ const SceneShortcut = ({unlocked, images, title, subtitle, attention, ...props}:
 				<div className={`${styles.sceneSubtitle} subtitle`}>
 					{(unlocked && subtitle)
 						? subtitle
-						: (unlocked && !subtitle)
-							? "" : "???"
+						: undefined
 					}
 				</div>
 			</div>
