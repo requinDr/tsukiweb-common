@@ -2,7 +2,7 @@
 @use "colors.scss";
 
 :root {
-	--page-width: max(1520px, 60%);
+	--page-width: max(1540px, 60%);
 
 	@include colors.color-vars;
 }
@@ -51,14 +51,21 @@ button {
 	}
 	*::-webkit-scrollbar-thumb {
 		border-radius: 4px;
-		background-image: var(--scrollbar-gradient);
+		background-color: var(--scrollbar-color);
 
 		&:hover {
-			background-image: var(--scrollbar-hover);
+			background: var(--scrollbar-hover);
 		}
 	}
 	*::-webkit-scrollbar-corner {
 		background: transparent;
+	}
+
+	@supports not selector(::-webkit-scrollbar) {
+		* {
+			scrollbar-color: var(--scrollbar-color) transparent;
+			scrollbar-width: thin;
+		}
 	}
 }
 

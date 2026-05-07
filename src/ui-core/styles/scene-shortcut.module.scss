@@ -7,7 +7,7 @@
 	font-size: 1.1em;
 	background-color: var(--menu-container);
 	overflow: clip;
-	height: 260px;
+	height: 240px;
 	
 	&.attention {
 		overflow: hidden;
@@ -45,7 +45,7 @@
 	}
 	.text {
 		position: absolute;
-		bottom: 1.3em;
+		bottom: 1rem;
 		left: 0;
 		right: 0;
 		text-align: center;
