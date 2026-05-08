@@ -45,10 +45,5 @@ export async function mergeImages(bottom, top, newimage) {
 		])
 		.toFile(newimage)
 
-	await Promise.all([
-		fs.unlink(bottom),
-		fs.unlink(top)
-	])
-
 	console.log(`Merged ${top} + ${bottom} -> ${newimage}`)
 }
