@@ -1,24 +1,26 @@
 import sharp from 'sharp'
 import fs from 'fs/promises'
 import path from 'path'
-import os from 'os'
 import { logProgress, logError } from '../utils/logging.js'
 
+
+const STATUS = Object.freeze({
+	SUCCESS: 'success',
+	FAILED:  'failed',
+	SKIPPED: 'skipped',
+})
+
 async function ensureDirectoryExists(dir) {
-	try {
-		await fs.access(dir)
-	} catch (error) {
-		await fs.mkdir(dir, { recursive: true })
-		logProgress(`Folder "${dir}" successfully created.`)
-	}
+	const created = await fs.mkdir(dir, { recursive: true })
+	if (created) logProgress(`Folder "${dir}" successfully created.`)
 }
 
-async function applyTransparencyMaskToImage(inputPath, outputPath) {
+async function applyTransparencyMask(inputPath, outputPath, metadata) {
 	try {
 		// 1. Get the file
-		const image = sharp(inputPath)
-		const { width, height } = await image.metadata()
+		const { width, height } = metadata
 		const halfWidth = Math.floor(width / 2)
+		const image = sharp(inputPath)
 		
 		// 2. Extract the mask (alpha channel) from the right side
 		const maskBuffer = await image
@@ -36,11 +38,27 @@ async function applyTransparencyMaskToImage(inputPath, outputPath) {
 			.png()
 			.toFile(outputPath)
 		
-		return true
+		return STATUS.SUCCESS
 	} catch (error) {
 		logError(`Error processing image ${inputPath}: ${error.message}`)
-		return false
+		return STATUS.FAILED
 	}
+}
+
+async function processFile(inputDir, outputDir, file) {
+	const inputPath  = path.join(inputDir, file)
+	const outputPath = path.join(outputDir, `${path.parse(file).name}.png`)
+ 
+	const metadata = await sharp(inputPath).metadata()
+ 
+	if (metadata.hasAlpha) {
+		if (inputPath !== outputPath) {
+			await fs.copyFile(inputPath, outputPath)
+		}
+		return STATUS.SKIPPED
+	}
+ 
+	return applyTransparencyMask(inputPath, outputPath, metadata)
 }
 
 /**
@@ -55,39 +73,39 @@ export async function processImages(inputDir, outputDir) {
 		await ensureDirectoryExists(outputDir)
 
 		const files = await fs.readdir(inputDir)
+		const imageFiles = files.filter(file =>
+			['.jpg', '.jpeg', '.png'].includes(path.extname(file).toLowerCase())
+		)
 
-		const imageFiles = files.filter(file => {
-			const ext = path.extname(file).toLowerCase()
-			return ext === '.jpg' || ext === '.jpeg' || ext === '.png'
-		})
-
-		const totalImages = imageFiles.length
-		if (totalImages === 0) {
+		const total = imageFiles.length
+		if (total === 0) {
 			logError('No images found in the "input" folder.')
 			return
 		}
 
-		const BATCH_SIZE = os.cpus().length
-		let successCount = 0
 		let processedCount = 0
-
-		for (let i = 0; i < totalImages; i += BATCH_SIZE) {
-			const batch = imageFiles.slice(i, i + BATCH_SIZE)
-
-			const results = await Promise.all(
-				batch.map(file => {
-					const inputPath = path.join(inputDir, file)
-					const outputPath = path.join(outputDir, `${path.parse(file).name}.png`)
-					return applyTransparencyMaskToImage(inputPath, outputPath)
+		const results = await Promise.all(
+			imageFiles.map(file => processFile(inputDir, outputDir, file)
+				.then(result => {
+					logProgress(`Processing sprites: ${++processedCount}/${total}`)
+					return result
 				})
 			)
+		)
 
-			processedCount += batch.length
-			successCount += results.filter(Boolean).length
-			logProgress(`Processing sprites: ${processedCount}/${totalImages}`)
+		const counts = {
+			success: results.filter(r => r === STATUS.SUCCESS).length,
+			skipped: results.filter(r => r === STATUS.SKIPPED).length,
+			failed:  results.filter(r => r === STATUS.FAILED).length,
 		}
-
-		logProgress(`Processing complete: ${successCount}/${totalImages}\n`)
+ 
+		const summary = [
+			`${counts.success}/${total} processed`,
+			counts.skipped && `${counts.skipped} skipped`,
+			counts.failed  && `${counts.failed} failed`,
+		].filter(Boolean).join(', ')
+ 
+		logProgress(`Processing complete: ${summary}\n`)
 	} catch (error) {
 		logError(`Error processing images: ${error.message}`)
 	}
