@@ -27,7 +27,9 @@ async function applyTransparencyMask(inputPath, outputPath, metadata) {
 			.clone()
 			.extract({ left: halfWidth, top: 0, width: halfWidth, height: height })
 			.grayscale()
+			.median(3)
 			.negate()     // Invert the mask so that white = transparent, black = opaque
+			.png()        // Prevent JPEG compression artifacts in the mask
 			.toBuffer()
 		
 		// 3. Apply the mask to the left side (color image)
