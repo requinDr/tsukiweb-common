@@ -1,7 +1,6 @@
 @use 'mixins' as *;
 
 .menuItem {
-	all: unset;
 	text-decoration: none;
 	transition: var(--transition);
 	user-select: none;

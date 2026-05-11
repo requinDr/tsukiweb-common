@@ -11,7 +11,6 @@ export type Tab = {
 	audio?: AudioManager
 }
 
-
 type TabsProps = {
 	tabs: Tab[],
 	selected: string,
