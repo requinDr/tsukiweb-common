@@ -1,5 +1,5 @@
 .particles {
-	position: absolute;
+	position: fixed;
 	display: block;
 	inset: 0;
 	width: 100%;
@@ -7,7 +7,7 @@
 	z-index: -1;
 	pointer-events: none;
 	overflow: hidden;
-	opacity: 0.5;
+	contain: strict;
 }
 
 @media (prefers-reduced-motion: reduce) {

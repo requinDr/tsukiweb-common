@@ -81,6 +81,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 
 		// Desktop: hover
 		const onMouseOver = (e: MouseEvent) => {
+			if (isTouchActive) return
 			const hit = resolve(e.target)
 			if (hit) openPopover(hit[1], hit[0])
 			else closePopover()

@@ -51,9 +51,8 @@ const Particles = () => {
 		}
 
 		const onPointerMove = (e: PointerEvent) => {
-			const rect = canvas.getBoundingClientRect()
-			pointer.current.x = e.clientX - rect.left
-			pointer.current.y = e.clientY - rect.top
+			pointer.current.x = e.clientX
+			pointer.current.y = e.clientY
 		}
 
 		const onOrientation = (e: DeviceOrientationEvent) => {
@@ -64,12 +63,12 @@ const Particles = () => {
 		// don't want to disrupt the user experience with a permission prompt
 		const DeviceOrientation = (window as any).DeviceOrientationEvent
 		if (DeviceOrientation && typeof DeviceOrientation.requestPermission !== 'function') {
-			window.addEventListener("deviceorientation", onOrientation)
+			window.addEventListener("deviceorientation", onOrientation, { passive: true })
 		}
 
 		resize()
-		window.addEventListener("resize", resize)
-		window.addEventListener("pointermove", onPointerMove)
+		window.addEventListener("resize", resize, { passive: true })
+		window.addEventListener("pointermove", onPointerMove, { passive: true })
 
 		const draw = () => {
 			ctx.clearRect(0, 0, dimensions.current.width, dimensions.current.height)
@@ -99,8 +98,8 @@ const Particles = () => {
 				if (p.life < 0.1) alpha = p.life / 0.1
 				else if (p.life > 0.8) alpha = 1 - (p.life - 0.8) / 0.2
 
-				const opacity = Math.max(0, alpha * 0.6)
 				const size = p.baseSize * (Math.sin(p.life * 10) * 0.4 + 1)
+				const opacity = Math.max(0, alpha * 0.3)
 
 				ctx.beginPath()
 				ctx.arc(p.x, p.y, size, 0, Math.PI * 2)
