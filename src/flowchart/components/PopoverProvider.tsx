@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef, ReactNode, useMemo, useEffect } from "react"
-import { autoUpdate, flip, useFloating, offset } from "@floating-ui/react"
 import { createPortal } from "react-dom"
+import { useFloatPosition } from "../useFloatPosition"
 import * as m from "motion/react-m"
 import { AnimatePresence } from "motion/react"
 
@@ -40,25 +40,12 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 	const [currentItem, setCurrentItem] = useState<T | null>(null)
 	const registry = useMemo(() => new Map<string, () => T>(), [])
 
-	const { refs, floatingStyles } = useFloating({
-		strategy: "absolute",
-		placement: "right",
-		open: currentItem !== null,
-		whileElementsMounted: (reference, floating, update) =>
-			autoUpdate(reference, floating, update, {
-				animationFrame: false,
-				ancestorScroll: true,
-				ancestorResize: false,
-				elementResize: false,
-				layoutShift: false,
-			}),
-		middleware: [flip(), offset(8)],
-	})
+	const { setReference, setFloating, floatingStyles } = useFloatPosition(8)
 
 	const openPopover = useCallback((item: T, element: Element) => {
-		refs.setReference(element)
+		setReference(element)
 		setCurrentItem(item)
-	}, [refs])
+	}, [setReference])
 
 	const closePopover = useCallback(() => setCurrentItem(null), [])
 
@@ -156,7 +143,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 				{createPortal(
 					<AnimatePresence mode="wait">
 						{currentItem && (
-							<div className="popover-container" ref={refs.setFloating} style={floatingStyles}>
+							<div className="popover-container" ref={setFloating} style={floatingStyles ?? {}}>
 								<m.div
 									key={currentItem.id}
 									className="scene-popover-animated"
