@@ -23,6 +23,7 @@ export function useFloatPosition(offsetPx: number) {
 
 	const relativeShift  = useRef({ dx: 0, dy: 0 })
 	const lastPos        = useRef({ x: -9999, y: -9999 })
+	const lastRef        = useRef<Element | null>(null)
 
 	const [floatingStyles, setFloatingStyles] = useState<CSSProperties | null>(null)
 
@@ -82,6 +83,10 @@ export function useFloatPosition(offsetPx: number) {
 			const ref = referenceEl.current
 			const el  = floatingEl.current
 			if (ref && el) {
+				if (ref !== lastRef.current) {
+					lockInitialPosition()
+					lastRef.current = ref
+				}
 				const rect = ref.getBoundingClientRect()
 				
 				const x = Math.round(rect.left + relativeShift.current.dx)
@@ -96,7 +101,7 @@ export function useFloatPosition(offsetPx: number) {
 			rafToken.current = requestAnimationFrame(tick)
 		}
 		rafToken.current = requestAnimationFrame(tick)
-	}, [stopLoop])
+	}, [stopLoop, lockInitialPosition])
 
 	useEffect(() => stopLoop, [stopLoop])
 
