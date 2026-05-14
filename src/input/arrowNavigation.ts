@@ -384,6 +384,10 @@ export function directionalNavigate(direction: Direction) {
             moveToTarget(target)
         return true
     }
+    if (direction == "in" && elmt instanceof HTMLButtonElement) {
+        elmt.click()
+        return true
+    }
     return false
 }
 
