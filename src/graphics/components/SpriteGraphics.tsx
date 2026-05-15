@@ -1,4 +1,5 @@
-import { memo } from "react"
+import { CSSProperties, memo } from "react"
+import classNames from "classnames"
 import GraphicsElement from "./GraphicsElement"
 import { useGraphicTransition } from "../../hooks"
 import { GraphicsTransition, Rocket, SpritePos } from "../types"
@@ -11,12 +12,27 @@ type SpriteGraphicsProps = {
 	topLayer?: boolean
 }
 
+function rocketToProps(rocket: Rocket) {
+	return {
+		className: 'rocket',
+		style: {
+			'--rocket-my': `${rocket.my}px`, //maybe vh
+			'--rocket-magnify': rocket.magnify,
+			'--rocket-duration': `${rocket.time}ms`,
+			'--rocket-accel': rocket.accel,
+			'--rocket-opacity': rocket.opacity / 255,
+		} as CSSProperties,
+		onAnimationEnd: rocket.onAnimationEnd,
+	}
+}
+
 //.......... l, c, r sprites ...........
 const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: SpriteGraphicsProps)=> {
 	const {
 		img: currImg, prev: prevImg,
 		duration: fadeTime, effect, onAnimationEnd
 	} = useGraphicTransition(pos, image, transition)
+	const rp = rocket ? rocketToProps(rocket) : undefined
 	const topLayerClass = topLayer ? "top-layer" : undefined
 
 	if (prevImg == undefined) // not loaded or no change
@@ -25,8 +41,9 @@ const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: Spri
 				key={currImg}
 				pos={pos}
 				image={currImg}
-				rocket={rocket}
-				className={topLayerClass}
+				className={classNames(topLayerClass, rp?.className)}
+				style={rp?.style}
+				onAnimationEnd={rp?.onAnimationEnd}
 			/>
 		)
 	return <>
@@ -46,9 +63,9 @@ const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: Spri
 			image={currImg}
 			fadeIn={effect}
 			fadeTime={fadeTime}
-			onAnimationEnd={onAnimationEnd}
-			rocket={rocket}
-			className={topLayerClass}
+			onAnimationEnd={rp?.onAnimationEnd ?? onAnimationEnd}
+			className={classNames(topLayerClass, rp?.className)}
+			style={rp?.style}
 		/>
 	</>
 }

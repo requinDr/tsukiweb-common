@@ -1,6 +1,6 @@
 import { CSSProperties, memo, useMemo } from "react"
 import GraphicElement from "./GraphicElement";
-import { Rocket, SpritePos } from "../types"
+import { SpritePos } from "../types"
 import { ResolutionId } from "../../utils/lang";
 import { isImage } from "../../utils/images";
 import { useGameConfig } from "../../context";
@@ -11,13 +11,12 @@ type Props = {
 	pos: SpritePos
 	image: string
 	resolution?: ResolutionId
-	rocket?: Rocket
 } & ({
 	fadeIn?: undefined
 	fadeOut?: undefined
 	fadeTime?: 0
 	toImg?: undefined
-	onAnimationEnd?: undefined
+	onAnimationEnd?: VoidFunction
 } | (
 	{ fadeTime: number, onAnimationEnd: VoidFunction } & (
 		{ fadeIn: string, fadeOut?: undefined, toImg?: undefined } |
@@ -34,7 +33,6 @@ const GraphicsElement = ({
 	fadeOut=undefined,
 	toImg=undefined,
 	onAnimationEnd=undefined,
-	rocket,
 	style,
 	...rest}: Props)=> {
 	const { imageSrc, cg } = useGameConfig()
@@ -45,22 +43,8 @@ const GraphicsElement = ({
 	const imageProps = useMemo(()=> {
 		if (!image) return pos === 'bg' ? {} : null
 
-		if (rocket) {
-			return {
-				className: 'rocket',
-				style: {
-					'--rocket-my': `${rocket.my}px`, //maybe vh
-					'--rocket-magnify': rocket.magnify,
-					'--rocket-duration': `${rocket.time}ms`,
-					'--rocket-accel': rocket.accel,
-					'--rocket-opacity': rocket.opacity / 255,
-				},
-				onAnimationEnd: rocket.onAnimationEnd
-			}
-		}
-
 		// static image
-		if (fadeTime === 0) return {}
+		if (fadeTime === 0) return onAnimationEnd ? { onAnimationEnd } : {}
 
 		// (dis)appearing image
 		const fadeAttr =
@@ -74,7 +58,7 @@ const GraphicsElement = ({
 			},
 			onAnimationEnd
 		}
-	}, [image, pos, rocket, fadeTime, fadeIn, fadeOut, onAnimationEnd])
+	}, [image, pos, fadeTime, fadeIn, fadeOut, onAnimationEnd])
 
 
 //________________________________crossfade mask________________________________
@@ -116,7 +100,7 @@ const GraphicsElement = ({
 					props={{
 						...rest,
 						...imageProps,
-						style: { ...imageProps.style, ...style }
+						style: { ...(imageProps as {style?: CSSProperties}).style, ...style }
 					}}
 				/>
 			}
