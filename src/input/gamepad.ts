@@ -8,7 +8,7 @@ export enum GamepadEvents {
     BTN_TOUCHSTART  = "gp_btntouchstart",
     BTN_TOUCHEND    = "gp_btntouchend",
     BTN_CHANGE      = "gp_btnchange",
-    AXIS_CHANGE       = "gp_axChange"
+    AXIS_CHANGE     = "gp_axChange"
 }
 
 class GamepadInputEvent extends Event {
