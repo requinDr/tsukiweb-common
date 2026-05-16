@@ -1,4 +1,12 @@
 
+function clamp(min: number, max: number, value: number) {
+    return Math.min(Math.max(min, value), max)
+}
+
+//##############################################################################
+//#region                             TYPES
+//##############################################################################
+
 interface _NavXElement extends Element {
     getAttribute(qualifiedName: 'nav-x'): `${number}`
     getAttribute(qualifiedName: string): string | null
@@ -40,9 +48,9 @@ export type NavigationProps = (({
     'nav-root'?: 1
 }
 
-function clamp(min: number, max: number, value: number) {
-    return Math.min(Math.max(min, value), max)
-}
+//#endregion ###################################################################
+//#region                         GET ELMT INFO
+//##############################################################################
 
 function readNavGridAttr(attr: string | null): [number, number] {
     if (attr == null)
@@ -69,6 +77,29 @@ function computeTempGridValue(min: number, max: number) {
          : (min == -Infinity) ? max
          : min
 }
+
+function isElmtVisible(elmt: Element) {
+    if (elmt instanceof HTMLElement)
+        return elmt.offsetParent != null
+    else if (elmt instanceof SVGElement && elmt.ownerSVGElement)
+        return (elmt.ownerSVGElement as unknown as HTMLElement)
+                .checkVisibility()
+    return false
+}
+
+function isNavRoot(elmt: Element): elmt is NavRootElement | HTMLBodyElement {
+    return elmt.hasAttribute('nav-root') || elmt === document.body
+}
+
+function isNavElmt(elmt: Element, gridOnly = false): elmt is NavElement {
+    return elmt != null && (elmt instanceof HTMLElement ? !(elmt as DisableableElement).disabled : true) && (
+        elmt.hasAttribute('nav-x') ||
+        elmt.hasAttribute('nav-y') ||
+        ((!gridOnly) && elmt.hasAttribute('nav-auto')))
+}
+//#endregion ###################################################################
+//#region                      SEARCH BEST TARGET
+//##############################################################################
 
 class NavHandler {
     elmt: NavElement
@@ -159,6 +190,7 @@ class NavHandler {
 
     private getAbsoluteDistance(handler: NavHandler): [number, number, number] | null {
         let dM // main (direction-aligned) distance
+        let span // direction-aligned origin size
         const r1 = this.absolute, r2 = handler.absolute
         // case direction == 'in' or from <body>
         if (r1.top == -Infinity) {
@@ -166,12 +198,15 @@ class NavHandler {
             return [r2.top - r1.bottom + r2.left - r1.right, 0, 0]
         }
         switch (this.direction!) {
-            case 'up'    : dM = r1.top - r2.bottom; break
-            case 'down'  : dM = r2.top - r1.bottom; break
-            case 'left'  : dM = r1.left - r2.right; break
-            case 'right' : dM = r2.left - r1.right; break
+            case 'up'    : dM = r1.top - r2.bottom; span = r1.bottom - r1.top; break
+            case 'down'  : dM = r2.top - r1.bottom; span = r1.bottom - r1.top; break
+            case 'left'  : dM = r1.left - r2.right; span = r1.right - r1.left; break
+            case 'right' : dM = r2.left - r1.right; span = r1.right - r1.left; break
         }
-        if (dM <= 0)
+        if (dM < 0)
+            return null
+        // only accept destination at same position if origin is not flat
+        if (dM == 0 && span == 0)
             return null
         switch (this.direction!) {
             case 'up' : case 'down' :
@@ -244,25 +279,9 @@ class NavHandler {
     }
 }
 
-function isElmtVisible(elmt: Element) {
-    if (elmt instanceof HTMLElement)
-        return elmt.offsetParent != null
-    else if (elmt instanceof SVGElement && elmt.ownerSVGElement)
-        return (elmt.ownerSVGElement as unknown as HTMLElement)
-                .checkVisibility()
-    return false
-}
-
-function isNavRoot(elmt: Element): elmt is NavRootElement | HTMLBodyElement {
-    return elmt.hasAttribute('nav-root') || elmt === document.body
-}
-
-function isNavElmt(elmt: Element, gridOnly = false): elmt is NavElement {
-    return elmt != null && (elmt instanceof HTMLElement ? !(elmt as DisableableElement).disabled : true) && (
-        elmt.hasAttribute('nav-x') ||
-        elmt.hasAttribute('nav-y') ||
-        ((!gridOnly) && elmt.hasAttribute('nav-auto')))
-}
+//#endregion ###################################################################
+//#region                        GET CANDIDATES
+//##############################################################################
 
 function getNavParent(elmt: Element | null): NavElement {
     // Walk up the tree to check if we're inside a nav-root
@@ -304,6 +323,9 @@ function searchNavElmtsIn(from: Element) {
     return result
 }
 
+//#endregion ###################################################################
+//#region                           NAVIGATE
+//##############################################################################
 const KEYBOARD_NAV_CLASS = 'keyboard-navigating'
 let mouseListenerAttached = false
 
