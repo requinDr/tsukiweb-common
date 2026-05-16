@@ -1,4 +1,4 @@
-import { BG_POSITIONS, POSITIONS } from "./constants"
+import { BG_POSITIONS, POSITIONS, SPRITES_POSITIONS } from "./constants"
 
 export type SpritePos = typeof POSITIONS[number]
 
@@ -22,7 +22,7 @@ export type Quake = {
 }
 
 export type Rocket = {
-	layer: 'l' | 'c' | 'r'
+	layer: typeof SPRITES_POSITIONS[number]
 	my: number
 	magnify: number
 	time: number

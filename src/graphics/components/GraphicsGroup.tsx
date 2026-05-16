@@ -5,6 +5,7 @@ import GraphicElement from "./GraphicElement";
 import { ResolutionId } from "../../utils/lang";
 import { useGameConfig } from "../../context";
 import { DivProps } from "../../types";
+import { buildEffectProps } from "../render";
 
 type GraphicsGroupProps = DivProps & {
 	images: Partial<GraphicsType>
@@ -20,25 +21,19 @@ const GraphicsGroup = ({
 	lazy = false,
 	...props}: GraphicsGroupProps)=> {
 	const { imageSrc, cg } = useGameConfig()
-	const monochrome = images.monochrome ?? ""
-	let {style, className, ...attrs} = props
-	const classes = ['graphics']
-	if (monochrome) {
-		classes.push('monochrome')
-		if (!style)
-			style = {}
-		style = {
-			...style,
-			...{'--monochrome-color': monochrome}
-		}
-	}
-	if (className)
-		classes.push(className)
+	let {style: rawStyle, className, ...attrs} = props
+	const getUrl = useCallback((img: string) => imageSrc(img, resolution), [imageSrc, resolution])
 
-	const getUrl = useCallback((img: string) => imageSrc(img, resolution), [resolution])
+	const effectProps = buildEffectProps({
+		monochrome: images.monochrome,
+	}, className, rawStyle)
 
 	return (
-		<div className={classes.join(' ')} style={style} {...attrs}>
+		<div
+			className={["graphics", effectProps.className].filter(Boolean).join(' ')}
+			style={effectProps.style}
+			{...attrs}
+		>
 			{POSITIONS.map(pos => images[pos] &&
 				<GraphicElement
 					key={pos}

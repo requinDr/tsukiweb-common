@@ -1,5 +1,5 @@
 import { memo } from "react"
-import GraphicsElement from "./GraphicsElement"
+import TransitionGraphic from "./TransitionGraphic"
 import { GraphicsTransition } from "../types"
 import { useGraphicTransition } from "../../hooks"
 
@@ -20,7 +20,7 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 	if (prevImg === undefined) return null
 
 	return (
-		<GraphicsElement key={currImg}
+		<TransitionGraphic key={currImg}
 			pos='bg'
 			image={currImg}
 			fadeTime={fadeTime}

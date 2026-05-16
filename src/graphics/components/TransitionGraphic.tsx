@@ -24,7 +24,7 @@ type Props = {
 	)
 )) & DivProps
 
-const GraphicsElement = ({
+const TransitionGraphic = ({
 	pos,
 	image,
 	resolution="src",
@@ -108,4 +108,4 @@ const GraphicsElement = ({
 	)
 }
 
-export default memo(GraphicsElement)
+export default memo(TransitionGraphic)

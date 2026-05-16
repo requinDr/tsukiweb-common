@@ -1,5 +1,5 @@
 import { memo } from "react"
-import GraphicsElement from "./GraphicsElement"
+import TransitionGraphic from "./TransitionGraphic"
 
 type Props = {
 	image: string
@@ -7,7 +7,7 @@ type Props = {
 }
 const BackgroundGraphics = ({image, bgAlign}: Props)=> {
 	return (
-		<GraphicsElement key={image}
+		<TransitionGraphic key={image}
 			pos='bg'
 			image={image}
 			bg-align={bgAlign}
