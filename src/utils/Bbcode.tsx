@@ -65,7 +65,7 @@ const url: TagTranslator = (_, content, arg, props?)=> {
 		arg = arg.substring(1, arg.length-1)
 	if (arg.lastIndexOf('.') > arg.lastIndexOf('/') || arg.startsWith("http"))
 		return (
-			<a href={arg} target="_blank" {...(props || {})} key={props?.key}>
+			<a href={arg} target="_blank" {...(props || {})} rel="noreferrer" key={props?.key}>
 				{content}
 			</a>
 		)
