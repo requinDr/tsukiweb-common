@@ -225,7 +225,7 @@ export class Stack<T> extends Buffer<T> {
   }
 
   /**
-   * Remove and return the latest inserted element in the queue
+   * Remove and return the latest inserted element in the stack
    * @returns the removed item
    */
   override pop(): T {

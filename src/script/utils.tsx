@@ -72,7 +72,7 @@ function evaluateTokens(tokens: string[], script: SPB): number {
 	return lhs
 }
 
-export function evaluateCondition(condition: string, script: SPB) {
+function evaluateCondition(condition: string, script: SPB) {
 	const tokens = tokenizeCondition(condition)
 	return (evaluateTokens(tokens, script) != 0)
 }

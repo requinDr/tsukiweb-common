@@ -94,5 +94,3 @@ export class Settings extends StoredJSON {
     }
   } 
 }
-
-export default Settings

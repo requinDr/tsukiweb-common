@@ -2,18 +2,13 @@
 //#region                          BASE TYPES
 //##############################################################################
 
-export type Primitive = string | number | boolean | undefined | null
+type Primitive = string | number | boolean | undefined | null
 
 export type Digit = '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
 export type LcLetter = 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'
       |'l'|'m'|'n'|'o'|'p'|'q'|'r'|'s'|'t'|'u'|'v'|'w'|'x'|'y'|'z'
 export type UcLetter = 'A'|'B'|'C'|'D'|'E'|'F'|'G'|'H'|'I'|'J'|'K'
       |'L'|'M'|'N'|'O'|'P'|'Q'|'R'|'S'|'T'|'U'|'V'|'W'|'X'|'Y'|'Z'
-export type Letter = LcLetter|UcLetter
-
-export type KeysMatching<T extends object, V> = {
-  [K in keyof T]-?: T[K] extends V ? K : never
-}[keyof T];
 
 export type RecursivePartial<T> = T|{
   [P in keyof T]?:
@@ -111,7 +106,3 @@ export type NoMethods<T> = { [P in keyof T as T[P] extends Function ? never : P]
 export type DivProps = React.HTMLAttributes<HTMLDivElement> & {
   [x: `${string}-${string}`]: any
 }
-
-export type NumVarName = `%${string}`
-export type StrVarName = `$${string}`
-export type VarName = NumVarName | StrVarName

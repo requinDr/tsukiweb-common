@@ -157,5 +157,3 @@ export function useEventActions<M extends Mapping>(
 		return handler.current!.disable.bind(handler.current, target, evts, options)
 	}, [target, mapping, options])
 }
-
-export default EventActions

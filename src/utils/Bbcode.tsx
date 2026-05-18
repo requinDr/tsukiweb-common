@@ -370,7 +370,6 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 	const [tree, updateTree] = useReducer(()=>
 		root.current ? hideTree(root.current, cursors.current, hideTag, hideTagArg) : undefined, undefined)
 
-	//useTraceUpdate("[BBTW] "+ text, {text, dict, charDelay, restartOnAppend, hideTag, hideTagArg, onFinish, hideTree, ...props})
 	const finished = useRef<boolean>(true)
 	const timer = useRef<Timer>(new Timer(charDelay, ()=> {
 		if (atEnd(path.current, cursors.current)) {

@@ -412,5 +412,3 @@ export function directionalNavigate(direction: Direction) {
     }
     return false
 }
-
-export default directionalNavigate

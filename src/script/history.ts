@@ -348,5 +348,3 @@ export abstract class HistoryBase<
       this.scenes.push(scene)
   }
 }
-
-export default HistoryBase

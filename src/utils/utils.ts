@@ -1,5 +1,5 @@
 import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent, PartialJSON, JSONDiff, JSONMerge } from "@tsukiweb-common/types"
-import { ReactElement, ReactNode, SyntheticEvent, useEffect } from "react"
+import { ReactElement, ReactNode } from "react"
 
 //##############################################################################
 //#                            OBJECTS MANIPULATION                            #
@@ -23,10 +23,6 @@ export function objectMatch<T extends Record<PropertyKey, any>>(toTest: T, ref: 
 		}
 	}
 	return true;
-}
-
-export function objectsEqual(obj1: Record<PropertyKey, any>, obj2: Record<PropertyKey, any>, useSymbols=true) {
-	return objectMatch(obj1, obj2, useSymbols) && objectMatch(obj2, obj1, useSymbols)
 }
 
 const primitiveTypes = [String, Number, BigInt, Symbol, Boolean, null, undefined] as Array<Function|null|undefined>
@@ -252,29 +248,9 @@ export function splitLast(text: string, sep: string, position=text.length) : [st
 		return [text, null]
 }
 
-export function subTextCount(full: string, sub: string) : number {
-		if (sub.length <= 0) return (full.length + 1)
-		const step = sub.length
-		let n = 0, pos = 0
-
-		do {
-			pos = full.indexOf(sub, pos)
-			if (pos < 0)
-				break
-			n++
-			pos += step
-		} while (true);
-		return n;
-}
-
 //##############################################################################
 //#                                   OTHERS                                   #
 //##############################################################################
-
-export const addEventListener = ({event, handler, element = window}: any) => {
-	element.addEventListener(event, handler)
-	return () => element.removeEventListener(event, handler)
-}
 
 export function listParentNodes(element: Node|null): Array<Node> {
 	const result = new Array<Node>()
@@ -410,11 +386,6 @@ export namespace fullscreen {
 			console.error(`Error attempting to disable full-screen mode: ${err.message} (${err.name})`);
 		})
 	}
-}
-
-export function resettable<T extends Record<PropertyKey, any>>(resetValue: Readonly<T>): [T, VoidFunction, Readonly<T>] {
-	const value = deepAssign({}, resetValue) as T
-	return [value, deepAssign.bind(null, value, resetValue, {}), resetValue]
 }
 
 export function TSForceType<T>(_v: any): asserts _v is T {}
