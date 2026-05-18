@@ -36,16 +36,33 @@ type OptionalUndefine<T> = {
 type NonUndefinedFields<T> = {
   [K in keyof T as T[K] extends (Required<T>[K] | undefined) ? never : K]: T[K]
 }
-
-//#endregion ###################################################################
-//#region                          JSON TYPES
-//##############################################################################
-
 type NonUndefinedKeys<T> = {
   [K in keyof T]-?: undefined extends T[K] ? never : K
 }[keyof T]
 
+export type RecursiveDefined<T extends object> = {
+  [P in keyof T]-?:
+    Defined<T[P]> extends PartialRecord<any, any> ?
+      RecursiveDefined<Defined<T[P]>>
+    : Defined<T[P]> extends Array<any> ?
+      Array<RecursiveDefined<Defined<T[P]>[any]>>
+    : Defined<T[P]>
+}
+
+export type NoMethods<T> = {
+  [P in keyof T as T[P] extends Function ? never : P]: T[P]
+}
+
 type Defined<T> = Exclude<T, undefined>
+
+export type Entries<T> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T][];
+
+
+//#endregion ###################################################################
+//#region                          JSON TYPES
+//##############################################################################
 
 type PartialJSONEntry<T extends any> =
   T extends JSONPrimitive | Array<any> ? T
@@ -101,7 +118,9 @@ export type JSONMerge<T1 extends PartialJSON<any>, T2 extends PartialJSON<any>> 
       : never
   }>
 
-export type NoMethods<T> = { [P in keyof T as T[P] extends Function ? never : P]: T[P] }
+//#endregion ###################################################################
+//#region                          OTHER TYPES
+//##############################################################################
 
 export type DivProps = React.HTMLAttributes<HTMLDivElement> & {
   [x: `${string}-${string}`]: any
