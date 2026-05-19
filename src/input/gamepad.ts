@@ -61,7 +61,10 @@ class GamepadState {
         this.axes = [...gamepad.axes]
     }
     *updateButtons() {
-        for (const [i, btn] of this.gamepad.buttons.entries()) {
+        const pad = navigator.getGamepads()[this.gamepad.index]
+        if (!pad)
+            return
+        for (const [i, btn] of pad.buttons.entries()) {
             if (btn.pressed != this.buttons[i].pressed || btn.touched != this.buttons[i].touched || btn.value != this.buttons[i].value) {
                 yield [i, this.buttons[i], btn] as const
                 this.buttons[i].pressed = btn.pressed
@@ -70,13 +73,22 @@ class GamepadState {
             }
         }
     }
-    *updateAxes(deadzones: number|number[]) {
-        for (let [i, value] of this.gamepad.axes.entries()) {
-            if (deadzones instanceof Array) {
-                if (i < deadzones.length && Math.abs(value) < deadzones[i])
-                    value = 0
-            } else if (Math.abs(value) < deadzones) {
+    *updateAxes(deadzones: number|number[], resolution: number|number[]) {
+        const pad = navigator.getGamepads()[this.gamepad.index]
+        if (!pad)
+            return
+        for (let [i, value] of pad.axes.entries()) {
+            let d = deadzones instanceof Array ?
+                    (i < deadzones.length ? deadzones[i] : 0)
+                    : deadzones
+            if (Math.abs(value) < d) {
                 value = 0
+            } else {
+                let r = resolution instanceof Array ?
+                    (i < resolution.length ? resolution[i] : 0)
+                    : resolution
+                if (r > 0)
+                    value = Math.round(value / r) * r
             }
             if (value != this.axes[i]) {
                 yield [i, this.axes[i], value] as const
@@ -96,6 +108,15 @@ type Opts = {
      * By default, axes have no dead zone.
      */
     axesDeadZones?: number|number[],
+    /** Axes resolution. If set to a strictly positive number, axis values
+     * will be rounded to multiple of this number.
+     * 
+     * If an array is used, axes with indices outside this array
+     * will be considered with native resolution.
+     * 
+     * By default, axes use native resolution.
+     */
+    axesResolution?: number|number[],
     /**
      * Period in ms, at which the program will poll the states of the gamepads.
      * 
@@ -110,6 +131,7 @@ class GamepadEventGeneratorClass {
     private _poll: VoidFunction | null = null
     private _pollHandle: number = 0
     private _axesDeadZones: number|number[] = 0
+    private _axesResolution: number|number[] = 0
     private _enabled: boolean = false
 
     private _eventsConfig: {
@@ -139,7 +161,7 @@ class GamepadEventGeneratorClass {
         }
     }
     private _onDisconnect(evt: GamepadEvent) {
-        const i = this._gamepads.findIndex(g=> g.gamepad == evt.gamepad)
+        const i = this._gamepads.findIndex(g=> g.gamepad.index == evt.gamepad.index)
         if (i < 0)
             return
         this._gamepads.splice(i, 1)
@@ -173,7 +195,7 @@ class GamepadEventGeneratorClass {
                     ))
                 }
             }
-            for (const [i, prevVal, newVal] of pad.updateAxes(this._axesDeadZones)) {
+            for (const [i, prevVal, newVal] of pad.updateAxes(this._axesDeadZones, this._axesResolution)) {
                 if ((this._eventsConfig.axisChange) && newVal != prevVal) {
                     elmt.dispatchEvent(new GamepadAxisEvent(
                         pad.gamepad, i, newVal
@@ -203,9 +225,10 @@ class GamepadEventGeneratorClass {
         }
     }
 
-    config({axesDeadZones, pollPeriod, ...config} : Opts) {
-        this._axesDeadZones = axesDeadZones ?? 0
-        this._pollInterval = pollPeriod ?? 0
+    config({axesDeadZones, axesResolution, pollPeriod, ...config} : Opts) {
+        this._axesDeadZones = axesDeadZones ?? this._axesDeadZones
+        this._axesResolution = axesDeadZones ?? this._axesResolution
+        this._pollInterval = pollPeriod ?? this._pollInterval
         Object.assign(this._eventsConfig, config)
     }
 

@@ -96,6 +96,10 @@ export class EventActions<A = string> {
             }
         }
     }
+    
+    dispatchAction(action: A, evt: Event|undefined = undefined, ...args: any) {
+        this._callback(action, evt, ...args)
+    }
 
     enable(element: GlobalEventHandlers,
            eventTypes: Iterable<EventType> = this.usedEvents,
@@ -113,9 +117,11 @@ export class EventActions<A = string> {
         }
     }
 }
+
 type Mapping = {
     [A in string]: EventFilter<A>[]
 }
+
 type Callback<M extends Mapping> = <A extends keyof M>(
     action: A,
     event: EventFromType<M[any][any]['type']>,
