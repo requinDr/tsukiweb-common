@@ -3,6 +3,8 @@ import styles from '../styles/modal.module.scss'
 import { createPortal } from "react-dom"
 import dialogPolyfill from 'dialog-polyfill'
 import 'dialog-polyfill/dist/dialog-polyfill.css'
+import { multiRef } from "@tsukiweb-common/utils/utils"
+import { useNavBackRef } from "../../hooks"
 
 type Props = ComponentProps<'dialog'> & {
 	show: boolean
@@ -45,13 +47,14 @@ const Modal = ({ show, onRequestClose, children, shouldCloseOnEsc = true, ...pro
 			onRequestClose?.()
 		}
 	}
+	const handleRef = onRequestClose ? multiRef(setRef, useNavBackRef(onRequestClose)) : setRef
 
 	if (!render) return null
 
 	return createPortal(
 		<dialog
 			{...props}
-			ref={setRef}
+			ref={handleRef}
 			className={`${styles.modal} modal ${props.className||""}`}
 			onCancel={(e) => { e.preventDefault(); onRequestClose?.() }}
 			onClick={handleBackdropClick}

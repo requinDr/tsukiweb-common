@@ -2,6 +2,11 @@ import { useCallback, useRef } from "react"
 import TabsBar, { Tab } from "../components/TabsBar"
 import PageTitle from "./PageTitle"
 import styles from "../styles/layouts.module.scss"
+import { useNavBackRef } from "../../hooks"
+
+function back() {
+	(document.querySelector('.back-button') as HTMLElement)?.click()
+}
 
 type Props = {
 	title?: string
@@ -34,7 +39,9 @@ const PageTabsLayout = ({
 	)
 
 	return (
-		<main {...props} className={`${styles.pageContent} ${styles.pageTabsLayout}`} ref={tabsRef}>
+		<main {...props} className={`${styles.pageContent} ${styles.pageTabsLayout}`}
+			ref={backButton ? useNavBackRef(back, tabsRef) : tabsRef}
+		>
 			{title &&
 			<PageTitle>{title}</PageTitle>
 			}

@@ -90,7 +90,7 @@ export class EventActions<A = string> {
             if (filter[EventActions.IF]?.(action, evt, ...args) ?? true) {
                 if (this._callback(action, evt, ...args)) {
                     evt.preventDefault()
-					evt.stopPropagation()
+					evt.stopImmediatePropagation()
 					break // don't execute other actions if first one validates it.
                 }
             }
@@ -132,7 +132,8 @@ export function useEventActions<M extends Mapping>(
         mapping: M|(()=>M),
         callback: Callback<M>,
         target: GlobalEventHandlers|RefObject<GlobalEventHandlers|null|undefined>,
-		options?: boolean|(Opts & AddEventListenerOptions)
+		options?: boolean|(Opts & AddEventListenerOptions),
+        enabled = true
     ) {
     const handler = useRef<EventActions>(undefined)
     
@@ -152,6 +153,8 @@ export function useEventActions<M extends Mapping>(
 	}, [mapping, options])
 
 	useEffect(()=> {
+        if (!enabled)
+            return
 		if ('current' in target) {
 			let current: GlobalEventHandlers|null|undefined = target.current
 			if (!current)
@@ -161,5 +164,5 @@ export function useEventActions<M extends Mapping>(
         const evts = handler.current!.usedEvents
 		handler.current!.enable(target, evts, options)
 		return handler.current!.disable.bind(handler.current, target, evts, options)
-	}, [target, mapping, options])
+	}, [target, mapping, options, enabled])
 }

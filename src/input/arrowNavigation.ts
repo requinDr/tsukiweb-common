@@ -372,7 +372,7 @@ function moveToTarget(elmt: NavElement, tempGrid?: [number, number]) {
  * @param direction direction of the new element to focus
  * @returns `true` if a new element has been focused, `false` otherwise
  */
-export function directionalNavigate(direction: Direction) {
+export function directionalNavigate(direction: Direction, fromEvent?: Event) {
     // Search the closest navigation element
     let elmt: NavElement = document.activeElement as NavElement
     if (!isNavElmt(elmt))
@@ -407,6 +407,20 @@ export function directionalNavigate(direction: Direction) {
         return true
     }
     if (direction == "in" && elmt instanceof HTMLButtonElement) {
+        if (fromEvent) {
+            if (fromEvent.eventPhase == Event.BUBBLING_PHASE)  {
+                // event may already have produced a click
+                // prevent additionnal click if click already produced
+                switch (fromEvent.type) {
+                    case 'keydown': case 'keypress':
+                        if (["Space", "Enter"].includes((fromEvent as KeyboardEvent).key))
+                            return true
+                        break
+                    case 'mouseup' : case 'click' :
+                        return true
+                }
+            }
+        }
         elmt.click()
         return true
     }

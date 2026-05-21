@@ -1,8 +1,8 @@
 import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent, PartialJSON, JSONDiff, JSONMerge } from "@tsukiweb-common/types"
-import { ReactElement, ReactNode } from "react"
+import { ReactElement, ReactNode, RefObject, useCallback } from "react"
 
 //##############################################################################
-//#                            OBJECTS MANIPULATION                            #
+//#region                     OBJECTS MANIPULATION
 //##############################################################################
 
 export function objectMatch<T extends Record<PropertyKey, any>>(toTest: T, ref: RecursivePartial<T>, useSymbols=true): boolean {
@@ -196,8 +196,8 @@ export function extract<T, K extends keyof T>(obj: T, props: Array<K>): {[P in K
 	return Object.fromEntries(props.map((k=> [k, obj[k]]))) as {[P in K]: T[P]}
 }
 
-//##############################################################################
-//#                              TEXT CONVERSION                               #
+//#endregion ###################################################################
+//#region                        TEXT CONVERSION
 //##############################################################################
 
 export function preprocessText(text: string) {
@@ -248,8 +248,8 @@ export function splitLast(text: string, sep: string, position=text.length) : [st
 		return [text, null]
 }
 
-//##############################################################################
-//#                                   OTHERS                                   #
+//#endregion ###################################################################
+//#region                            OTHERS
 //##############################################################################
 
 export function listParentNodes(element: Node|null): Array<Node> {
@@ -438,4 +438,16 @@ export function versionsCompare(v1: string, v2: string) {
 
 export function twoDigits(n: number) {
   return n.toString().padStart(2, '0')
+}
+
+export function multiRef<T extends Node>(...refs: Array<any | RefObject<T|null> | ((node: T|null)=>void)>) {
+	return (node: T|null)=> {
+		refs.forEach(ref=> {
+			if ('current' in ref) {
+				ref.current = node
+			} else if (ref instanceof Function) {
+				ref(node)
+			}
+		})
+	}
 }
