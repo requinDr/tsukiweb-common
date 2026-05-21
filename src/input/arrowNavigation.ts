@@ -79,8 +79,12 @@ function computeTempGridValue(min: number, max: number) {
 }
 
 function isElmtVisible(elmt: Element) {
+    if (!elmt.checkVisibility())
+        return false
+    if (elmt.hasAttribute('inert'))
+        return false
     if (elmt instanceof HTMLElement)
-        return elmt.offsetParent != null
+        return elmt.offsetParent != null && elmt.closest("[inert]") == null
     else if (elmt instanceof SVGElement && elmt.ownerSVGElement)
         return (elmt.ownerSVGElement as unknown as HTMLElement)
                 .checkVisibility()
