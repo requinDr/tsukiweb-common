@@ -39,7 +39,7 @@
 		}
 	}
 
-	&:focus-visible {
+	&:focus-visible, :global(.keyboard-navigating) &:focus {
 		background-color: var(--surface-dark);
 	}
 
@@ -48,7 +48,7 @@
 		background-color: var(--surface-light);
 		text-shadow: 0 0 3px black;
 	}
-	&:focus-visible.active {
+	&:focus-visible.active, .keyboard-navigating &.active:focus {
 		background-color: var(--surface-dark);
 	}
 

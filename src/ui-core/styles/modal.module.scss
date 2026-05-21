@@ -81,7 +81,7 @@
 		animation: popIn 0.2s ease forwards;
 	}
 
-	&:focus-visible {
+	&:focus-visible, .keyboard-navigating &:focus {
 		outline: none;
 	}
 

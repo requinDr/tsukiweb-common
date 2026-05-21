@@ -23,7 +23,7 @@
 		transition: .2s;
 	}
 
-	&:hover, &:focus-visible {
+	&:hover, &:focus {
 		cursor: pointer;
 		outline: none;
 		&:after {

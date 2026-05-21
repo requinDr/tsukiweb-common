@@ -30,14 +30,14 @@
 		opacity: 0.1;
 	}
 
-	&:hover, &:focus-visible, &.active {
+	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus, &.active {
 		text-shadow: 0 0 6px var(--btn-title-menu-shadow);
 		text-decoration: none;
 		background: var(--btn-title-menu-bg);
 		background-clip: text;
 		-webkit-text-fill-color: transparent;
 	}
-	&:hover, &:focus-visible {
+	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus {
 		cursor: pointer;
 		transform: translateY(-4px);
 

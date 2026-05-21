@@ -17,7 +17,7 @@
 	transition: box-shadow 0.2s;
 
 	&:hover,
-	&:focus-visible {
+	&:focus-visible, :global(.keyboard-navigating) &:focus {
 		box-shadow: var(--selected-shadow);
 		text-decoration: none;
 	}
@@ -32,7 +32,7 @@
 	transition: 0.2s;
 
 	&:hover,
-	&:focus-visible {
+	&:focus-visible, :global(.keyboard-navigating) &:focus {
 		box-shadow: var(--selected-shadow);
 		text-decoration: none;
 	}
@@ -65,7 +65,7 @@
 		right: 0;
 	}
 
-	&.active, &:hover, &:focus-visible {
+	&.active, &:hover, &:focus-visible, :global(.keyboard-navigating) &:focus {
 		box-shadow: 0px 0px 90px 0px var(--btn-select-bg) inset;
 
 		&::before, &::after {
@@ -84,7 +84,7 @@
 			border-bottom-right-radius: 3px;
 		}
 	}
-	&.active:focus-visible {
+	&.active:focus-visible, :global(.keyboard-navigating) &:focus {
 		--btn-select-accent: #fff;
 	}
 	&:disabled {
@@ -116,7 +116,7 @@
 		opacity: 0.1;
 	}
 
-	&:hover, &:focus-visible {
+	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus {
 		color: var(--surface-light-active);
 		filter: drop-shadow(0 0 2px var(--surface-dark));
 
