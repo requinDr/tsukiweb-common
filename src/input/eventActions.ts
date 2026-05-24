@@ -64,6 +64,8 @@ export class EventActions<A = string> {
 	addAction<T extends EventType, E extends EventFromType<T>>(action: A, filter: EventFilter<A, T, E>) {
 		const size = Object.keys(filter).length
 		const f = {[ACTION]: action, [SIZE]: size, ...filter}
+        if (['keydown', 'keyup', 'keypress'].includes(f.type) && 'key' in f)
+             f.key = (f.key as string).toLowerCase()
 		const filters = this._eventsMap.get(filter.type)
 		if (filters)
 			filters.push(f)
@@ -76,12 +78,25 @@ export class EventActions<A = string> {
 	}
 
 	handleEvent(evt: Event) {
-		if (evt instanceof KeyboardEvent && this._hideTextEdit && isEditableElement(evt.target))
-			return
+        let filters
 		// take only filters that match the event, and sort them with most specific match first
-		const filters = this._eventsMap.get(evt.type)
-				?.filter(f=> objectMatch(evt, f, false))
-				.sort((f1, f2)=> f2[SIZE] - f1[SIZE])
+		if (evt instanceof KeyboardEvent) {
+            // special case for keyboard events: no event on text edits (optional),
+            if (this._hideTextEdit && isEditableElement(evt.target))
+			    return
+            // and no case sensitivity for evt.key
+            const evtKey = evt.key.toLowerCase()
+            filters = this._eventsMap.get(evt.type)?.filter(filter=> {
+                const {key, ...f} = filter
+                if ('key' !== undefined && key != evtKey)
+                    return false
+                return objectMatch(evt, f, false)
+            })
+        } else {
+            filters = this._eventsMap.get(evt.type)
+                    ?.filter(f=> objectMatch(evt, f, false))
+                    .sort((f1, f2)=> f2[SIZE] - f1[SIZE])
+        }
 		if (!filters || filters.length == 0)
 			return
 		for (const filter of filters) {

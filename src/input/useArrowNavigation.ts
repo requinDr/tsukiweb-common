@@ -26,6 +26,8 @@ function callback(action: string, evt: KeyboardEvent, ...args: any) {
 				return handleBack(document.activeElement)
 			}
 			return handled
+		case "none":
+			return true
 		default :
 			throw Error(`Unknown action ${action}`)
 	}
