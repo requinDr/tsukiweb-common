@@ -18,7 +18,7 @@ type Props = {
 	toImg?: undefined
 	onAnimationEnd?: VoidFunction
 } | (
-	{ fadeTime: number, onAnimationEnd: VoidFunction } & (
+	{ fadeTime: number, onAnimationEnd?: VoidFunction } & (
 		{ fadeIn: string, fadeOut?: undefined, toImg?: undefined } |
 		{ fadeOut: string, fadeIn?: undefined, toImg: string }
 	)

@@ -41,7 +41,7 @@ const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: Spri
 			fadeOut={effect}
 			fadeTime={fadeTime}
 			toImg={currImg}
-			onAnimationEnd={onAnimationEnd}
+			onAnimationEnd={currImg ? undefined :onAnimationEnd}
 			className={topLayerClass}
 		/>
 		<TransitionGraphic
