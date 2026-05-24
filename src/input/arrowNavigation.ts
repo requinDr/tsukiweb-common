@@ -79,7 +79,7 @@ function computeTempGridValue(min: number, max: number) {
 }
 
 function isElmtVisible(elmt: Element) {
-    if (!elmt.checkVisibility())
+    if (!elmt.checkVisibility({opacityProperty: true, visibilityProperty: true}))
         return false
     if (elmt.hasAttribute('inert'))
         return false
