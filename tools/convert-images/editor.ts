@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
 import sharp from 'sharp'
 import { logger } from '../utils/logger.ts'
+import path from 'path'
 
 export async function mergeVertical(bottom: string, top: string, newImage: string) {
   try {
@@ -42,5 +43,5 @@ export async function mergeVertical(bottom: string, top: string, newImage: strin
     ])
     .toFile(newImage)
 
-  logger.log(`Merged ${top} + ${bottom} -> ${newImage}`)
+  logger.log(`Merged ${path.basename(top)} + ${path.basename(bottom)} -> ${path.basename(newImage)}`)
 }
