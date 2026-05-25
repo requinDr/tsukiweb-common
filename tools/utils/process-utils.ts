@@ -1,6 +1,6 @@
-import fs from 'fs/promises'
 import path from 'path'
 import { spawn } from 'child_process'
+import { pathExists } from './fs-utils.ts'
 
 interface ExecutableResolution {
   command: string
@@ -10,15 +10,6 @@ interface ExecutableResolution {
 
 interface RunCommandOptions {
   cwd?: string
-}
-
-async function canAccess(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath)
-    return true
-  } catch {
-    return false
-  }
 }
 
 function normalizeConfiguredValue(value: string): string {
@@ -43,7 +34,7 @@ async function findInPath(command: string): Promise<string | null> {
   for (const dir of pathEntries) {
     for (const candidate of candidates) {
       const fullPath = path.join(dir, candidate)
-      if (await canAccess(fullPath)) return fullPath
+      if (await pathExists(fullPath)) return fullPath
     }
   }
 
@@ -60,13 +51,13 @@ export async function resolveExecutable(configuredValue: string, baseDir: string
 
     return {
       command,
-      found: await canAccess(command),
+      found: await pathExists(command),
       cwd: path.dirname(command),
     }
   }
 
   const besideConfig = path.join(baseDir, normalizedValue)
-  if (await canAccess(besideConfig)) {
+  if (await pathExists(besideConfig)) {
     return {
       command: besideConfig,
       found: true,
@@ -100,4 +91,14 @@ export function runCommand(command: string, args: string[], options: RunCommandO
       }
     })
   })
+}
+
+export async function withWorkingDirectory<T>(cwd: string, fn: () => T | Promise<T>): Promise<T> {
+  const previous = process.cwd()
+  process.chdir(cwd)
+  try {
+    return await fn()
+  } finally {
+    process.chdir(previous)
+  }
 }
