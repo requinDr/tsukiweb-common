@@ -64,8 +64,6 @@ function evaluateTokens(tokens: string[], script: SPB): number {
 				}
 			}
 		} else {
-			if (lhs != null)
-				throw Error(`Unexpected identifier`)
 			lhs = getTokenValue(token, script)
 		}
 	}
