@@ -88,7 +88,7 @@ export class EventActions<A = string> {
             const evtKey = evt.key.toLowerCase()
             filters = this._eventsMap.get(evt.type)?.filter(filter=> {
                 const {key, ...f} = filter
-                if ('key' !== undefined && key != evtKey)
+                if (key != undefined && 'key' !== undefined && key != evtKey)
                     return false
                 return objectMatch(evt, f, false)
             })
