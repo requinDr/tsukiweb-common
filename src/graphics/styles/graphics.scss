@@ -114,6 +114,7 @@
 			inset: 0;
 			background: inherit;
 			mix-blend-mode: multiply;
+			z-index: 5; // prevent top-layer sprite from displaying above the monochrome filter
 		}
 	}
 
