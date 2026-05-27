@@ -12,17 +12,15 @@
 
 .pageTitle {
 	padding-inline: var(--page-padding);
-	font-size: clamp(2.1rem, 4.8vmin, 2.8rem);
+	font-size: 2.6rem;
 	letter-spacing: -1px;
 	margin-block: 0;
 	font-family: "Times New Roman", "Times-Roman", serif;
-	font-weight: 700;
-	background: var(--page-title);
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
+	font-weight: 500;
 	white-space: nowrap;
 	grid-area: page-title;
+	width: fit-content;
+	text-shadow: 0 0 14px var(--btn-title-menu-shadow);
 }
 .content {
 	grid-area: content;
@@ -36,17 +34,12 @@
 
 .pageTabsLayout {
 	display: grid;
-	grid-template-columns: 1fr;
-	grid-template-areas:
-		"page-title"
-		"tabs"
-		"content"
-		"back-button";
-	grid-template-rows: auto auto 1fr auto;
-
-	.pageTitle {
-		margin-bottom: 0.2em;
-	}
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+		"page-title tabs"
+		"content content"
+		"back-button back-button";
+  grid-template-rows: auto 1fr auto;
 
 	@media screen and (orientation: landscape) and (max-height: 680px) {
 		grid-template-columns: 180px 1fr;

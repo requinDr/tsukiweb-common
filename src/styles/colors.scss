@@ -11,6 +11,7 @@
 	--menu-shadow: 0 1px 3px 1px hsl(0 0 0 / 70%);
 
 	--selected-shadow: 0 0 0 1px hsl(193 100 50) inset,
+		0 0 12px 0 hsl(208 100 50 / 80%) inset,
 		0 0 90px 0 hsl(198 100 50 / 80%) inset;
 
 	--separator: rgb(255 255 255 / 10%);
@@ -25,11 +26,11 @@
 	--btn-select-bg: hsl(215 100 27);
 
 	--btn-title-menu-bg: linear-gradient(180deg, hsl(185 156 69), hsl(205 100 26));
-	--btn-title-menu-shadow: hsla(205 100 50 / 52%);
+	--btn-title-menu-shadow: hsl(205 180 60);
 
 	--page-title: linear-gradient(180deg, hsl(201 36 71) 0%, hsl(195 60 65) 100%);
 
 	--placeholder: hsl(205 100 26);
-	--attention: hsl(219 100 50);
+	--attention: hsl(195 89% 46%);
 	--off-color: hsl(0 100 56);
 }

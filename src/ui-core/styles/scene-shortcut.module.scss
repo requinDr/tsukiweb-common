@@ -10,10 +10,11 @@
 	height: 280px;
 	border-radius: 8px;
 	corner-shape: scoop;
+	outline: 1px solid hsl(0deg 0% 100% / 10%);
 	
 	&.attention {
 		overflow: hidden;
-		&:before {
+		&::before {
 			content: "!";
 			font-size: 2.5em;
 			position: absolute;
@@ -22,8 +23,7 @@
 			left: 0;
 			display: grid;
 			justify-content: center;
-			color: rgb(10, 164, 171);
-			text-shadow: 0 0 6px var(--attention);
+			color: var(--attention);
 			z-index: 1;
 
 			@include hover-scale("attention", 1.2);

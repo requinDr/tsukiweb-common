@@ -108,7 +108,7 @@
 			filter: grayscale(1);
 		}
 
-		&:after {
+		&::after {
 			content: "";
 			position: absolute;
 			inset: 0;
