@@ -16,14 +16,32 @@ export function isImage(str: string) {
  * Preload an image.
  * @param src full url of the image to preload
  */
+const preloadCache = new Map<string, Promise<void>>()
+const loadedImage = Promise.resolve()
+
+export function markImageLoaded(src: string) {
+	if (!preloadCache.has(src))
+		preloadCache.set(src, loadedImage)
+}
+
 export async function preloadImage(src: string): Promise<void> {
-	return new Promise((resolve, reject) => {
+	const cached = preloadCache.get(src)
+	if (cached)
+		return cached
+
+	const promise = new Promise<void>((resolve, reject) => {
 		const img = new Image()
-		img.onload = resolve as VoidFunction
+		img.onload = () => {
+			markImageLoaded(src)
+			resolve()
+		}
 		img.onerror = img.onabort = reject
 
 		img.src = src
 	})
+	preloadCache.set(src, promise)
+	promise.catch(() => preloadCache.delete(src))
+	return promise
 }
 
 
