@@ -40,6 +40,12 @@
 			animation: fadeOut 0.2s ease forwards;
 		}
 	}
+
+	@media screen and (orientation: landscape) and (max-height: 540px) {
+		max-width: 720px;
+		max-height: 94vh;
+		width: calc(100% - 2em);
+	}
 }
 
 @keyframes fadeIn {

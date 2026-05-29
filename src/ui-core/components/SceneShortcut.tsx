@@ -25,6 +25,7 @@ const SceneShortcut = ({unlocked, images, title, subtitle, attention, ...props}:
 				<GraphicsGroup
 					className={styles.image}
 					images={images}
+					lazy
 				/>
 			:
 				<div className={classNames(styles.image, styles.placeholder)} />

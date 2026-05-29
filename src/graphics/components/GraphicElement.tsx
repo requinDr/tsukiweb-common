@@ -44,7 +44,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 				draggable={false}
 				className={classNames({ blur })}
 				onLoad={() => markImageLoaded(imgUrl)}
-				{...(lazy ? { loading: "lazy" } : {})}
+				{...(lazy ? { loading: "lazy", decoding: "async" } : {})}
 			/>
 		)
 	}

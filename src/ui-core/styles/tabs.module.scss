@@ -13,14 +13,6 @@
 			display: none;
 		}
 	}
-
-	@media screen and (orientation: landscape) and (max-height: 680px) {
-		flex-direction: column;
-
-		.tab {
-			width: 100%;
-		}
-	}
 }
 
 @property --menu-bg-opacity {
