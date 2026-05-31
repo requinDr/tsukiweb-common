@@ -1,5 +1,5 @@
 import path from 'path'
-
+import { gray } from '../utils/console-utils.ts'
 import { displayPath } from '../utils/fs-utils.ts'
 import { resolveExecutable } from '../utils/process-utils.ts'
 
@@ -78,15 +78,15 @@ function formatFoundTool(status: ToolStatus, paths: OrchestratorHeaderPaths): st
   }
 
   if (!path.isAbsolute(status.configuredValue) && !hasPathSeparator(status.configuredValue)) {
-    return `found in PATH (${status.configuredValue})`
+    return `found in PATH ${gray(`(${status.configuredValue})`)}`
   }
 
-  return `found (${status.configuredValue})`
+  return `found ${gray(`(${status.configuredValue})`)}`
 }
 
 function formatToolStatus(status: ToolStatus, paths: OrchestratorHeaderPaths, labelWidth: number): string {
   const icon = status.found ? OK : KO
-  const state = status.found ? formatFoundTool(status, paths) : `not found (${status.configuredValue})`
+  const state = status.found ? formatFoundTool(status, paths) : `not found ${gray(`(${status.configuredValue})`)}`
   return `  ${icon} ${status.label.padEnd(labelWidth)} ${state}`
 }
 

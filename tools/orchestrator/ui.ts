@@ -1,5 +1,6 @@
 import readline from 'readline/promises'
 import { stdin as input, stdout as output } from 'process'
+import { gray } from '../utils/console-utils.ts'
 import type { Check, OrchestratorStep } from './utils.ts'
 
 export interface StepStatus {
@@ -63,7 +64,7 @@ function statusIcon(check: Check): string {
 
 export function statusLine(label: string, check: Check): string {
   const failedLabel = check.ok ? '' : failedConditionLabel(check)
-  const details = failedLabel ? ` (${failedLabel})` : ''
+  const details = failedLabel ? ` ${gray(`(${failedLabel})`)}` : ''
   return `   ${label}: ${statusIcon(check)}${details}`
 }
 
