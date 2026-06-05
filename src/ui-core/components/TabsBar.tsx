@@ -17,7 +17,7 @@ type TabsProps = {
 	setSelected: Dispatch<SetStateAction<any>>
 }
 const TabsBar = ({ tabs, selected, setSelected }: TabsProps) => (
-	<div className={classNames(styles.tabs, "tabs")}>
+	<div className={classNames(styles.tabs, "tabs")} role="tablist">
 		{tabs.map(tab =>
 			<TabBtn key={tab.value}
 				active={selected === tab.value}
@@ -49,6 +49,8 @@ const TabBtn = ({label, value, active, audio, ...props}: TabBtnProps) => {
 		<button
 			className={classNames(styles.tab, "tab", { [styles.active]: active }, props?.className)}
 			onContextMenu={e => e.preventDefault()}
+			role="tab"
+			aria-selected={active}
 			data-tab={value}
 			{...soundProps}
 		 >

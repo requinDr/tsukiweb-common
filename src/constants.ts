@@ -1,3 +1,5 @@
+export const ASSETS_PATH = `${import.meta.env.BASE_URL}static/`
+
 export enum ViewRatio {
   unconstrained = "",
   fourByThree = "4/3",

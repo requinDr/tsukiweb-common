@@ -1,4 +1,4 @@
-const ASSETS_PATH = `${import.meta.env.BASE_URL}static/`
+import { ASSETS_PATH } from "../constants"
 
 export function assetPath(basePath: string) {
 	if (!/^\w+:\/\//.test(basePath)) // does not start with "<protocol>://"
@@ -70,7 +70,7 @@ const avif = {
 	},
 }
 
-export let imageFormat: string = import.meta.env.VITE_IMAGE_FORMAT ?? 'webp'
+export let imageFormat: string = 'avif'
 
 ;(async () => {
 	if (imageFormat === 'avif') {
