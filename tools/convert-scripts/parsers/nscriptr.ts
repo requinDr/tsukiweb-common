@@ -1,4 +1,4 @@
-import {StrReader, Token, TextToken, CommandToken, ReturnToken, LabelToken, ConditionToken, ErrorToken} from "./utils.js"
+import {StrReader, Token, TextToken, CommandToken, ReturnToken, LabelToken, ConditionToken, ErrorToken} from "./utils.ts"
 
 const CONDITION_REGEXP = /((^|\s*[&<>!=]*)\s*([%$\d-]\w*|fchk|"[^"]"))*/
 // [%$]X*|N* <=!> [%$]X*|N* (&& ...)*
@@ -8,11 +8,8 @@ const ARGUMENT_REGEXP = /^`[^`]*`|"[^"]*"|[#\w%$*-]+/
 //#region                         TOKEN PARSERS
 //##############################################################################
 
-/**
- * @param {number} lineIndex
- * @param {string} str
- */
-function parseText(lineIndex, str) {
+
+function parseText(lineIndex: number, str: string) {
     if (str.startsWith('`'))
         str = str.substring(1)
     let texts = str.split('\\')
@@ -32,19 +29,11 @@ function parseText(lineIndex, str) {
     return tokens
 }
 
-/**
- * @param {number} lineIndex
- * @param {string} str
- */
-function parseReturn(lineIndex, str) {
+function parseReturn(lineIndex: number, str: string) {
     return [new ReturnToken(lineIndex)]
 }
 
-/**
- * @param {number} lineIndex
- * @param {string} str
- */
-function parseCondition(lineIndex, str) {
+function parseCondition(lineIndex: number, str: string): Token[] {
     const cmdReader = new StrReader(str)
     let cmd = cmdReader.readMatch(/^\w+\b/)
     let not
@@ -54,7 +43,7 @@ function parseCondition(lineIndex, str) {
         default : throw Error(`Unexpected command '${cmd}' for condition token`)
     }
     cmdReader.readMatch(/\s*/) //trim whitespaces
-    const condition = cmdReader.readMatch(CONDITION_REGEXP)
+    const condition = cmdReader.readMatch(CONDITION_REGEXP)!
     // extract commands until end of line (separated by ':')
     const commands = parseScript(cmdReader.read().trim())
     commands.forEach(tkn=> tkn.lineIndex += lineIndex) //TODO maybe single line index?
@@ -73,21 +62,13 @@ function parseCondition(lineIndex, str) {
     ]
 }
 
-/**
- * @param {number} lineIndex 
- * @param {string} str 
- */
-function parseLabel(lineIndex, str) {
+function parseLabel(lineIndex: number, str: string) {
     if (str.startsWith('*'))
         str = str.substring(1)
     return [new LabelToken(lineIndex, str)]
 }
 
-/**
- * @param {number} lineIndex 
- * @param {string} str 
- */
-function parseCommand(lineIndex, str) {
+function parseCommand(lineIndex: number, str: string) {
     let cmd, arg, args, reader
     str = str.trimStart()
     switch (str.charAt(0)) {
@@ -98,7 +79,7 @@ function parseCommand(lineIndex, str) {
         case '+' : return [] // unknown command. Ignore.
         case '!' :
             reader = new StrReader(str)
-            cmd = reader.readMatch(/^![a-z]+/)
+            cmd = reader.readMatch(/^![a-z]+/)!
             arg = reader.read()
             args = arg ? [arg] : []
             return [new CommandToken(lineIndex, cmd, args)]
@@ -106,7 +87,7 @@ function parseCommand(lineIndex, str) {
             return [new CommandToken(lineIndex, 'textcolor', [str])]
         default :
             reader = new StrReader(str)
-            cmd = reader.readMatch(/^\w+\b/)
+            cmd = reader.readMatch(/^\w+\b/)!
             reader.readMatch(/\s*/)
             args = []
             while (!reader.atEnd()) {
@@ -120,11 +101,7 @@ function parseCommand(lineIndex, str) {
     }
 }
 
-/**
- * @param {number} lineIndex
- * @param {string} str
- */
-function parseError(lineIndex, str) {
+function parseError(lineIndex: number, str: string) {
     // console.log(`Warning line ${lineIndex + 1}: ${str}`)
     return [new ErrorToken(lineIndex, str)]
 }
@@ -133,7 +110,9 @@ function parseError(lineIndex, str) {
 //#region                         SCRIPT PARSER
 //##############################################################################
 
-const tokensRE = new Map(Object.entries({
+type Tokenizer = (i: number, str: string)=>Token[]
+
+const tokensRE = new Map<string, [string|RegExp, Tokenizer|null]>(Object.entries({
     'comment'       : [/^(\s*(;.*)?\r?\n)+/, null],
     'asciiText'     : [/^\s*`[^\n`]*(`|\r?\n)/, parseText],
     'nonAsciiText'  : [/^\s*[^ \t\na-z;`*@\\+!:,~"#][^\n\\]*/u, parseText],
@@ -148,12 +127,8 @@ const tokensRE = new Map(Object.entries({
     'error1'        : [/^"\r?\n/, parseError]
 }))
 
-/**
- * @param {string} text 
- * @param {number} singleLineIndex
- * @returns {Token[]}
- */
-function parseScript(text, singleLineIndex = -1) {
+
+function parseScript(text: string, singleLineIndex = -1) {
     const reader = new StrReader(text)
     const tokens = []
     
@@ -162,7 +137,7 @@ function parseScript(text, singleLineIndex = -1) {
         let lineIndex = reader.lineIndex
         
         for (const [name, [re, func]] of tokensRE.entries()) {
-            const tokenText = reader.readMatch(re, true);
+            const tokenText = reader.readMatch(re);
             if (tokenText) {
                 found = true
                 if (func)
