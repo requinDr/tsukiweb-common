@@ -1,4 +1,4 @@
-import { GraphicsTransition, SpritePos } from "../types";
+import { GraphicsTransition, SpritePos } from "./types";
 
 type GraphicTransitionResult = {
 	img: string
@@ -14,7 +14,7 @@ type GraphicTransitionResult = {
 	onAnimationEnd: VoidFunction
 }
 
-export function useGraphicTransition(
+export function resolveGraphicTransition(
 	pos: SpritePos,
 	image: string,
 	transition?: GraphicsTransition

@@ -1,7 +1,7 @@
 import { memo } from "react"
 import TransitionGraphic from "./TransitionGraphic"
 import { GraphicsTransition } from "../types"
-import { useGraphicTransition } from "../../hooks"
+import { resolveGraphicTransition } from "../utils"
 
 type Props = {
 	image: string
@@ -15,7 +15,7 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 	const {
 		img: currImg, prev: prevImg,
 		duration: fadeTime, effect, onAnimationEnd
-	} = useGraphicTransition('bg', image, transition)
+	} = resolveGraphicTransition('bg', image, transition)
 
 	if (prevImg === undefined) return null
 

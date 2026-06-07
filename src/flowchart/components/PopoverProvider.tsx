@@ -147,9 +147,9 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 								<m.div
 									key={currentItem.id}
 									className="scene-popover-animated"
-									initial={{ opacity: 0 }}
-									animate={{ opacity: 1 }}
-									exit={{ opacity: 0 }}
+									initial={{ opacity: 0, scale: 1 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0, scale: 0.98 }}
 									transition={{ type: "tween", duration: 0.25 }}
 								>
 									{renderContent(currentItem)}

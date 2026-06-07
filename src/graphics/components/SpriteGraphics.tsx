@@ -1,9 +1,9 @@
 import { memo } from "react"
 import classNames from "classnames"
 import TransitionGraphic from "./TransitionGraphic"
-import { useGraphicTransition } from "../../hooks"
 import { GraphicsTransition, Rocket, SpritePos } from "../types"
 import { buildRocketProps } from "../render"
+import { resolveGraphicTransition } from "../utils";
 
 type SpriteGraphicsProps = {
 	pos: Exclude<SpritePos, 'bg'>
@@ -18,7 +18,7 @@ const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: Spri
 	const {
 		img: currImg, prev: prevImg,
 		duration: fadeTime, effect, onAnimationEnd
-	} = useGraphicTransition(pos, image, transition)
+	} = resolveGraphicTransition(pos, image, transition)
 	const rp = rocket ? buildRocketProps(rocket) : undefined
 	const topLayerClass = topLayer ? "top-layer" : undefined
 
