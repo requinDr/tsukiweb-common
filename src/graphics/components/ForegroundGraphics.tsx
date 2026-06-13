@@ -15,7 +15,7 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 	const {
 		img: currImg, prev: prevImg,
 		duration: fadeTime, effect, onAnimationEnd
-	} = resolveGraphicTransition('bg', image, transition)
+	} = resolveGraphicTransition('bg', image, transition, false)
 
 	if (prevImg === undefined) return null
 

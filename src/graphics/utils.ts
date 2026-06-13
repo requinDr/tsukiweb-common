@@ -17,11 +17,12 @@ type GraphicTransitionResult = {
 export function resolveGraphicTransition(
 	pos: SpritePos,
 	image: string,
-	transition?: GraphicsTransition
+	transition?: GraphicsTransition,
+	skipSameImg: boolean = true
 ): GraphicTransitionResult {
 	const nextImg = transition?.to[pos]
 
-	if (!transition || nextImg == undefined || nextImg == image)
+	if (!transition || nextImg == undefined || (skipSameImg && nextImg == image))
 		return { img: image, prev: undefined }
 
 	return {
