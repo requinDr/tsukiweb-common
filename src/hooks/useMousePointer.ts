@@ -24,7 +24,7 @@ export const useMousePointer = ({hideDelay = 5000}: Props = {})=> {
 			clearTimeout(timeout)
 			window.removeEventListener('mousemove', showCursor)
 		}
-	}, [])
+	}, [hideDelay])
 
 	return mouseCursorVisible
 }

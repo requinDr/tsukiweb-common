@@ -217,7 +217,7 @@ class GamepadEventGeneratorClass {
     }
     private _stopPolling() {
         if (this._poll) {
-            if (this._pollInterval = 0)
+            if (this._pollInterval === 0)
                 cancelAnimationFrame(this._pollHandle)
             else
                 clearInterval(this._pollHandle)
@@ -227,7 +227,7 @@ class GamepadEventGeneratorClass {
 
     config({axesDeadZones, axesResolution, pollPeriod, ...config} : Opts) {
         this._axesDeadZones = axesDeadZones ?? this._axesDeadZones
-        this._axesResolution = axesDeadZones ?? this._axesResolution
+        this._axesResolution = axesResolution ?? this._axesResolution
         this._pollInterval = pollPeriod ?? this._pollInterval
         Object.assign(this._eventsConfig, config)
     }

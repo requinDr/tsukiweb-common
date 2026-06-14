@@ -33,6 +33,6 @@ export function useEventState<T extends EvtTarget>(target: T,
             if (typeof exitEvt == "string") remove(exitEvt, onExit, exitOpts)
             else exitEvt.forEach(e => remove(e, onExit, enterOpts))
         }
-    }, [target, enterEvt, exitEvt])
+    }, [target, enterEvt, exitEvt, enterOpts, exitOpts])
 	return [status, setStatus] as const
 }

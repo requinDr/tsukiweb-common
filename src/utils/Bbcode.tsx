@@ -398,7 +398,7 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 					&& charDelay != 0)
 				timer.current.start()
 		}
-	}, [paused])
+	}, [charDelay, paused])
 
 	useEffect(()=> {
 		if (text == prevText.current)
@@ -419,7 +419,7 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 		}
 		prevText.current = text
 		updateTree()
-	}, [text])
+	}, [charDelay, onEnd, restartOnAppend, text])
 
 	useEffect(()=> {
 		if (charDelay == 0) {
@@ -432,7 +432,7 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 		} else {
 			timer.current.delay = charDelay
 		}
-	}, [charDelay])
+	}, [charDelay, onEnd])
 
 	let resultNode = (tree) ? tagToJSX(tree, dict, props) : undefined
 	if (rootPrefix || rootSuffix) {

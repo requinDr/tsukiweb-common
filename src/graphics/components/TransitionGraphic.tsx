@@ -77,7 +77,7 @@ const TransitionGraphic = ({
 			}
 		}
 		return null
-	}, [pos, fadeTime, fadeOut, image, toImg])
+	}, [pos, fadeTime, fadeOut, image, toImg, imageSrc])
 
 	return (
 		<>
