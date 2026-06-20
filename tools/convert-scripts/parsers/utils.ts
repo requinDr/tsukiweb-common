@@ -263,7 +263,7 @@ export class Block {
 			if (t.toString().search(search) >= 0) {
 				let str = t.toString()
 				if (maxCount == -1)
-					str.replaceAll(search, replaceString)
+					str = str.replaceAll(search, replaceString)
 				else {
 					do {
 						str = str.replace(search, replaceString)

@@ -114,7 +114,7 @@ type Tokenizer = (i: number, str: string)=>Token[]
 
 const tokensRE = new Map<string, [string|RegExp, Tokenizer|null]>(Object.entries({
     'comment'       : [/^(\s*(;.*)?\r?\n)+/, null],
-    'asciiText'     : [/^\s*`[^\n`]*(`|\r?\n)/, parseText],
+    'asciiText'     : [/^\s*`[^\n`]*(`|\r?\n|$)/, parseText],
     'nonAsciiText'  : [/^\s*[^ \t\na-z;`*@\\+!:,~"#][^\n\\]*/u, parseText],
     'return'        : [/^\s*return\s*\r?\n/, parseReturn],
     'condition'     : [/^\s*(not)?if\s[^\n]*/, parseCondition],
