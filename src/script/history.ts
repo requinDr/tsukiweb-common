@@ -207,6 +207,10 @@ export abstract class HistoryBase<
   onTextChange(script: SP) {
     if (!this._enabled || script.text.length == 0)
       return
+    
+    if (this.pageContext == null && script.currentBlock)
+      this.onPageStart(script.pageContext() as PageContext<SP>)
+    
     const text = script.text.replace(/^\[\r\n]*/, '')
     if (this.pages.length > 0) {
       let lastPage = this.lastPage

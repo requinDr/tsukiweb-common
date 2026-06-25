@@ -1,3 +1,7 @@
+import { ScriptPlayerBase } from "../script/ScriptPlayer";
+import { AudioManager } from "./AudioManager";
+import { CommandHandler, CommandProcessFunction } from "../script/types";
+
 export function calcGain(value: number) {
   if (value <= 0)
     return 0
@@ -6,4 +10,27 @@ export function calcGain(value: number) {
   const normalizedValue = value / valueRange
   const dB = normalizedValue * dbRange - dbRange
   return Math.pow(10, dB / 20)
+}
+
+type SPB = ScriptPlayerBase<any, any, any, any>
+
+export function createCommands<SP extends SPB>(audio: AudioManager): Record<string, CommandProcessFunction<SP>> {
+  return {
+    'wave'    : (arg, _, script)=> {
+      script.audio.looped_se = null
+      audio.playWave(arg)
+    },
+    'waveloop': (arg, _, script)=> {
+      script.audio.looped_se = audio.waveLoop = arg
+    },
+    'wavestop': (_a, _c, script)=> {
+      script.audio.looped_se = audio.waveLoop = null
+    },
+    'play'    : (arg, _, script)=> {
+      script.audio.track = audio.gameTrack = arg
+    },
+    'playstop': (_a, _c, script)=> {
+      script.audio.track = audio.gameTrack = null
+    }
+  }
 }
