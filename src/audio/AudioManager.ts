@@ -3,6 +3,7 @@ import { asyncDelay } from "../utils/timer"
 import { AudioSourceNode, Sound} from "./AudioSourceNode"
 import { StreamingAudioNode } from "./StreamingAudioNode"
 import { AutoMuteAudioContext } from "./AutoMuteContext"
+import { settings } from "engine/settings";
 
 const effects: Record<string, Sound> = {
     'glass' : {
@@ -82,9 +83,9 @@ export class AudioManager {
     private _uiVolume: number
     private _context: AutoMuteAudioContext
     private _masterGainNode: GainNode
-    private _gameTrackNode: StreamingAudioNode
+    private _gameTrackNode: StreamingAudioNode|AudioSourceNode
     private _waveNode: AudioSourceNode
-    private _menuTrackNode: StreamingAudioNode
+    private _menuTrackNode: StreamingAudioNode|AudioSourceNode
     private _uiNodes: Array<AudioSourceNode>
 
     constructor(idToUrl: (id: string) => string) {
@@ -97,8 +98,16 @@ export class AudioManager {
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
         this._assetsMap = new AudioAssetsMap(this._context, idToUrl)
-        this._gameTrackNode = new StreamingAudioNode(this._context)
-        this._menuTrackNode = new StreamingAudioNode(this._context)
+        const useAudioBuffer = settings.forceAudioBuffer || 
+            document.createElement('audio').canPlayType('audio/webm; codecs="opus"') != "probably"
+        if (useAudioBuffer) {
+            console.log("opus not supported by <audio>, or disabled by user. Fallback to Web audio API")
+            this._gameTrackNode = new AudioSourceNode(this._context)
+            this._menuTrackNode = new AudioSourceNode(this._context)
+        } else {
+            this._gameTrackNode = new StreamingAudioNode(this._context)
+            this._menuTrackNode = new StreamingAudioNode(this._context)
+        }
         this._waveNode = new AudioSourceNode(this._context)
         this._uiNodes = new Array<AudioSourceNode>()
         this._uiVolume = 1
@@ -215,12 +224,18 @@ export class AudioManager {
             return
         await this._stopStreamingTrack(this._gameTrackNode)
         if (this._gameTrack == id) { // check if track has not changed during delays
-            const url = this._idToUrl(id)
-            await this._gameTrackNode.play(url, true)
+            if (this._gameTrackNode instanceof StreamingAudioNode) {
+                const url = this._idToUrl(id)
+                await this._gameTrackNode.play(url, true)
+            } else {
+                const buffer = await this._assetsMap.get(id)
+                if (this._gameTrack == id) // check if track changed while loading buffer
+                    this._gameTrackNode.play({buffer, loop: true})
+            }
         }
     }
 
-    private async _stopStreamingTrack(node: StreamingAudioNode) {
+    private async _stopStreamingTrack(node: StreamingAudioNode|AudioSourceNode) {
         if (node.playing) {
             if (this._trackFadeout) {
                 node.gainRamp(0, this._trackFadeout)
@@ -243,8 +258,14 @@ export class AudioManager {
             return
         await this._stopStreamingTrack(this._menuTrackNode)
         if (this._menuTrack == id) { // check if track has not changed during delays
-            const url = this._idToUrl(id)
-            await this._menuTrackNode.play(url, true)
+            if (this._menuTrackNode instanceof StreamingAudioNode) {
+                const url = this._idToUrl(id)
+                await this._menuTrackNode.play(url, true)
+            } else {
+                const buffer = await this._assetsMap.get(id)
+                if (this._menuTrack == id) // check if track changed while loading buffer
+                    this._menuTrackNode.play({buffer, loop: true})
+            }
         }
     }
     

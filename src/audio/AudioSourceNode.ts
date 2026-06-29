@@ -61,7 +61,7 @@ export class AudioSourceNode extends GainNode {
         this._endPromises = []
     }
     
-    get numberOfInputs() { return 0 }
+    override get numberOfInputs() { return 0 }
 
     get playing() {
         return this._descriptor != null

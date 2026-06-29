@@ -26,6 +26,7 @@ export class Settings extends StoredJSON {
     systemSE: 6,
   }
   autoMute: boolean = true
+  forceAudioBuffer: boolean = false
 
   unlockEverything: boolean = false
   flowchartBadges: boolean = true
