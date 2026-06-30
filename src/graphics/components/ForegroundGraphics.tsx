@@ -18,6 +18,7 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 	} = resolveGraphicTransition('bg', image, transition, false)
 
 	if (prevImg === undefined) return null
+	if (currImg == prevImg && transition?.to.bgAlign && transition.effect.endsWith("scroll")) return null; // scroll animation only affects background
 
 	return (
 		<TransitionGraphic key={currImg}
