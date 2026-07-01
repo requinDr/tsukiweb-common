@@ -17,8 +17,10 @@ export const SVG_DEFS = (
 			fill="var(--active-connection)"
 		/>
 		<symbol id="fc-scene-hidden" overflow="visible">
-			<rect {...SCENE_RECT_ATTRS} rx={SCENE_HEIGHT/10} fill="url(#hidden-scene-gradient)" />
-			<path d={`M${-SCENE_WIDTH/2},${-SCENE_HEIGHT/2} L${SCENE_WIDTH/2},${SCENE_HEIGHT/2} M${-SCENE_WIDTH/2},${SCENE_HEIGHT/2} L${SCENE_WIDTH/2},${-SCENE_HEIGHT/2}`} stroke="black" strokeWidth={0.4} />
+			<g clipPath="url(#fc-scene-clip)">
+				<rect {...SCENE_RECT_ATTRS} rx={SCENE_HEIGHT/10} fill="url(#hidden-scene-gradient)" />
+				<path d={`M${-SCENE_WIDTH/2},${-SCENE_HEIGHT/2} L${SCENE_WIDTH/2},${SCENE_HEIGHT/2} M${-SCENE_WIDTH/2},${SCENE_HEIGHT/2} L${SCENE_WIDTH/2},${-SCENE_HEIGHT/2}`} stroke="black" strokeWidth={0.4} />
+			</g>
 			<rect {...SCENE_RECT_ATTRS} rx={SCENE_HEIGHT/10} />
 		</symbol>
 	</defs>
