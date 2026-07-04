@@ -2,7 +2,7 @@ import { ASSETS_PATH } from "../constants"
 
 export function assetPath(basePath: string) {
 	if (!/^\w+:\/\//.test(basePath)) // does not start with "<protocol>://"
-		return ASSETS_PATH + basePath
+		return ASSETS_PATH + basePath.replace(/^\.\//, '')
 	else
 		return basePath
 }
