@@ -4,6 +4,8 @@ import { AudioSourceNode, Sound} from "./AudioSourceNode"
 import { StreamingAudioNode } from "./StreamingAudioNode"
 import { AutoMuteAudioContext } from "./AutoMuteContext"
 import { settings } from "engine/settings";
+import { observe, observeChildren, unobserve } from "@tsukiweb-common/utils/Observer";
+import { calcGain } from "./utils";
 
 const effects: Record<string, Sound> = {
     'glass' : {
@@ -76,43 +78,34 @@ export class AudioManager {
     private _assetsMap: AudioAssetsMap<string>
     private _idToUrl: (id: string) => string
     private _trackFadeout: number
-    private _gameTrack: string | null
-    private _menuTrack: string | null
+    private _track: string | null
     private _waveLoop: boolean
     private _wave: string | null // /!\ attr not updated when wave finishes.
     private _uiVolume: number
     private _context: AutoMuteAudioContext
     private _masterGainNode: GainNode
-    private _gameTrackNode: StreamingAudioNode|AudioSourceNode
+    private _trackNode: StreamingAudioNode|AudioSourceNode
     private _waveNode: AudioSourceNode
-    private _menuTrackNode: StreamingAudioNode|AudioSourceNode
     private _uiNodes: Array<AudioSourceNode>
 
-    constructor(idToUrl: (id: string) => string) {
+    constructor(idToUrl: (id: string) => string, enableAudioElements: boolean = false) {
         this._idToUrl = idToUrl
         this._trackFadeout = 0
-        this._gameTrack = null
-        this._menuTrack = null
+        this._track = null
         this._waveLoop = false
         this._wave = null
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
         this._assetsMap = new AudioAssetsMap(this._context, idToUrl)
-        const useAudioBuffer = settings.forceAudioBuffer || 
-            document.createElement('audio').canPlayType('audio/webm; codecs="opus"') != "probably"
-        if (useAudioBuffer) {
-            console.log("opus not supported by <audio>, or disabled by user. Fallback to Web audio API")
-            this._gameTrackNode = new AudioSourceNode(this._context)
-            this._menuTrackNode = new AudioSourceNode(this._context)
+        if (enableAudioElements) {
+            this._trackNode = new StreamingAudioNode(this._context)
         } else {
-            this._gameTrackNode = new StreamingAudioNode(this._context)
-            this._menuTrackNode = new StreamingAudioNode(this._context)
+            this._trackNode = new AudioSourceNode(this._context)
         }
         this._waveNode = new AudioSourceNode(this._context)
         this._uiNodes = new Array<AudioSourceNode>()
         this._uiVolume = 1
-        this._gameTrackNode.connect(this._masterGainNode)
-        this._menuTrackNode.connect(this._masterGainNode)
+        this._trackNode.connect(this._masterGainNode)
         this._waveNode.connect(this._masterGainNode)
         this._masterGainNode.connect(this._context.destination)
     }
@@ -127,26 +120,16 @@ export class AudioManager {
         let previousVolume = this.masterVolume
         this._masterGainNode.gain.value = value
         if (previousVolume == 0) {
-            if (this.gameTrackVolume > 0 && this.gameTrack) this.playGameTrack(this.gameTrack)
-            if (this.menuTrackVolume > 0 && this.menuTrack) this.playMenuTrack(this.menuTrack)
+            if (this.trackVolume > 0 && this.track) this.playTrack(this.track)
             if (this.waveVolume > 0 && this.waveLoop) this.playWave(this.waveLoop, true)
         }
     }
-    
-    get gameTrackVolume() { return this._gameTrackNode.gain.value }
-    set gameTrackVolume(value: number) {
-        let previousVolume = this.gameTrackVolume
-        this._gameTrackNode.gain.value = value
-        if (previousVolume == 0 && this.masterVolume > 0 && this.gameTrack)
-            this.playGameTrack(this.gameTrack)
-    }
-    
-    get menuTrackVolume() { return this._menuTrackNode.gain.value }
-    set menuTrackVolume(value: number) {
-        let previousVolume = this.menuTrackVolume
-        this._menuTrackNode.gain.value = value
-        if (previousVolume == 0 && this.masterVolume > 0 && this.menuTrack)
-            this.playMenuTrack(this.menuTrack)
+    get trackVolume() { return this._trackNode.gain.value }
+    set trackVolume(value: number) {
+        let previousVolume = this.trackVolume
+        this._trackNode.gain.value = value
+        if (previousVolume == 0 && this.masterVolume > 0 && this.track)
+            this.playTrack(this.track)
     }
     
     get waveVolume() { return this._waveNode.gain.value }
@@ -169,20 +152,12 @@ export class AudioManager {
         this._trackFadeout = value
     }
 
-    get gameTrack() { return this._gameTrack }
-    set gameTrack(id: string | null) {
+    get track() { return this._track }
+    set track(id: string | null) {
         if (id)
-            this.playGameTrack(id)
+            this.playTrack(id)
         else
-            this.stopGameTrack()
-    }
-
-    get menuTrack() { return this._menuTrack }
-    set menuTrack(id: string | null) {
-        if (id)
-            this.playMenuTrack(id)
-        else
-            this.stopMenuTrack()
+            this.stopTrack()
     }
     get waveLoop() { return this._waveLoop ? this._wave : null}
     set waveLoop(id: string | null) {
@@ -216,21 +191,21 @@ export class AudioManager {
         this._uiNodes.push(node)
     }
 
-    async playGameTrack(id: string, forceRestart = false) {
-        if (!forceRestart && this._gameTrack == id && this._gameTrackNode.playing)
+    async playTrack(id: string, forceRestart = false) {
+        if (!forceRestart && this._track == id && this._trackNode.playing)
             return
-        this._gameTrack = id
-        if (this.gameTrackVolume == 0 || this.masterVolume == 0)
+        this._track = id
+        if (this.trackVolume == 0 || this.masterVolume == 0)
             return
-        await this._stopStreamingTrack(this._gameTrackNode)
-        if (this._gameTrack == id) { // check if track has not changed during delays
-            if (this._gameTrackNode instanceof StreamingAudioNode) {
+        await this._stopStreamingTrack(this._trackNode)
+        if (this._track == id) { // check if track has not changed during delays
+            if (this._trackNode instanceof StreamingAudioNode) {
                 const url = this._idToUrl(id)
-                await this._gameTrackNode.play(url, true)
+                await this._trackNode.play(url, true)
             } else {
                 const buffer = await this._assetsMap.get(id)
-                if (this._gameTrack == id) // check if track changed while loading buffer
-                    this._gameTrackNode.play({buffer, loop: true})
+                if (this._track == id) // check if track changed while loading buffer
+                    this._trackNode.play({buffer, loop: true})
             }
         }
     }
@@ -245,33 +220,9 @@ export class AudioManager {
         }
     }
     
-    async stopGameTrack() {
-        await this._stopStreamingTrack(this._gameTrackNode)
-        this._gameTrack = null
-    }
-
-    async playMenuTrack(id: string, forceRestart = false) {
-        if (!forceRestart && this._menuTrack == id && this._menuTrackNode.playing)
-            return
-        this._menuTrack = id
-        if (this.menuTrackVolume == 0 || this.masterVolume == 0)
-            return
-        await this._stopStreamingTrack(this._menuTrackNode)
-        if (this._menuTrack == id) { // check if track has not changed during delays
-            if (this._menuTrackNode instanceof StreamingAudioNode) {
-                const url = this._idToUrl(id)
-                await this._menuTrackNode.play(url, true)
-            } else {
-                const buffer = await this._assetsMap.get(id)
-                if (this._menuTrack == id) // check if track changed while loading buffer
-                    this._menuTrackNode.play({buffer, loop: true})
-            }
-        }
-    }
-    
-    async stopMenuTrack() {
-        this._stopStreamingTrack(this._menuTrackNode)
-        this._menuTrack = null
+    async stopTrack() {
+        this._track = null
+        await this._stopStreamingTrack(this._trackNode)
     }
     
     async playWave(id: string, loop: boolean = false) {
@@ -308,10 +259,45 @@ export class AudioManager {
     clearBuffers(restartTrack: boolean = false) {
         this._assetsMap.clear()
         if (restartTrack) {
-            if (this._gameTrackNode.playing && this._gameTrack)
-                this.playGameTrack(this._gameTrack, true)
-            if (this._menuTrackNode.playing && this._menuTrack)
-                this.playMenuTrack(this._menuTrack, true)
+            if (this._trackNode.playing && this._track)
+                this.playTrack(this._track, true)
+        }
+    }
+}
+
+//#endregion ###################################################################
+//#region                       GameAudio
+//##############################################################################
+
+export class GameAudioManager extends AudioManager {
+    _inGame: boolean = false
+
+    constructor (...params: ConstructorParameters<typeof AudioManager>) {
+        super(...params)
+        this._updateVolumes = this._updateVolumes.bind(this)
+        this._updateVolumes()
+        for (const attr of ['master', 'se', 'titleTrack', 'systemSE', 'track'] as const)
+            observe(settings.volume, attr, this._updateVolumes)
+        observe(settings, 'autoMute', (m) => { this.autoMute = m })
+        this.autoMute = settings.autoMute
+    }
+    
+    private _updateVolumes() {
+        this.masterVolume = calcGain(settings.volume.master)
+        this.uiVolume = calcGain(settings.volume.systemSE)
+        this.waveVolume = calcGain(settings.volume.se)
+        this.trackVolume = calcGain(
+            (this._inGame) ? settings.volume.track
+                           : settings.volume.titleTrack)
+    }
+
+    get inGame() { return this._inGame }
+    set inGame(inGame: boolean) {
+        if (inGame != this._inGame) {
+            this._inGame = inGame
+            this.stopTrack()
+            this.stopWave()
+            this._updateVolumes()
         }
     }
 }

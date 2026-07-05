@@ -1,9 +1,4 @@
-
-const autoPlayEnablingEvents = [
-    'auxclick', 'click'    , 'contextmenu',
-    'dblclick', 'mousedown', 'mouseup',
-    'keydown' , 'keyup'    , 'touchend'
-]
+import { autoPlayEnablingEvents } from "./utils";
 
 /**
  * Extends the base {@link AudioContext} to add auto-mute feature, to

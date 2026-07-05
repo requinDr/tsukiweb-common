@@ -1,6 +1,12 @@
 import { ScriptPlayerBase } from "../script/ScriptPlayer";
 import { AudioManager } from "./AudioManager";
-import { CommandHandler, CommandProcessFunction } from "../script/types";
+import { CommandProcessFunction } from "../script/types";
+
+export const autoPlayEnablingEvents = [
+    'auxclick', 'click'    , 'contextmenu',
+    'dblclick', 'mousedown', 'mouseup',
+    'keydown' , 'keyup'    , 'touchend'
+]
 
 export function calcGain(value: number) {
   if (value <= 0)
@@ -27,10 +33,10 @@ export function createCommands<SP extends SPB>(audio: AudioManager): Record<stri
       script.audio.looped_se = audio.waveLoop = null
     },
     'play'    : (arg, _, script)=> {
-      script.audio.track = audio.gameTrack = arg
+      script.audio.track = audio.track = arg
     },
     'playstop': (_a, _c, script)=> {
-      script.audio.track = audio.gameTrack = null
+      script.audio.track = audio.track = null
     }
   }
 }

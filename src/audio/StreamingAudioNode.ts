@@ -1,3 +1,5 @@
+import { autoPlayEnablingEvents } from "./utils";
+
 /**
  * Uses HTMLAudioElement for streaming playback
  * This allows audio to start playing before the file is fully downloaded.
@@ -83,9 +85,13 @@ export class StreamingAudioNode extends GainNode {
 			if (error.name === 'AbortError') return
 			// autoplay blocked - wait for user interaction
 			if (error.name === 'NotAllowedError') {
-				const tryPlay = () => this._audioElement?.play().catch(() => {})
-				document.addEventListener('click', tryPlay, { once: true })
-				document.addEventListener('keydown', tryPlay, { once: true })
+				const tryPlay = () => {
+					this._audioElement?.play().catch(() => {})
+					for (const evt of autoPlayEnablingEvents)
+						document.removeEventListener(evt, tryPlay)
+				}
+				for (const evt of autoPlayEnablingEvents)
+					document.addEventListener(evt, tryPlay)
 			} else {
 				this.stop()
 				throw error
