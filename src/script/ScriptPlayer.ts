@@ -159,7 +159,7 @@ function processVarCmd(arg: string, cmd: string, script: SP) {
     case 'sub' :
         if (name.startsWith('$'))
             throw Error(`Cannot subtract string variable ${arg}`)
-        script.writeVariable(name, (script.readVariable(name) as any) + value)
+        script.writeVariable(name, (script.readVariable(name) as any) - (value as number))
         break
     default : 
         throw Error(`Unexpected command ${cmd}`)
