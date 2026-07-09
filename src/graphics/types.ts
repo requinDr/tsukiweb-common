@@ -1,3 +1,4 @@
+import { WithRequired } from "@tsukiweb-common/types";
 import { BG_POSITIONS, POSITIONS, SPRITES_POSITIONS } from "./constants"
 
 export type SpritePos = typeof POSITIONS[number]
@@ -6,6 +7,7 @@ export type Graphics = Record<SpritePos, string> & {
 	monochrome?: string
 	bgAlign?: typeof BG_POSITIONS[number]
 }
+export type ThumbnailsGraphics = WithRequired<Partial<Graphics>, 'bg'>
 
 export type GraphicsTransition = {
 	to: Partial<Graphics>

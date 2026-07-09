@@ -1,4 +1,4 @@
-import { Graphics } from "../graphics/types"
+import { Digit, PartialRecord, UcLetter } from "../types"
 
 export type FcNodeAttrs = {
 	col: number
@@ -7,7 +7,16 @@ export type FcNodeAttrs = {
 	align?: string
 }
 
-export type FcSceneGraphAttrs = Partial<Graphics> & { bg: Graphics["bg"] }
+export type FlowchartJson<CharId extends string, SceneId extends string> = {
+  nodes: Record<string, FcNodeAttrs>,
+  scenes: Record<SceneId, FcNodeAttrs>,
+  badges: {
+    points: Record<CharId, PartialRecord<SceneId, number>>
+    flags: PartialRecord<UcLetter|Digit, Array<string>>
+    select: Record<SceneId, {copy?: SceneId, conditions: (0|string)[]}>
+    conditions: Record<SceneId, string>
+  }
+}
 
 export type FlowchartNodeAttrs<NodeId extends string> = {
 	from?: NodeId[]
