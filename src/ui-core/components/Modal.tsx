@@ -3,7 +3,7 @@ import styles from '../styles/modal.module.scss'
 import { createPortal } from "react-dom"
 import dialogPolyfill from 'dialog-polyfill'
 import 'dialog-polyfill/dist/dialog-polyfill.css'
-import { multiRef } from "@tsukiweb-common/utils/utils"
+import { multiRef } from "../../utils/utils"
 import { useNavBackRef } from "../../hooks"
 
 type Props = ComponentProps<'dialog'> & {

@@ -4,7 +4,7 @@ import { AudioSourceNode, Sound} from "./AudioSourceNode"
 import { StreamingAudioNode } from "./StreamingAudioNode"
 import { AutoMuteAudioContext } from "./AutoMuteContext"
 import { settings } from "engine/settings";
-import { observe, observeChildren, unobserve } from "@tsukiweb-common/utils/Observer";
+import { observe } from "../utils/Observer";
 import { calcGain } from "./utils";
 
 const effects: Record<string, Sound> = {

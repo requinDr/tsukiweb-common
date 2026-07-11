@@ -1,4 +1,4 @@
-import { JSONObject, NoMethods, PartialJSON, RecursivePartial } from "@tsukiweb-common/types";
+import { JSONObject, NoMethods, PartialJSON } from "../types";
 import { deepAssign, jsonDiff, jsonMerge } from "./utils";
 
 export abstract class Stored {

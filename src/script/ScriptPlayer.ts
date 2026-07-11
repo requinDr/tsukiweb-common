@@ -6,7 +6,7 @@ import { JSONObject, PartialJSON, WithRequired } from "../types";
 import { deepAssign } from "../utils/utils";
 import { AsyncEventsDispatcher } from "../utils/eventsDispatcher"
 import { HistoryBase } from "./history";
-import { Graphics } from "@tsukiweb-common/graphics";
+import { Graphics } from "../graphics";
 import { CommandMap, CommandProcessFunction, CommandRecord, FFwStopPredicate, NumVarName, StrVarName, VarName, VarType } from "./types";
 
 type Hist<S extends SP = SP> = HistoryBase<S, any, any, any, any>

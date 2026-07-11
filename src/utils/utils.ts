@@ -1,5 +1,5 @@
-import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent, PartialJSON, JSONDiff, JSONMerge } from "@tsukiweb-common/types"
-import { ReactElement, ReactNode, RefObject, useCallback } from "react"
+import { RecursivePartial, JSONObject, JSONPrimitive, JSONParent, PartialJSON, JSONDiff, JSONMerge } from "../types"
+import { ReactElement, ReactNode, RefObject } from "react"
 
 //##############################################################################
 //#region                     OBJECTS MANIPULATION
@@ -310,13 +310,16 @@ export async function fetchJson(input: URL | RequestInfo, init?: RequestInit) {
  * @param fileName default name of the file
  */
 export function textFileUserDownload(text: string, fileName: string, contentType="text/plain") {
-	let element = document.createElement('a');
-	element.setAttribute('href', `data:${contentType};charset=utf-8,${encodeURIComponent(text)}`);
-	element.setAttribute('download', fileName);
-	element.style.display = 'none';
-	document.body.appendChild(element);
-	element.click();
-	document.body.removeChild(element);
+	const a = document.createElement('a')
+	a.style.display = 'none'
+	document.body.appendChild(a)
+	const blob = new Blob([text], {type: 'octet/stream'})
+	const url = window.URL.createObjectURL(blob)
+	a.href = url
+	a.download = fileName
+	a.click()
+	window.URL.revokeObjectURL(url)
+	document.removeChild(a)
 }
 
 /**
@@ -437,7 +440,7 @@ export function versionsCompare(v1: string, v2: string) {
 }
 
 export function twoDigits(n: number) {
-  return n.toString().padStart(2, '0')
+	return n.toString().padStart(2, '0')
 }
 
 export function multiRef<T extends Node>(...refs: Array<any | RefObject<T|null> | ((node: T|null)=>void)>) {

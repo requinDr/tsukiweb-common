@@ -1,4 +1,4 @@
-import { WithRequired } from "@tsukiweb-common/types";
+import { WithRequired } from "../types";
 import { BG_POSITIONS, POSITIONS, SPRITES_POSITIONS } from "./constants"
 
 export type SpritePos = typeof POSITIONS[number]
