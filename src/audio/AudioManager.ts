@@ -3,6 +3,9 @@ import { asyncDelay } from "../utils/timer"
 import { AudioSourceNode, Sound} from "./AudioSourceNode"
 import { StreamingAudioNode } from "./StreamingAudioNode"
 import { AutoMuteAudioContext } from "./AutoMuteContext"
+import { observe } from "../utils/Observer";
+import { calcGain } from "./utils";
+import { Settings } from "../utils/settings";
 
 const effects: Record<string, Sound> = {
     'glass' : {
@@ -261,3 +264,45 @@ export class AudioManager {
         }
     }
 }
+
+//#endregion ###################################################################
+//#region                       GameAudio
+//##############################################################################
+
+export class GameAudioManager<S extends Settings> extends AudioManager {
+    private _inGame: boolean = false
+    private _settings: S
+
+    constructor(settings: S, ...params: ConstructorParameters<typeof AudioManager>) {
+        super(...params)
+        this._settings = settings
+        this._updateVolumes = this._updateVolumes.bind(this)
+        this._updateVolumes()
+        for (const attr of ['master', 'se', 'titleTrack', 'systemSE', 'track'] as const)
+            observe(settings.volume, attr, this._updateVolumes)
+        observe(settings, 'autoMute', (m) => { this.autoMute = m })
+        this.autoMute = settings.autoMute
+    }
+    
+    private _updateVolumes() {
+        this.masterVolume = calcGain(this._settings.volume.master)
+        this.uiVolume = calcGain(this._settings.volume.systemSE)
+        this.waveVolume = calcGain(this._settings.volume.se)
+        this.trackVolume = calcGain(
+            (this._inGame) ? this._settings.volume.track
+                           : this._settings.volume.titleTrack)
+    }
+
+    get inGame() { return this._inGame }
+    set inGame(inGame: boolean) {
+        if (inGame != this._inGame) {
+            this._inGame = inGame
+            this.stopTrack()
+            this.stopWave()
+            this._updateVolumes()
+        }
+    }
+}
+
+//#endregion ###################################################################
+
