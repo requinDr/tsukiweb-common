@@ -10,7 +10,7 @@ import { Graphics } from "../graphics";
 import { CommandMap, CommandProcessFunction, CommandRecord, FFwStopPredicate, NumVarName, StrVarName, VarName, VarType } from "./types";
 
 type Hist<S extends SP = SP> = HistoryBase<S, any, any, any, any>
-type SP = ScriptPlayerBase<any, any, any, Hist>
+type SP = ScriptPlayerBase<any, any, any, any, Hist>
 
 type PageCallback<LN> = (line: string, lineIndex: number, blockLines: string[], label: LN)=>void
 
@@ -35,12 +35,13 @@ type Audio = {
     looped_se : string | null
 }
 
-type InitContext<LN extends string> = PartialJSON<{
+type InitContext<LN extends string, PointId extends string> = PartialJSON<{
     label: LN
     page: number
     audio: Audio
     graphics: Graphics
     flags: string[]
+    points: Record<PointId, number>
     textPrefix: string
     continueScript: boolean
 }>
@@ -54,9 +55,10 @@ type PageContext<LN extends string, Content extends JSONObject> = {
     text: string
 } & Content
 
-type BlockContext<LN extends string, Content extends JSONObject> = {
+type BlockContext<LN extends string, PointId extends string, Content extends JSONObject> = {
     label: LN
     flags: string[]
+    points: Partial<Record<PointId, number>>
     continueScript: boolean
 } & Content
 
@@ -170,10 +172,10 @@ function processVarCmd(arg: string, cmd: string, script: SP) {
 //##############################################################################
 
 export abstract class ScriptPlayerBase<
-        LN extends string,
+        LN extends string, PointId extends string,
         PageContent extends JSONObject,
         BlockContent extends JSONObject,
-        H extends Hist<ScriptPlayerBase<LN, PageContent, BlockContent, any>>>
+        H extends Hist<ScriptPlayerBase<LN, PointId, PageContent, BlockContent, any>>>
     extends AsyncEventsDispatcher<Callbacks<LN>> {
 
 //##############################################################################
@@ -204,6 +206,7 @@ export abstract class ScriptPlayerBase<
 
 //----------script variables------------
     private _flags: Set<string>
+    private _points: Map<PointId, number>
     private _textPrefix : string // add bbcode before text lines (for e.g., color or alignement)
     private _text: string = ""
     private _audio: Audio
@@ -249,7 +252,18 @@ export abstract class ScriptPlayerBase<
     }
 
 //----------script variables------------
-    get flags() { return this._flags }
+    get flags(): typeof this._flags { return this._flags }
+    set flags(value: Iterable<string>) {
+        this._flags.clear()
+        for (const v of value)
+            this._flags.add(v)
+    }
+    get points(): typeof this._points { return this._points }
+    set points(value: Partial<Record<PointId, number>>) {
+        for (const [id, val] of Object.entries(value)) {
+            this._points.set(id as PointId, val as number)
+        };
+    }
 
     get audio(): Audio { return this._audio }
     set audio(value: Partial<Audio>) {
@@ -273,7 +287,7 @@ export abstract class ScriptPlayerBase<
 //#region                          CONSTRUCTOR
 //##############################################################################
 
-    constructor(history: H, init: InitContext<LN>) {
+    constructor(history: H, init: InitContext<LN, PointId>) {
         super()
         this._uid = Date.now()
         
@@ -287,10 +301,11 @@ export abstract class ScriptPlayerBase<
             history.onBlockStart({...this.blockContext(), label})
         })
 
-        const { graphics, audio, label, flags } = init
+        const { graphics, audio, label, flags, points } = init
         
         this._commands = new Map()
         this._flags = new Set(flags)
+        this._points = new Map(Object.entries(points ?? {}) as [PointId, number][])
 
         this._nextLabel = label as LN|undefined ?? null
         this._initLabel = label as LN|undefined ?? null
@@ -424,13 +439,14 @@ export abstract class ScriptPlayerBase<
         }
     }
         
-    blockContext(): BlockContext<LN, BlockContent> {
+    blockContext(): BlockContext<LN, PointId, BlockContent> {
         const label = this.currentLabel
         if (!label)
             throw Error('no label')
         return {
             label: label,
             flags: [...this.flags],
+            points: Object.fromEntries(Object.entries(this.points)) as Partial<Record<PointId, number>>,
             continueScript: this._continueScript,
             ...this.blockContent()
         }
@@ -466,6 +482,35 @@ export abstract class ScriptPlayerBase<
     getCommand(cmd: string) {
         return this._commands.get(cmd)
     }
+//_________________________points and flags accessors___________________________
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    clearFlags() {
+        this._flags.clear()
+    }
+    hasFlag(flag: string) {
+        return this._flags.has(flag)
+    }
+    setFlag(flag: string) {
+        this._flags.add(flag)
+    }
+    deleteFlag(flag: string) {
+        this._flags.delete(flag)
+    }
+
+    clearPoints() {
+        this._points.clear()
+    }
+    setPoints(id: PointId, value: number) {
+        this._points.set(id, value)
+    }
+    getPoints(id: PointId) {
+        return this._points.get(id) ?? 0
+    }
+    addPoints(id: PointId, delta: number) {
+        this._points.set(id, this.getPoints(id) + delta)
+    }
+    
 
 //______________________abstract and internal use methods_______________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

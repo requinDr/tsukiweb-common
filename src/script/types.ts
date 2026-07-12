@@ -1,6 +1,6 @@
 import { ScriptPlayerBase } from "./ScriptPlayer";
 
-export type SPB = ScriptPlayerBase<any, any, any, any>
+export type SPB = ScriptPlayerBase<any, any, any, any, any>
 
 export type Instruction = {
 	cmd?: string,

@@ -8,13 +8,13 @@ import { ScriptPlayerBase } from "./ScriptPlayer"
 //#region                             TYPES
 //##############################################################################
 
-type ScriptPlayer = ScriptPlayerBase<any, any, any, any>
+type ScriptPlayer = ScriptPlayerBase<any, any, any, any, any>
 
 type PageContext<SP extends ScriptPlayer = ScriptPlayer> = ReturnType<SP['pageContext']>
 type BlockContext<SP extends ScriptPlayer = ScriptPlayer> = ReturnType<SP['blockContext']>
 
 type SPB<DP extends JSONObject = JSONObject, DS extends JSONObject = JSONObject>
-  = ScriptPlayerBase<any, JSONObject, JSONObject, any> & {
+  = ScriptPlayerBase<any, any, JSONObject, JSONObject, any> & {
     ['pageContext']: ()=> PageContext & PartialJSON<DP> & unknown,
     ['blockContext']: ()=> BlockContext & PartialJSON<DS> & unknown,
   }

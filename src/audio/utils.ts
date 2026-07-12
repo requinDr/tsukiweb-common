@@ -18,7 +18,7 @@ export function calcGain(value: number) {
   return Math.pow(10, dB / 20)
 }
 
-type SPB = ScriptPlayerBase<any, any, any, any>
+type SPB = ScriptPlayerBase<any, any, any, any, any>
 
 export function createCommands<SP extends SPB>(audio: AudioManager): Record<string, CommandProcessFunction<SP>> {
   return {

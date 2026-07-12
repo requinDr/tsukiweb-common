@@ -7,7 +7,7 @@ import { CommandHandler } from "./types";
 type BlockFinishCallback =
     (complete: boolean)=> void
 
-type SPB = ScriptPlayerBase<any, any, any, any>
+type SPB = ScriptPlayerBase<any, any, any, any, any>
 
 export class BlockPlayer<SP extends SPB> {
 
