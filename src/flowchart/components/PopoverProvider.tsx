@@ -38,16 +38,34 @@ type PopoverProviderProps<T extends WithId> = {
 
 export const PopoverProvider = <T extends WithId>({ children, renderContent }: PopoverProviderProps<T>) => {
 	const [currentItem, setCurrentItem] = useState<T | null>(null)
+	const [popoverMounted, setPopoverMounted] = useState(false)
+	const animateEntryRef = useRef(true)
+	const currentItemRef = useRef<T | null>(null)
+	const popoverMountedRef = useRef(false)
 	const registry = useMemo(() => new Map<string, () => T>(), [])
 
 	const { setReference, setFloating, floatingStyles } = useFloatPosition(8)
 
 	const openPopover = useCallback((item: T, element: Element) => {
+		animateEntryRef.current = !popoverMountedRef.current
+		popoverMountedRef.current = true
+		currentItemRef.current = item
+		setPopoverMounted(true)
 		setReference(element)
 		setCurrentItem(item)
 	}, [setReference])
 
-	const closePopover = useCallback(() => setCurrentItem(null), [])
+	const closePopover = useCallback(() => {
+		currentItemRef.current = null
+		setCurrentItem(null)
+	}, [])
+
+	const onExitComplete = useCallback(() => {
+		if (currentItemRef.current === null) {
+			popoverMountedRef.current = false
+			setPopoverMounted(false)
+		}
+	}, [])
 
 	// Delegated listeners
 	useEffect(() => {
@@ -141,22 +159,23 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 			<PopoverRegistryContext.Provider value={registry as Map<string, () => WithId>}>
 				{children}
 				{createPortal(
-					<AnimatePresence mode="wait">
-						{currentItem && (
-							<div className="popover-container" ref={setFloating} style={floatingStyles ?? {}}>
-								<m.div
-									key={currentItem.id}
-									className="scene-popover-animated"
-									initial={{ opacity: 0, scale: 1 }}
-									animate={{ opacity: 1, scale: 1 }}
-									exit={{ opacity: 0, scale: 0.98 }}
-									transition={{ type: "tween", duration: 0.25 }}
-								>
-									{renderContent(currentItem)}
-								</m.div>
-							</div>
-						)}
-					</AnimatePresence>,
+					popoverMounted && (
+						<div className="popover-container" ref={setFloating} style={floatingStyles ?? {}}>
+							<AnimatePresence onExitComplete={onExitComplete}>
+								{currentItem && (
+									<m.div
+										key="popover"
+										className="scene-popover-animated"
+										initial={animateEntryRef.current ? { opacity: 0, scale: 1 } : false}
+										animate={{ opacity: 1, scale: 1, transition: { type: "tween", duration: animateEntryRef.current ? 0.25 : 0 } }}
+										exit={{ opacity: 0, scale: 0.98, transition: { type: "tween", duration: 0.25 } }}
+									>
+										{renderContent(currentItem)}
+									</m.div>
+								)}
+							</AnimatePresence>
+						</div>
+					),
 					getRootElement()
 				)}
 			</PopoverRegistryContext.Provider>
