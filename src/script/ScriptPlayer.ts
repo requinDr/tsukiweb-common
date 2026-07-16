@@ -465,7 +465,8 @@ export abstract class ScriptPlayerBase<
     static defaultBlockContext() {
         return {
             flags: [] as string[],
-            continueScript: true
+            continueScript: true,
+            points: { }
         }
     }
 
