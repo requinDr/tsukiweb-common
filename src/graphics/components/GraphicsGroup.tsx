@@ -2,7 +2,7 @@ import { memo, useCallback } from "react"
 import { POSITIONS } from "../constants";
 import { SpritePos, Graphics as GraphicsType } from "../types";
 import GraphicElement from "./GraphicElement";
-import { ResolutionId } from "../../utils/lang";
+import { ResolutionId } from "../../translation/lang";
 import { useGameConfig } from "../../context";
 import { DivProps } from "../../types";
 import { buildEffectProps } from "../render";

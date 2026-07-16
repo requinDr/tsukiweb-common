@@ -1,7 +1,7 @@
 import { CSSProperties, memo, useMemo } from "react"
 import GraphicElement from "./GraphicElement";
 import { SpritePos } from "../types"
-import { ResolutionId } from "../../utils/lang";
+import { ResolutionId } from "../../translation/lang";
 import { isImage } from "../../utils/images";
 import { useGameConfig } from "../../context";
 import { DivProps } from "../../types";

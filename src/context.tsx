@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext } from "react"
-import { ResolutionId } from "./utils/lang"
+import { ResolutionId } from "./translation/lang"
 
 export type LibConfig = {
 	imageSrc: (src: string, res?: ResolutionId) => string
