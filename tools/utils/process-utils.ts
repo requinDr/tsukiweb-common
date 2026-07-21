@@ -10,6 +10,7 @@ interface ExecutableResolution {
 
 interface RunCommandOptions {
   cwd?: string
+  stdout?: 'inherit' | 'ignore'
 }
 
 function normalizeConfiguredValue(value: string): string {
@@ -77,7 +78,7 @@ export function runCommand(command: string, args: string[], options: RunCommandO
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd,
-      stdio: 'inherit',
+      stdio: ['inherit', options.stdout ?? 'inherit', 'inherit'],
       shell: false,
       windowsHide: false,
     })

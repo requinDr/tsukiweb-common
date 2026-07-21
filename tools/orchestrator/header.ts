@@ -1,5 +1,5 @@
 import path from 'path'
-import { gray } from '../utils/console-utils.ts'
+import { gray, red } from '../utils/console-utils.ts'
 import { displayPath } from '../utils/fs-utils.ts'
 import { resolveExecutable } from '../utils/process-utils.ts'
 
@@ -33,9 +33,7 @@ export interface OrchestratorHeaderOptions {
   width?: number
 }
 
-const OK = '\u2705'
-const KO = '\u274c'
-const DEFAULT_WIDTH = 72
+const DEFAULT_WIDTH = 82
 
 async function collectToolStatuses(
   tools: OrchestratorHeaderTool[],
@@ -84,16 +82,15 @@ function formatFoundTool(status: ToolStatus, paths: OrchestratorHeaderPaths): st
   return `found ${gray(`(${status.configuredValue})`)}`
 }
 
-function formatToolStatus(status: ToolStatus, paths: OrchestratorHeaderPaths, labelWidth: number): string {
-  const icon = status.found ? OK : KO
-  const state = status.found ? formatFoundTool(status, paths) : `not found ${gray(`(${status.configuredValue})`)}`
-  return `  ${icon} ${status.label.padEnd(labelWidth)} ${state}`
+function formatToolStatus(status: ToolStatus, paths: OrchestratorHeaderPaths): string {
+  if (status.found) return `  ${status.label} ${formatFoundTool(status, paths)}`
+  return `  ${red(`${status.label} not found`)} ${gray(`(${status.configuredValue})`)}`
 }
 
-function printToolStatus(status: ToolStatus, paths: OrchestratorHeaderPaths, labelWidth: number): void {
-  console.log(formatToolStatus(status, paths, labelWidth))
+function printToolStatus(status: ToolStatus, paths: OrchestratorHeaderPaths): void {
+  console.log(formatToolStatus(status, paths))
   if (!status.found && status.downloadUrl) {
-    console.log(`     Download ${status.downloadUrl}`)
+    console.log(red(`  Download ${status.downloadUrl}`))
   }
 }
 
@@ -113,11 +110,9 @@ export async function printOrchestratorHeader(options: OrchestratorHeaderOptions
   printHeaderFields(options.fields)
 
   if (toolStatuses.length) {
-    const toolLabelWidth = Math.max(...toolStatuses.map(status => status.label.length))
     console.log('')
-    console.log('  Tools')
     for (const status of toolStatuses) {
-      printToolStatus(status, options.paths, toolLabelWidth)
+      printToolStatus(status, options.paths)
     }
   }
 
