@@ -1,13 +1,13 @@
 import fs from 'fs/promises'
 import os from 'os'
 import path from 'path'
-import sharp from 'sharp'
+import sharp, { type AvifOptions, type ResizeOptions } from 'sharp'
 import { logger} from '../utils/logger.ts'
 
 
 interface ConvertOptions {
-  resize?: sharp.ResizeOptions
-  avif?:   sharp.AvifOptions
+  resize?: ResizeOptions
+  avif?:   AvifOptions
 }
 
 /**

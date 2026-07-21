@@ -1,4 +1,4 @@
-import sharp from 'sharp'
+import sharp, { type Metadata } from 'sharp'
 import fs from 'fs/promises'
 import path from 'path'
 import { logger } from '../utils/logger.ts'
@@ -15,7 +15,7 @@ async function ensureDirectoryExists(dir: string) {
   if (created) logger.log(`Folder "${dir}" successfully created.`)
 }
 
-async function applyTransparencyMask(inputPath: string, outputPath: string, metadata: sharp.Metadata) {
+async function applyTransparencyMask(inputPath: string, outputPath: string, metadata: Metadata) {
   try {
     // 1. Get the file
     const { width, height } = metadata

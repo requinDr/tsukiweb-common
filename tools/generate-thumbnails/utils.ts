@@ -1,4 +1,4 @@
-import sharp from 'sharp'
+import sharp, { type OverlayOptions, type Region, type Sharp, type SharpOptions } from 'sharp'
 import path from 'path'
 
 
@@ -29,9 +29,9 @@ export async function generateThumbnail({ bg, l, c, r, monochrome, width, height
     },
   })
 
-  const layers: sharp.OverlayOptions[] = []
+  const layers: OverlayOptions[] = []
 
-  const applyGrayscale = (inputImage: sharp.Sharp) => {
+  const applyGrayscale = (inputImage: Sharp) => {
     if (monochrome) {
       return inputImage.grayscale().toBuffer()
     }
@@ -59,7 +59,7 @@ export async function generateThumbnail({ bg, l, c, r, monochrome, width, height
     layers.push({ input: finalBgBuffer, top: 0, left: 0 })
   }
 
-  const characterGrid: Record<string, sharp.Region> = {
+  const characterGrid: Record<string, Region> = {
     l: { left: 0, top: 0, width: Math.floor(width / 2), height },
     c: { left: Math.floor(width / 4), top: 0, width: Math.floor(width / 2), height },
     r: { left: Math.floor(width / 2), top: 0, width: Math.floor(width / 2), height },
@@ -140,7 +140,7 @@ export async function saveSpritesheet(
     top: Math.floor(i / cols) * thumbHeight,
   }))
 
-  const canvas: sharp.SharpOptions = {
+  const canvas: SharpOptions = {
     create: {
       width: nw,
       height: nh,
