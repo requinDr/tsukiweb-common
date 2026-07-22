@@ -121,7 +121,7 @@ export async function generateThumbnail({ bg, l, c, r, monochrome, width, height
     })
   }
 
-  return canvas.composite(layers).toFormat("avif").toBuffer()
+  return canvas.composite(layers).raw().toBuffer()
 }
 
 export async function saveSpritesheet(
@@ -134,8 +134,13 @@ export async function saveSpritesheet(
   const nw = cols * thumbWidth
   const nh = rows * thumbHeight
 
-  const compositeImages = thumbnails.map((thumb, i) => ({
+  const compositeImages: OverlayOptions[] = thumbnails.map((thumb, i) => ({
     input: thumb,
+      raw: {
+      width: thumbWidth,
+      height: thumbHeight,
+      channels: 4,
+    },
     left: (i % cols) * thumbWidth,
     top: Math.floor(i / cols) * thumbHeight,
   }))
@@ -149,19 +154,16 @@ export async function saveSpritesheet(
     },
   }
 
-  const avifPromise = sharp(canvas)
+  await sharp(canvas)
     .composite(compositeImages)
-    .toFormat('avif')
-    .avif({ effort: 9, quality: 40 })
-    .toFile(spritesheetPath + ".avif")
- 
-  const webpPromise = sharp(canvas)
-    .composite(compositeImages)
-    .toFormat('webp')
-    .webp({ effort: 6, preset: 'drawing', quality: 70 })
-    .toFile(spritesheetPath + ".webp")
-
-  await Promise.all([avifPromise, webpPromise])
+    .avif({
+      quality: 40,
+      effort: 9,
+      tune: 'psnr',
+      chromaSubsampling: '4:4:4',
+      bitdepth: 8,
+    })
+    .toFile(`${spritesheetPath}.avif`)
 
   return { nw, nh }
 }

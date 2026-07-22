@@ -1,5 +1,6 @@
 import fs, { type FileHandle } from 'fs/promises'
 import path from 'path'
+import { createHash } from 'node:crypto'
 import { inflateSync } from 'zlib'
 
 import { logger } from '../utils/logger.ts'
@@ -9,6 +10,7 @@ const INDEX_COMPRESSED = 1
 const SEGMENT_COMPRESSED = 1
 const FILE_PROTECTED = 0x80000000
 const COPY_CHUNK_SIZE = 1024 * 1024
+const MAX_PATH_PART_BYTES = 240
 
 interface Segment {
   flags:        number
@@ -173,6 +175,17 @@ function normalizeArchivePath(filename: string): string {
     .replace(/^\/+/, '')
 }
 
+function shortenPathPart(part: string): string {
+  if (Buffer.byteLength(part) <= MAX_PATH_PART_BYTES) return part
+
+  const rawExtension = path.extname(part)
+  const extension = Buffer.byteLength(rawExtension) <= 32 ? rawExtension : ''
+  const suffix = `~${createHash('sha256').update(part).digest('hex').slice(0, 8)}${extension}`
+  const stem = [...(extension ? part.slice(0, -extension.length) : part)]
+  while (Buffer.byteLength(stem.join('') + suffix) > MAX_PATH_PART_BYTES) stem.pop()
+  return stem.join('') + suffix
+}
+
 function filterEntries(entries: Entry[], filters: string[]): Entry[] {
   const normalizedFilters = filters
     .map(filter => ({
@@ -194,7 +207,7 @@ function filterEntries(entries: Entry[], filters: string[]): Entry[] {
 }
 
 function outputPathFor(outputDir: string, filename: string): string {
-  const parts = normalizeArchivePath(filename).split('/').filter(part => part && part !== '.')
+  const parts = normalizeArchivePath(filename).split('/').filter(part => part && part !== '.').map(shortenPathPart)
   if (!parts.length || parts.includes('..')) throw new Error(`Refusing unsafe XP3 filename: "${filename}"`)
 
   const outputPath = path.join(outputDir, ...parts)
@@ -275,7 +288,7 @@ export async function extractXp3(
     for (let i = 0; i < entriesToExtract.length; i++) {
       const entry = entriesToExtract[i]
       const filename = normalizeArchivePath(entry.filename)
-      logger.progress(`Extracting file: ${i + 1}/${entriesToExtract.length} (${filename})`)
+      logger.progress(`Extracting file: ${i + 1}/${entriesToExtract.length}`)
 
       try {
         await extractEntry(archive, archiveSize, entry, outputPathFor(outputDir, filename))

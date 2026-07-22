@@ -22,13 +22,12 @@ interface SpritesheetMeta {
   i: Record<string, [number, number, number]>
 }
 
-const IMAGE_FORMAT = 'avif'
 const BATCH_SIZE = 90
 const THUMB_WIDTH = 108
 const THUMB_HEIGHT = 72
 
 const getPath = (img: string | undefined, dir: string) =>
-  img && !isHexColor(img) ? path.join(dir, `${img}.${IMAGE_FORMAT}`) : img
+  img && !isHexColor(img) ? path.join(dir, `${img}.${img.startsWith('tachi/') ? 'png' : 'jpg'}`) : img
 
 export async function buildSpritesheets(
   scenes: Array<[string, Scene]>,
