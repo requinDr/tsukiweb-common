@@ -16,7 +16,7 @@ export class Settings extends StoredJSON {
   fixedRatio: ViewRatio = ViewRatio.unconstrained
   
   eroBlur: boolean = true
-  eroSkip: 'no' | 'ask' | 'yes' = 'ask'
+  eroSkip: 'no' | 'ask' = 'ask'
   
   volume = {
     master: 6,

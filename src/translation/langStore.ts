@@ -98,7 +98,7 @@ export function createTranslationStore<T extends Record<string, any>>(
       id = desc.fallback
     }
     if (strings.id !== settings.language || !strings.lastUpdate || lastUpdate > strings.lastUpdate)
-      updateLanguage(settings.language, true)
+      await updateLanguage(settings.language, true)
   }
 
   function isLanguageLoaded() {
@@ -140,18 +140,16 @@ export function createTranslationStore<T extends Record<string, any>>(
   }
 
   async function initTranslations() {
-    if (!languagesStorage.storageExists())
-      await fetchAvailableLanguages()
-    else
-      fetchAvailableLanguages()
+    await fetchAvailableLanguages()
 
     if (!strings.id || strings.id !== settings.language)
       await updateLanguage(settings.language)
     else
       selection.ready = true
+
+    observe(settings, "language", lang => updateLanguage(lang))
   }
 
-  observe(settings, "language", lang => updateLanguage(lang))
   window.addEventListener("load", initTranslations)
 
   return {
