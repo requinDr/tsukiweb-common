@@ -88,7 +88,7 @@ export class AudioManager {
     private _waveNode: AudioSourceNode
     private _uiNodes: Array<AudioSourceNode>
 
-    constructor(idToUrl: (id: string) => string, enableAudioElements: boolean = false) {
+    constructor(idToUrl: (id: string) => string, enableAudioElements: boolean = true) {
         this._idToUrl = idToUrl
         this._trackFadeout = 0
         this._track = null
@@ -97,7 +97,7 @@ export class AudioManager {
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
         this._assetsMap = new AudioAssetsMap(this._context, idToUrl)
-        if (enableAudioElements) {
+        if (enableAudioElements && document.createElement('audio').canPlayType('audio/webm; codecs="opus"') == "probably") {
             this._trackNode = new StreamingAudioNode(this._context)
         } else {
             this._trackNode = new AudioSourceNode(this._context)
