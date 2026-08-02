@@ -277,8 +277,11 @@ export class Block {
 		}
 	}
 
-	extend(block: Block) {
-		this._tokens.push(...block._tokens)
+	extend(block: Block|Token[]|string) {
+		if (block instanceof Block)
+			this._tokens.push(...block._tokens)
+		else
+			this.insert(this.length, block)
 	}
 	
 //________________________________other methods_________________________________
