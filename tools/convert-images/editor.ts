@@ -29,6 +29,7 @@ export async function mergeVertical(bottom: string, top: string, newImage: strin
     topImage.toBuffer()
   ])
 
+  await fs.mkdir(path.dirname(newImage), { recursive: true })
   await sharp({
       create: {
         width: maxWidth,
