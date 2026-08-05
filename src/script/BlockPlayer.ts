@@ -3,6 +3,7 @@ import Timer from "../utils/timer"
 import { extractInstructions } from "./utils";
 import { ScriptPlayerBase } from "./ScriptPlayer";
 import { CommandHandler } from "./types";
+import { line } from "motion/react-client";
 
 type BlockFinishCallback =
     (complete: boolean)=> void
@@ -30,7 +31,6 @@ export class BlockPlayer<SP extends SPB> {
 //-------------progression--------------
     private _page: number
     private _lineIndex: number
-    private _currLine: string | null = null
     private _currCmd: CommandHandler | null = null
 //-----------private setters------------
     private set page(value: number) {
@@ -43,7 +43,6 @@ export class BlockPlayer<SP extends SPB> {
     get page() { return this._page }
     get index() { return this._lineIndex }
     get blockLines() { return this._blockLines }
-    get currLine() { return this._currLine }
 
     get loaded() { return this._blockLines.length > 0 }
 
@@ -64,8 +63,6 @@ export class BlockPlayer<SP extends SPB> {
         this._onFinish = onFinish
         this._script.fetchLines(label).then((lines: string[]) => {
             this._blockLines = lines
-            if (this._lineIndex == -1)
-                this._lineIndex = this._getLineIndex(this._page)
             onScriptLoaded()
         })
     }
@@ -85,9 +82,6 @@ export class BlockPlayer<SP extends SPB> {
     }
     stop() {
         this._stopped = true
-    }
-    isCurrentLineText() {
-        return this._currLine?.startsWith('`') ?? false
     }
     skip(nb_lines: number) {
         this._lineIndex += nb_lines
@@ -190,40 +184,58 @@ export class BlockPlayer<SP extends SPB> {
     }
 
     private async _processBlock() {
-        if (this._lineIndex == -1)
+        if (this._blockLines.length == 0)
             throw Error(`block not loaded`)
         const {_label: label, _blockLines: lines} = this
-        await this._script.dispatchEvent('blockStart', label, this._page)
-        let newPage = true
-        while (this._lineIndex < this._blockLines.length && !this._stopped) {
-            const index = this._lineIndex
 
-            let line = lines[index]
-            console.debug(`${label}:${this._page}|${index}: ${line}`)
-            if (newPage) {
-                await this._script.dispatchEvent('pageStart', line, index, lines, label)
-                newPage = false
-            }
-
-            if (this._script.ffwStopCondition?.(line, index, this._page, lines, this._label, this._script))
-                this._script.ffw(null)
-
-            await this._processLine(line)
-            if (this.isPageBreak(line, index, true)) {
-                await this._script.dispatchEvent('pageEnd', line, index, lines, label)
-                this.page++
-                newPage = true
-            }
-            if (this._lineIndex == index) // if no line skip, move to next line
-                this._lineIndex++
+        // extract pages from block
+        const pages: string[][] = [[]]
+        for (const [index, line] of lines.entries()) {
+            pages[pages.length-1].push(line)
+            if (this.isPageBreak(line, index, false))
+                pages.push([])
         }
-        if (!this._stopped) {
-            if (!newPage)
-                await this._script.dispatchEvent('pageEnd', 'return', lines.length, lines, label)
+        if (pages[pages.length-1].length == 0)
+            pages.pop()
+        
+        await this._script.dispatchEvent('blockStart', label, this._page, pages)
+        
+        this._lineIndex = 0;
+        while (this._page < pages.length) {
+            const page = pages[this._page]
+            await this._script.dispatchEvent('pageStart', this._page, pages, label)
+
+            while (this._lineIndex >= 0 && this._lineIndex < page.length && !this._stopped) {
+                const index = this._lineIndex
+                const line = page[index]
+                console.debug(`${label}:${this._page}|${index}: ${line}`)
+                
+                if (this._script.ffwStopCondition?.(line, index, this._page, pages, this._label, this._script))
+                    this._script.ffw(null)
+
+                await this._processLine(line)
+
+                if (this._lineIndex == index) // if no line skip, move to next line
+                    this._lineIndex++
+            }
+            if (this._stopped)
+                break
+            if (this._lineIndex > 0) {
+                // only trigger 'pageEnd' event when finishing a page
+                // (skipping back more than a page should never happen anyway)
+                await this._script.dispatchEvent('pageEnd', this._page, pages, label)
+                this._lineIndex -= page.length
+                this._page++
+            } else {
+                this._page--;
+                this._lineIndex += pages[this._page].length;
+            }
+        }
+        if (this._stopped) {
+            this._onFinish(false)
+        } else {
             this._onFinish(true)
             await this._script.dispatchEvent('blockEnd', label)
-        } else {
-            this._onFinish(false)
         }
         this._started = false
     }

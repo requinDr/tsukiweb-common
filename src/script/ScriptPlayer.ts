@@ -12,12 +12,12 @@ import { CommandMap, CommandProcessFunction, CommandRecord, FFwStopPredicate, Nu
 type Hist<S extends SP = SP> = HistoryBase<S, any, any, any, any>
 type SP = ScriptPlayerBase<any, any, any, any, Hist>
 
-type PageCallback<LN> = (line: string, lineIndex: number, blockLines: string[], label: LN)=>void
+type PageCallback<LN> = (page: number, pages: string[][], label: LN)=>void
 
 type ScriptPlayerCallbacks<LN extends string> = {
     beforeBlock: (label: LN, initPage: number) => Promise<void>|void,
     afterBlock: (label: LN) => Promise<void>|void,
-    blockStart: (label: LN, initPage: number) => Promise<void>|void,
+    blockStart: (label: LN, initPage: number, pages: string[][]) => Promise<void>|void,
     blockEnd: (label: LN) => Promise<void>|void,
     pageStart: PageCallback<LN>
     pageEnd: PageCallback<LN>
@@ -385,13 +385,13 @@ export abstract class ScriptPlayerBase<
         const prevPredicate = this._ffwStopCondition
         const prevDelay = this._ffwDelay
         const currentLabel = this.currentLabel
-        this.ffw((l, i, p, lines, label)=> {
+        this.ffw((l, li, p, pages, label)=> {
             if (p < stopPage && label == currentLabel)
                 return false
             if (!keepHistory)
                 this._history.enable()
             // restore previous ffw
-            if (prevPredicate && !prevPredicate(l, i, p, lines, label, this)) {
+            if (prevPredicate && !prevPredicate(l, li, p, pages, label, this)) {
                 this.ffw(prevPredicate, prevDelay)
                 return false
             }

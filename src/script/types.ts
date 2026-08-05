@@ -17,9 +17,9 @@ export type CommandProcessFunction<SP extends SPB> = (
 
 export type FFwStopPredicate<SP extends SPB> = (
 	line: string,
-	index: number,
+	lineIndex: number,
 	page: number,
-	lines: string[],
+	pages: string[][],
 	label: Exclude<SP['currentLabel'], null>,
 	script: SP,
 ) => boolean
