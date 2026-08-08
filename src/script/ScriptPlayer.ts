@@ -222,7 +222,7 @@ export abstract class ScriptPlayerBase<
 
     get currentBlock() { return this._blockPlayer }
     get currentLabel(): LN { return (this._blockPlayer?.label ?? this._nextLabel) as LN }
-    get currentPage() { return this._blockPlayer?.page ?? -1 }
+    get currentPage() { return this._blockPlayer?.pageIndex ?? -1 }
     
     get paused() { return this._blockPlayer?.paused ?? false}
     get continueScript() { return this._continueScript }
@@ -378,7 +378,7 @@ export abstract class ScriptPlayerBase<
     skipPages(nb_pages: number, keepHistory: boolean = true) {
         if (!this._blockPlayer)
             return
-        const stopPage = this._blockPlayer.page + nb_pages
+        const stopPage = this._blockPlayer.pageIndex + nb_pages
         //TODO insert "skip n pages" in history (add argument for page text if necessary)
         if (!keepHistory)
             this._history.disable()
@@ -429,7 +429,7 @@ export abstract class ScriptPlayerBase<
         if (!this.currentBlock)
             throw Error(`no active block`)
         return {
-            page: this.currentBlock.page,
+            page: this.currentBlock.pageIndex,
             label: this.currentLabel as LN,
             graphics: {...this.graphics},
             audio: this.audio,
@@ -522,7 +522,7 @@ export abstract class ScriptPlayerBase<
     abstract fetchLines(label: LN): Promise<string[]>
 
     isLinePageBreak(line: string, _index: number, _blockLines: string[],
-                    _label: LN, _playing: boolean): boolean {
+                    _label: LN): boolean {
         return line.startsWith('\\')
     }
 
@@ -534,6 +534,8 @@ export abstract class ScriptPlayerBase<
                 simulateObserverChange(this, 'autoPlay')
                 break
             case 'pageStart' :
+                const [page, pages, _label] = args as Parameters<PageCallback<LN>>
+                this.preloadPages(pages.slice(page, page+2)) // preload current page and next page
                 this.text = ""
                 break
         }
@@ -547,6 +549,22 @@ export abstract class ScriptPlayerBase<
     protected abstract pageContent(): PageContent
     
     protected abstract nextLabel(label: LN): LN|null
+
+    protected abstract preloadAssets(assets: Set<string>): void
+
+    private preloadPages(pages: string[][]) {
+        const assets = new Set<string>()
+        for (const page of pages) {
+            for (const line of page) {
+                if (line.startsWith('`')) continue; // nothing to load in text lines
+                for (const match of line.matchAll(/"([^"]*)"/g)) {
+                    assets.add(match[1])
+                }
+            }
+        }
+        if (assets.size > 0)
+            this.preloadAssets(assets)
+    }
 
     private async _runLoop() {
         while (this._nextLabel != null) {

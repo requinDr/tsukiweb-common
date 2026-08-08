@@ -27,24 +27,24 @@ export class BlockPlayer<SP extends SPB> {
     private _resume: VoidFunction|undefined = undefined
 //-------------block info---------------
     private _label: SP['currentLabel']
-    private _blockLines: string[]
+    private _blockPages: string[][]
 //-------------progression--------------
-    private _page: number
+    private _pageIndex: number
     private _lineIndex: number
     private _currCmd: CommandHandler | null = null
 //-----------private setters------------
-    private set page(value: number) {
-        this._page = value
+    private set pageIndex(value: number) {
+        this._pageIndex = value
     }
 
 //______________________________public properties_______________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     get label() { return this._label }
-    get page() { return this._page }
-    get index() { return this._lineIndex }
-    get blockLines() { return this._blockLines }
+    get pageIndex() { return this._pageIndex }
+    get lineIndex() { return this._lineIndex }
+    get pages() { return this._blockPages }
 
-    get loaded() { return this._blockLines.length > 0 }
+    get loaded() { return this._blockPages.length > 0 }
 
     get paused() { return this._pauseRequested || this._resume != undefined }
 
@@ -57,12 +57,20 @@ export class BlockPlayer<SP extends SPB> {
                 onFinish: BlockFinishCallback) {
         this._script = script
         this._label = label
-        this._page = initPage
+        this._pageIndex = initPage
         this._lineIndex = -1
-        this._blockLines = []
+        this._blockPages = []
         this._onFinish = onFinish
-        this._script.fetchLines(label).then((lines: string[]) => {
-            this._blockLines = lines
+        this._script.fetchLines(label).then((lines: string[]) => {            
+            const pages: string[][] = [[]]
+            for (const [index, line] of lines.entries()) {
+                pages[pages.length-1].push(line)
+                if (this._script.isLinePageBreak(line, index, lines, label))
+                    pages.push([])
+            }
+            if (pages[pages.length-1].length == 0)
+                pages.pop()
+            this._blockPages = pages
             onScriptLoaded()
         })
     }
@@ -102,24 +110,6 @@ export class BlockPlayer<SP extends SPB> {
 //#endregion ###################################################################
 //#region                        PRIVATE METHODS
 //##############################################################################
-    private isPageBreak(line: string, lineIndex: number, playing: boolean) {
-        return this._script.isLinePageBreak(line, lineIndex, this._blockLines,
-            this._label, playing)
-    }
-    
-    private _getLineIndex(page: number) {
-        if (page == 0)
-            return 0
-        let p = 0
-        for (const [i, line] of this._blockLines.entries()) {
-            if (this.isPageBreak(line, i, false)) {
-                p += 1
-                if (p == page)
-                    return i+1
-            }
-        }
-        return this._blockLines.length // return end of file if not enough pages
-    }
 
     private _makeAutoPlay() {
         const cmd = this._currCmd
@@ -184,33 +174,23 @@ export class BlockPlayer<SP extends SPB> {
     }
 
     private async _processBlock() {
-        if (this._blockLines.length == 0)
+        if (this._blockPages.length == 0)
             throw Error(`block not loaded`)
-        const {_label: label, _blockLines: lines} = this
-
-        // extract pages from block
-        const pages: string[][] = [[]]
-        for (const [index, line] of lines.entries()) {
-            pages[pages.length-1].push(line)
-            if (this.isPageBreak(line, index, false))
-                pages.push([])
-        }
-        if (pages[pages.length-1].length == 0)
-            pages.pop()
+        const {_label: label, _blockPages: pages, _pageIndex: startPage} = this
         
-        await this._script.dispatchEvent('blockStart', label, this._page, pages)
+        await this._script.dispatchEvent('blockStart', label, startPage, pages)
         
         this._lineIndex = 0;
-        while (this._page < pages.length) {
-            const page = pages[this._page]
-            await this._script.dispatchEvent('pageStart', this._page, pages, label)
+        while (this._pageIndex < pages.length) {
+            const page = pages[this._pageIndex]
+            await this._script.dispatchEvent('pageStart', this._pageIndex, pages, label)
 
             while (this._lineIndex >= 0 && this._lineIndex < page.length && !this._stopped) {
                 const index = this._lineIndex
                 const line = page[index]
-                console.debug(`${label}:${this._page}|${index}: ${line}`)
+                console.debug(`${label}:${this._pageIndex}|${index}: ${line}`)
                 
-                if (this._script.ffwStopCondition?.(line, index, this._page, pages, this._label, this._script))
+                if (this._script.ffwStopCondition?.(line, index, this._pageIndex, pages, this._label, this._script))
                     this._script.ffw(null)
 
                 await this._processLine(line)
@@ -223,12 +203,12 @@ export class BlockPlayer<SP extends SPB> {
             if (this._lineIndex > 0) {
                 // only trigger 'pageEnd' event when finishing a page
                 // (skipping back more than a page should never happen anyway)
-                await this._script.dispatchEvent('pageEnd', this._page, pages, label)
+                await this._script.dispatchEvent('pageEnd', this._pageIndex, pages, label)
                 this._lineIndex -= page.length
-                this._page++
+                this._pageIndex++
             } else {
-                this._page--;
-                this._lineIndex += pages[this._page].length;
+                this._pageIndex--;
+                this._lineIndex += pages[this._pageIndex].length;
             }
         }
         if (this._stopped) {

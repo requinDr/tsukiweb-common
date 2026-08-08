@@ -214,7 +214,7 @@ export abstract class HistoryBase<
     const text = script.text.replace(/^\[\r\n]*/, '')
     if (this.pages.length > 0) {
       let lastPage = this.lastPage
-      if (lastPage.page == script.currentBlock?.page &&
+      if (lastPage.page == script.currentBlock?.pageIndex &&
           lastPage.label == script.currentBlock!.label)
         lastPage.text = text
       else
