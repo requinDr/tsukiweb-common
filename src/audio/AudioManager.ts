@@ -1,4 +1,4 @@
-import { AssetsMap } from "../utils/AssetsMap"
+import { AssetsCache } from "../utils/AssetsCache"
 import { asyncDelay } from "../utils/timer"
 import { AudioSourceNode, Sound} from "./AudioSourceNode"
 import { StreamingAudioNode } from "./StreamingAudioNode"
@@ -47,36 +47,15 @@ const effects: Record<string, Sound> = {
     },
 }
 
-//#endregion ###################################################################
-//#region                        AudioAssetsMap
-//##############################################################################
 
-export class AudioAssetsMap<Key> extends AssetsMap<Key, AudioBuffer> {
-    
-    constructor(context: AudioContext, id2url: (id: Key)=>string) {
-        super((AudioAssetsMap._createAudioBuffer<Key>)
-            .bind(undefined, context, id2url))
-    }
-
-    private static async _createAudioBuffer<Key>(context: AudioContext,
-            id2url: (id: Key)=>string, id: Key) {
-        const path = id2url(id) ?? id
-        const result = await fetch(path)
-        if (!result.ok)
-            throw Error(`audio file ${path} not found: ${result.statusText}`)
-        const data = await result.arrayBuffer()
-        const buffer = await context.decodeAudioData(data)
-        return buffer as AudioBuffer
-    }
-}
 
 //#endregion ###################################################################
 //#region                       AudioManager
 //##############################################################################
 
 export class AudioManager {
-    private _assetsMap: AudioAssetsMap<string>
-    private _idToUrl: (id: string) => string
+    private _assetsCache: AssetsCache<any>
+    private _assetProviderKey: string
     private _trackFadeout: number
     private _track: string | null
     private _waveLoop: boolean
@@ -88,15 +67,15 @@ export class AudioManager {
     private _waveNode: AudioSourceNode
     private _uiNodes: Array<AudioSourceNode>
 
-    constructor(idToUrl: (id: string) => string, enableAudioElements: boolean = true) {
-        this._idToUrl = idToUrl
+    constructor(_assetsCache: AssetsCache<any>, assetProviderKey: string, enableAudioElements: boolean = true) {
+        this._assetsCache = _assetsCache
+        this._assetProviderKey = assetProviderKey
         this._trackFadeout = 0
         this._track = null
         this._waveLoop = false
         this._wave = null
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
-        this._assetsMap = new AudioAssetsMap(this._context, idToUrl)
         if (enableAudioElements && document.createElement('audio').canPlayType('audio/webm; codecs="opus"') == "probably") {
             this._trackNode = new StreamingAudioNode(this._context)
         } else {
@@ -109,6 +88,8 @@ export class AudioManager {
         this._waveNode.connect(this._masterGainNode)
         this._masterGainNode.connect(this._context.destination)
     }
+
+    get context() { return this._context }
     
     get autoMute() { return this._context.autoMute }
     set autoMute(value: boolean) {
@@ -200,10 +181,10 @@ export class AudioManager {
         await this._stopStreamingTrack(this._trackNode)
         if (this._track == id) { // check if track has not changed during delays
             if (this._trackNode instanceof StreamingAudioNode) {
-                const url = this._idToUrl(id)
+                const url = this._assetsCache.getUrl(this._assetProviderKey, id)
                 await this._trackNode.play(url, true)
             } else {
-                const buffer = await this._assetsMap.get(id)
+                const buffer = (await this._assetsCache.get(this._assetProviderKey, id)).value as AudioBuffer
                 if (this._track == id) // check if track changed while loading buffer
                     this._trackNode.play({buffer, loop: true})
             }
@@ -226,7 +207,7 @@ export class AudioManager {
     }
     
     async playWave(id: string, loop: boolean = false) {
-        if (loop && this.waveLoop == id && (loop == this._waveLoop) && this._waveNode.playing)
+        if (loop && this.waveLoop == id && this._waveNode.playing)
             return
         this._wave = id
         this._waveLoop = loop
@@ -236,7 +217,7 @@ export class AudioManager {
         }
         if (this.waveVolume == 0 || this.masterVolume == 0)
             return
-        const buffer = await this._assetsMap.get(id)
+        const buffer = (await this._assetsCache.get(this._assetProviderKey, id)).value as AudioBuffer
         if (this._wave != id || this._waveLoop != loop )
             return // wave changed while stopping prev. one and loading buffer
         this._waveNode.play({buffer, loop})
@@ -254,14 +235,6 @@ export class AudioManager {
         }
         this._wave = null
         this._waveLoop = false
-    }
-
-    clearBuffers(restartTrack: boolean = false) {
-        this._assetsMap.clear()
-        if (restartTrack) {
-            if (this._trackNode.playing && this._track)
-                this.playTrack(this._track, true)
-        }
     }
 }
 

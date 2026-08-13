@@ -4,7 +4,6 @@ import { splitFirst } from "../../utils/utils";
 import classNames from "classnames";
 import { ReactNode } from "react";
 import { SpritePos } from "../types";
-import { markImageLoaded } from "../../utils/images";
 
 type Props = {
 	pos: SpritePos
@@ -43,7 +42,6 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 				alt={alt}
 				draggable={false}
 				className={classNames({ blur })}
-				onLoad={() => markImageLoaded(imgUrl)}
 				{...(lazy ? { loading: "lazy", decoding: "async" } : {})}
 			/>
 		)
