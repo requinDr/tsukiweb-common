@@ -52,10 +52,12 @@ const effects: Record<string, Sound> = {
 //#endregion ###################################################################
 //#region                       AudioManager
 //##############################################################################
+type AudioAssetsCache<K extends string> =
+    AssetsCache<Record<K, AudioBuffer>>
 
-export class AudioManager {
-    private _assetsCache: AssetsCache<any>
-    private _assetProviderKey: string
+export class AudioManager<AssetProviderKey extends string = string> {
+    private _assetsCache: AudioAssetsCache<AssetProviderKey>
+    private _assetProviderKey: AssetProviderKey
     private _trackFadeout: number
     private _track: string | null
     private _waveLoop: boolean
@@ -67,7 +69,9 @@ export class AudioManager {
     private _waveNode: AudioSourceNode
     private _uiNodes: Array<AudioSourceNode>
 
-    constructor(_assetsCache: AssetsCache<any>, assetProviderKey: string, enableAudioElements: boolean = true) {
+    constructor(_assetsCache: typeof this._assetsCache,
+                assetProviderKey: AssetProviderKey,
+                enableAudioElements: boolean = true) {
         this._assetsCache = _assetsCache
         this._assetProviderKey = assetProviderKey
         this._trackFadeout = 0
@@ -184,7 +188,7 @@ export class AudioManager {
                 const url = this._assetsCache.getUrl(this._assetProviderKey, id)
                 await this._trackNode.play(url, true)
             } else {
-                const buffer = (await this._assetsCache.get(this._assetProviderKey, id)).value as AudioBuffer
+                const buffer = (await this._assetsCache.get(this._assetProviderKey, id))
                 if (this._track == id) // check if track changed while loading buffer
                     this._trackNode.play({buffer, loop: true})
             }
@@ -217,7 +221,7 @@ export class AudioManager {
         }
         if (this.waveVolume == 0 || this.masterVolume == 0)
             return
-        const buffer = (await this._assetsCache.get(this._assetProviderKey, id)).value as AudioBuffer
+        const buffer = (await this._assetsCache.get(this._assetProviderKey, id))
         if (this._wave != id || this._waveLoop != loop )
             return // wave changed while stopping prev. one and loading buffer
         this._waveNode.play({buffer, loop})
@@ -242,11 +246,13 @@ export class AudioManager {
 //#region                       GameAudio
 //##############################################################################
 
-export class GameAudioManager<S extends Settings> extends AudioManager {
+export class GameAudioManager<S extends Settings,
+                              AssetProviderKey extends string = string
+                            > extends AudioManager<AssetProviderKey> {
     private _inGame: boolean = false
     private _settings: S
 
-    constructor(settings: S, ...params: ConstructorParameters<typeof AudioManager>) {
+    constructor(settings: S, ...params: ConstructorParameters<typeof AudioManager<AssetProviderKey>>) {
         super(...params)
         this._settings = settings
         this._updateVolumes = this._updateVolumes.bind(this)
@@ -259,9 +265,9 @@ export class GameAudioManager<S extends Settings> extends AudioManager {
     
     private _updateVolumes() {
         this.masterVolume = calcGain(this._settings.volume.master)
-        this.uiVolume = calcGain(this._settings.volume.systemSE)
-        this.waveVolume = calcGain(this._settings.volume.se)
-        this.trackVolume = calcGain(
+        this.uiVolume     = calcGain(this._settings.volume.systemSE)
+        this.waveVolume   = calcGain(this._settings.volume.se)
+        this.trackVolume  = calcGain(
             (this._inGame) ? this._settings.volume.track
                            : this._settings.volume.titleTrack)
     }
