@@ -53,7 +53,7 @@ const effects: Record<string, Sound> = {
 //#region                       AudioManager
 //##############################################################################
 type AudioAssetsCache<K extends string> =
-    AssetsCache<Record<K, AudioBuffer>>
+    AssetsCache<Record<K, AudioBuffer|undefined>>
 
 export class AudioManager<AssetProviderKey extends string = string> {
     private _assetsCache: AudioAssetsCache<AssetProviderKey>
@@ -94,6 +94,8 @@ export class AudioManager<AssetProviderKey extends string = string> {
     }
 
     get context() { return this._context }
+
+    get streamingEnabled() { return this._trackNode instanceof StreamingAudioNode }
     
     get autoMute() { return this._context.autoMute }
     set autoMute(value: boolean) {
@@ -188,7 +190,7 @@ export class AudioManager<AssetProviderKey extends string = string> {
                 const url = this._assetsCache.getUrl(this._assetProviderKey, id)
                 await this._trackNode.play(url, true)
             } else {
-                const buffer = (await this._assetsCache.get(this._assetProviderKey, id))
+                const buffer = (await this._assetsCache.get(this._assetProviderKey, id))!
                 if (this._track == id) // check if track changed while loading buffer
                     this._trackNode.play({buffer, loop: true})
             }
@@ -221,7 +223,7 @@ export class AudioManager<AssetProviderKey extends string = string> {
         }
         if (this.waveVolume == 0 || this.masterVolume == 0)
             return
-        const buffer = (await this._assetsCache.get(this._assetProviderKey, id))
+        const buffer = (await this._assetsCache.get(this._assetProviderKey, id))!
         if (this._wave != id || this._waveLoop != loop )
             return // wave changed while stopping prev. one and loading buffer
         this._waveNode.play({buffer, loop})

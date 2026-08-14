@@ -1,6 +1,4 @@
-import { Provider } from "react";
-
-type Ref<T> = { deref(): T|undefined }
+type Ref<T> = { deref(): T|undefined } // Match WeakRef and PrimitiveRef below
 
 class PrimitiveRef<T extends Exclude<any, object>> {
     private _value: T;
