@@ -122,7 +122,7 @@ const tokensRE = new Map<string, [string|RegExp, Tokenizer|null]>(Object.entries
     'cmd2'          : [/^[@\\+~]/, parseCommand],
     'cmd3'          : [/^![a-z]+\d*/, parseCommand],
     'cmd4'          : [/^#[\da-fA-F]+/, parseCommand],
-    'label'         : [/^\*\w*\b/, parseLabel],
+    'label'         : [/^\s*\*\w*\b/, parseLabel],
     'separator'     : [':', null],
     'error1'        : [/^"\r?\n/, parseError]
 }))
