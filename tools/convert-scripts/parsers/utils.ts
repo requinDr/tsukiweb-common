@@ -164,6 +164,20 @@ export class Block {
 	slice(start: number, end?:number) {
 		return this._tokens.slice(start, end)
 	}
+
+	/**
+	 * Move all tokens starting from the specified index to a new block with
+	 * the specified label. Insert the label at the beginning of the new block.
+	 * @param index index of the first token that will be moved to the next block
+	 * @param label label (without the leading '*') of the new block
+	 * @returns the newly-created block
+	 */
+	split(index: number, label: string) {
+		const newBlock = new Block(label, this.slice(index))
+		newBlock.insert(0, `*${label}`)
+		this.delete(index, this.length-index)
+		return newBlock
+	}
 //________________________________find methods__________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	find(predicate: (t: Token, i: number, b: Block)=>boolean) {
@@ -223,8 +237,9 @@ export class Block {
 			if (i >= index)
 				this._iterIndices.set(key, i + items.length)
 		}
-		const idx = lineIndex >= 0 ? lineIndex
-					: index > 0 ? this._tokens.at(index-1)?.lineIndex ?? 0 : 0
+		const idx = (lineIndex >= 0) ? lineIndex
+				  : (index > 0) ? this._tokens.at(index-1)?.lineIndex ?? 0
+				  : this._tokens.at(0)?.lineIndex ?? 0
 		for (const tok of items) {
 			tok.lineIndex = idx
 		}

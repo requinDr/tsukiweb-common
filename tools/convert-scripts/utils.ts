@@ -1,9 +1,11 @@
+import { CommandToken, Token } from "./parsers/utils.ts";
 
 type SwitchMap<T> = ([
     string, T|((s: string)=>T)
 ] | [
     RegExp, T|((m: RegExpMatchArray)=>T)
 ])[]
+
 function switch_regex<T>(str: string, map: SwitchMap<T>, fallback: T|((s: string)=>T)) {
     for (const [key, result] of map) {
         if (key instanceof RegExp) {
@@ -47,7 +49,18 @@ function processCondition(condition: string, processVarName: (varName: string)=>
 	return `${lhs}${op}${rhs}`
 }
 
+function addChoiceCondition(token: Token, label: string, condition: string) {
+	if (token instanceof CommandToken && token.cmd == 'select') {
+		const i = token.args.indexOf(label)
+		if (i < 0) throw Error(`Expected choice ${label}, got ${token.args}`)
+		token.args[i] = `[${condition}]${label}`
+		return true
+	}
+	return false
+}
+
 export {
     switch_regex,
-    processCondition
+    processCondition,
+    addChoiceCondition
 }
