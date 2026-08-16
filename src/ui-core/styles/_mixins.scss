@@ -25,7 +25,7 @@
 
 	&:hover, &:focus {
 		cursor: pointer;
-		outline: none;
+		outline-color: transparent;
 		&::after {
 			box-shadow: var(--selected-shadow);
 		}
