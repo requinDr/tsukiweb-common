@@ -35,10 +35,19 @@ type StoredAsset<V> = {
 }
 type StrKey<T extends Record<string, any>> = keyof T & string
 
+/**
+ * Function that takes an asset id and returns either :
+ * - `undefined` if the provider is not applicable for the asset;
+ * - `null` if there is no asset linked to this id (i.e. the id is used as-is);
+ * - an object containing the url where the asset is fetched, and its value or
+ *   a promise that eventually resolves with its value.
+ */
+type Provider<T> = (k: string)=>Asset<T>|null|undefined
+
 export class AssetsCache<Providers extends Record<string, any>> {
 
-    private _map: Map<string, StoredAsset<Providers[any]>>
-    private _providers: Map<string, (k: string)=>Asset<Providers[any]>|undefined>
+    private _map: Map<string, StoredAsset<Providers[any]>|null>
+    private _providers: Map<string, Provider<Providers[any]>>
     private _urlCacheDuration: number
 
     constructor(urlCacheDuration: number = 30*60*1000) { // default cache duration for urls: 30 minutes
@@ -65,34 +74,41 @@ export class AssetsCache<Providers extends Record<string, any>> {
         } else {
             this._map.delete(key)
         }
-        let asset: Asset<Providers[P]>|undefined
+        let asset: Asset<Providers[P]>|null|undefined
         if (providerKey) {
             const provider = this._providers.get(providerKey)
             if (!provider)
                 throw Error(`Unregistered provider ${providerKey as string}`)
             asset = provider(key)
+            if (asset === undefined)
+                throw Error(`provider ${providerKey} did not recognize asset id ${key.toString()}`)
         } else {
             for (const provider of this._providers.values()) {
                 asset = provider(key)
-                if (asset)
+                if (asset !== undefined)
                     break
             }
-            if (!asset)
+            if (asset === undefined)
                 throw Error(`No provider recognized asset id ${key.toString()}`)
         }
-        let stored: StoredAsset<Providers[P]>
-        const value = asset!.value
-        if (value instanceof Promise) {
-            stored = { id: key, ...asset! }
-            value.then(val=> {
-                stored.value = (typeof val == "object") ?
+        if (asset === null) {
+            this._map.set(key, null)
+            return null
+        }
+        let stored: StoredAsset<Providers[P]>|null
+        if (asset === null) {
+            stored = null
+        } else if (asset.value instanceof Promise) {
+            stored = { id: key, ...asset }
+            asset.value.then(val=> {
+                stored!.value = (typeof val == "object") ?
                     new WeakRef(val)
                     : new PrimitiveRef(val, this._urlCacheDuration)
             })
         } else {
-            let ref = (typeof value == "object") ?
-                new WeakRef(value)
-                : new PrimitiveRef(value, this._urlCacheDuration)
+            let ref = (typeof asset.value == "object") ?
+                new WeakRef(asset.value)
+                : new PrimitiveRef(asset.value, this._urlCacheDuration)
             stored = { id: key, url: asset!.url, value: ref }
         }
         this._map.set(key, stored)
@@ -100,7 +116,7 @@ export class AssetsCache<Providers extends Record<string, any>> {
     }
     setProvider<P extends StrKey<Providers>>(
             key: P,
-            provider: (k: string)=>Asset<Providers[P]>|undefined) {
+            provider: Provider<Providers[P]>) {
         this._providers.set(key, provider)
     }
 
@@ -125,9 +141,11 @@ export class AssetsCache<Providers extends Record<string, any>> {
     async get<P extends StrKey<Providers>>(
             providerKey: P|undefined,
             key: string,
-            forceReload: boolean = false): Promise<Providers[P]> {
+            forceReload: boolean = false): Promise<Providers[P]|null> {
         // Request the asset from the storage, fetch it if new or expired
         const asset = this._getAsset(providerKey, key, forceReload)
+        if (asset === null)
+            return asset
         if (asset.value instanceof Promise){
             // wait for the promise to be fulfilled, wich also replaces
             // the value with a reference to the fetched value
@@ -137,8 +155,10 @@ export class AssetsCache<Providers extends Record<string, any>> {
     }
     getUrl<P extends StrKey<Providers>>(
             providerKey: P|undefined,
-            key: string) {
+            key: string): string {
         const asset = this._getAsset(providerKey, key)
+        if (!asset)
+            throw Error(`asset id ${key} has no url`)
         return asset.url
     }
     clear() {
