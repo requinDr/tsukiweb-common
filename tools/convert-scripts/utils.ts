@@ -29,7 +29,7 @@ function switch_regex<T>(str: string, map: SwitchMap<T>, fallback: T|((s: string
         return fallback
 }
 
-const CONDITION_REGEXP = /^(?<lhs>(%\w+|\d+))(?<op>[=!><]+)(?<rhs>(%\w+|\d+))$/
+const CONDITION_REGEXP = /^(?<lhs>(%\w+|-?\d+))(?<op>[=!><]+)(?<rhs>(%\w+|-?\d+))$/
 
 function processCondition(condition: string, processVarName: (varName: string)=>string|null): string|null {
 	condition = condition.trim()

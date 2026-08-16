@@ -34,7 +34,7 @@ function parseReturn(lineIndex: number, str: string) {
 }
 
 function parseCondition(lineIndex: number, str: string): Token[] {
-    const cmdReader = new StrReader(str)
+    const cmdReader = new StrReader(str.trimStart())
     let cmd = cmdReader.readMatch(/^\w+\b/)
     let not
     switch(cmd) {
@@ -63,6 +63,7 @@ function parseCondition(lineIndex: number, str: string): Token[] {
 }
 
 function parseLabel(lineIndex: number, str: string) {
+    str = str.trimStart()
     if (str.startsWith('*'))
         str = str.substring(1)
     return [new LabelToken(lineIndex, str)]
@@ -119,9 +120,9 @@ const tokensRE = new Map<string, [string|RegExp, Tokenizer|null]>(Object.entries
     'return'        : [/^\s*return\s*\r?\n/, parseReturn],
     'condition'     : [/^\s*(not)?if\s[^\n]*/, parseCondition],
     'cmd'           : [/^\s*(?<cmd>[a-z]\w+)[ \t]*(?<args>(([\w%$_#*-]*|"([^\n"]|(_"))*"|`[^`]*`)(,\s*)?[ \t]*)+)?/u, parseCommand],
-    'cmd2'          : [/^[@\\+~]/, parseCommand],
-    'cmd3'          : [/^![a-z]+\d*/, parseCommand],
-    'cmd4'          : [/^#[\da-fA-F]+/, parseCommand],
+    'cmd2'          : [/^\s*[@\\+~]/, parseCommand],
+    'cmd3'          : [/^\s*![a-z]+\d*/, parseCommand],
+    'cmd4'          : [/^\s*#[\da-fA-F]+/, parseCommand],
     'label'         : [/^\s*\*\w*\b/, parseLabel],
     'separator'     : [':', null],
     'error1'        : [/^"\r?\n/, parseError]
