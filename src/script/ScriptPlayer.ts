@@ -446,7 +446,7 @@ export abstract class ScriptPlayerBase<
         return {
             label: label,
             flags: [...this.flags],
-            points: Object.fromEntries(Object.entries(this.points)) as Partial<Record<PointId, number>>,
+            points: Object.fromEntries(this.points.entries()) as Partial<Record<PointId, number>>,
             continueScript: this._continueScript,
             ...this.blockContent()
         }
