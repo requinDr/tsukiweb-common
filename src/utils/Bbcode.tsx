@@ -58,6 +58,22 @@ const align: TagTranslator = (tag, content, arg, props?)=> {
 		props)
 }
 
+const shadow: TagTranslator = (_, content, arg = "", props?)=> {
+	const [color, size] = arg.split(',').map(value=> value.trim())
+	const edge = `calc(${size} / 5)`, negative = `calc(${size} / -5)`
+	const shadows = [
+		`${edge} 0 0 ${color}`, `${negative} 0 0 ${color}`,
+		`0 ${edge} 0 ${color}`, `0 ${negative} 0 ${color}`,
+		`${edge} ${edge} 0 ${color}`, `${edge} ${negative} 0 ${color}`,
+		`${negative} ${edge} 0 ${color}`, `${negative} ${negative} 0 ${color}`,
+		`0 0 ${size} ${color}`, `0 0 ${size} ${color}`,
+		`0 0 calc(${size} + ${size}) ${color}`,
+		`0 0 calc(${size} + ${size}) ${color}`,
+		`0 0 calc(${size} + ${size}) ${color}`
+	]
+	return styled('span', content, {textShadow: shadows.join(', ')}, props)
+}
+
 const url: TagTranslator = (_, content, arg, props?)=> {
 	if (!arg)
 		arg = innerText(content)
@@ -113,6 +129,7 @@ const defaultBBcodeDict: Record<string, TagTranslator> = {
 	'font'	: (_, content, arg, props)=> styled('span', content, {fontFamily: arg}, props),
 	'color' : (_, content, arg, props)=> styled('span', content, {color: arg}, props),
 	'opacity':(_, content, arg, props)=> styled('span', content, {opacity: arg}, props),
+	'shadow': shadow,
 	'noline': (_, content, _a, props)=> styled('span', content, {textShadow: "none"}, props),
 	'hide'	: (_, content, _a, props)=> styled('span', content, {visibility: "hidden"}, props),
 	'copy'	: (_, content, _a, props)=> <span {...props} key={props?.key}>&copy;{content}</span>,
