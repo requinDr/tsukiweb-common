@@ -34,13 +34,16 @@ type MouseDrag = {
 export type PanZoomOptions = {
 	maxScale?: number
 	minScale?: number
-	minVisible?: number
+	minVisible?: number | `${number}%`
 	stageRef?: RefObject<HTMLElement | null>
 	viewportSelector?: string
 }
 
 const clamp = (value: number, min: number, max: number) =>
 	Math.min(max, Math.max(min, value))
+
+const resolveLength = (value: number | `${number}%`, total: number) =>
+	typeof value === 'number' ? value : total * Number.parseFloat(value) / 100
 
 const getTouch = (touches: TouchList, id: number) => {
 	for (let index = 0; index < touches.length; index++) {
@@ -134,10 +137,12 @@ export const usePanZoom = <T extends HTMLElement | SVGElement>(
 			const paddingLeft = Number.parseFloat(style.paddingLeft) || 0
 			const paddingRight = Number.parseFloat(style.paddingRight) || 0
 			const paddingTop = Number.parseFloat(style.paddingTop) || 0
-			const nextBottom = Math.max(0, viewport.clientHeight - minVisible - paddingBottom)
-			const nextLeft = Math.max(0, viewport.clientWidth - minVisible - paddingLeft)
-			const nextRight = Math.max(0, viewport.clientWidth - minVisible - paddingRight)
-			const nextTop = Math.max(0, viewport.clientHeight - minVisible - paddingTop)
+			const minVisibleHeight = resolveLength(minVisible, viewport.clientHeight)
+			const minVisibleWidth = resolveLength(minVisible, viewport.clientWidth)
+			const nextBottom = Math.max(0, viewport.clientHeight - minVisibleHeight - paddingBottom)
+			const nextLeft = Math.max(0, viewport.clientWidth - minVisibleWidth - paddingLeft)
+			const nextRight = Math.max(0, viewport.clientWidth - minVisibleWidth - paddingRight)
+			const nextTop = Math.max(0, viewport.clientHeight - minVisibleHeight - paddingTop)
 			if (
 				nextBottom === gutterBottom
 				&& nextLeft === gutterLeft

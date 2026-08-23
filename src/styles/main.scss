@@ -61,7 +61,7 @@ button {
 		background: transparent;
 	}
 
-	@supports not selector(::-webkit-scrollbar) {
+	@supports (-moz-appearance: none) {
 		* {
 			scrollbar-color: var(--scrollbar-color) transparent;
 			scrollbar-width: thin;
