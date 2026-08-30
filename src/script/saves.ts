@@ -146,7 +146,10 @@ export abstract class SavesManager<SS extends SaveState> extends Stored {
                         throw Error(`Cannot read save file ${(save as File).name}`)
             }
         })
-        await this.add({...JSON.parse(save), date: Date.now()} as SS)
+        const savestate = JSON.parse(save)
+        if (Object.hasOwn(savestate, 'saveStates') || Object.hasOwn(savestate, 'settings'))
+            throw Error('file contains multiple saves.')
+        await this.add({...savestate, date: Date.now()} as SS)
     }
     
     async importSaveFiles(saves: string[] | FileList | File[]): Promise<void> {
