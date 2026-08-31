@@ -3,7 +3,7 @@ import { getScrollableParent } from "../utils/utils"
 
 type Direction = ""|"left"|"right"|"up"|"down"
 
-type SwipeListener = (direction: Direction, distance: number, event: TouchEvent, dx: number, dy: number)=>boolean|void
+type SwipeListener = (direction: Direction, distance: number, event: TouchEvent|PointerEvent, dx: number, dy: number)=>boolean|void
 
 const events = ["touchstart", "touchmove", "touchend", "touchcancel"]
 
@@ -115,6 +115,111 @@ class GestureHandler {
   }
 }
 
+class MouseGestureHandler {
+  private element: HTMLElement|undefined
+  private swipeListener: SwipeListener|undefined
+  private minDistance: number
+  private pointerId = -1
+  private captureTarget: Element|undefined
+  private start = {x: -1, y: -1}
+  private handled = false
+  private clickReset: ReturnType<typeof setTimeout>|undefined
+  private _onPointer: (event: PointerEvent)=>void
+  private _onClick: (event: MouseEvent)=>void
+
+  constructor(element: HTMLElement|null|undefined, {
+      swipeTrigDistance = 20, onSwipe = undefined as SwipeListener|undefined} = {}) {
+    this.minDistance = swipeTrigDistance
+    this.swipeListener = onSwipe
+    this._onPointer = this.pointerEventHandler.bind(this)
+    this._onClick = this.clickHandler.bind(this)
+    if (element)
+      this.enable(element)
+  }
+
+  enable(element: HTMLElement) {
+    this.disable()
+    this.element = element
+    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'])
+      element.addEventListener(event, this._onPointer as EventListener, {passive: false})
+    element.addEventListener('click', this._onClick, true)
+  }
+
+  disable() {
+    if (this.element) {
+      for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'])
+        this.element.removeEventListener(event, this._onPointer as EventListener)
+      this.element.removeEventListener('click', this._onClick, true)
+    }
+    clearTimeout(this.clickReset)
+    this.cancel()
+  }
+
+  private pointerEventHandler(event: PointerEvent) {
+    if (event.pointerType !== 'mouse')
+      return
+    switch (event.type) {
+      case 'pointerdown':
+        if (event.button !== 0)
+          return
+        this.pointerId = event.pointerId
+        this.captureTarget = event.target instanceof Element ? event.target : this.element
+        this.start = {x: event.clientX, y: event.clientY}
+        this.captureTarget?.setPointerCapture(event.pointerId)
+        break
+      case 'pointermove': {
+        if (event.pointerId !== this.pointerId || this.handled)
+          return
+        const dx = event.clientX - this.start.x
+        const dy = event.clientY - this.start.y
+        const distX = Math.abs(dx), distY = Math.abs(dy)
+        const dist = Math.max(distX, distY)
+        const direction: Direction = distX > distY * 2 ? (dx > 0 ? 'right' : 'left')
+          : distY > distX * 2 ? (dy > 0 ? 'down' : 'up')
+          : ''
+        if (direction && dist > this.minDistance
+            && !getScrollableParent(event.target as HTMLElement, [
+              direction == 'left' ? 'right' : direction == 'right' ? 'left'
+                : direction == 'up' ? 'down' : 'up'
+            ])
+            && this.swipeListener?.(direction, dist, event, dx, dy)) {
+          event.preventDefault()
+          this.handled = true
+        }
+        break
+      }
+      case 'pointerup':
+        if (event.pointerId === this.pointerId) {
+          this.cancel()
+          this.clickReset = setTimeout(() => { this.handled = false })
+        }
+        break
+      case 'pointercancel':
+        if (event.pointerId === this.pointerId) {
+          this.handled = false
+          this.cancel()
+        }
+        break
+    }
+  }
+
+  private clickHandler(event: MouseEvent) {
+    if (this.handled) {
+      event.preventDefault()
+      event.stopPropagation()
+      this.handled = false
+    }
+  }
+
+  private cancel() {
+    if (this.pointerId >= 0 && this.captureTarget?.hasPointerCapture(this.pointerId))
+      this.captureTarget.releasePointerCapture(this.pointerId)
+    this.pointerId = -1
+    this.captureTarget = undefined
+    this.start = {x: -1, y: -1}
+  }
+}
+
 export function useSwipeGesture(onSwipe: SwipeListener,
   target: HTMLElement|RefObject<HTMLElement|null|undefined>,
   triggerDistance = 20) {
@@ -129,9 +234,13 @@ export function useSwipeGesture(onSwipe: SwipeListener,
       }
     }
     if (target) {
-      const handler = new GestureHandler(target, {swipeTrigDistance: triggerDistance, onSwipe})
+      const touchHandler = new GestureHandler(target, {swipeTrigDistance: triggerDistance, onSwipe})
+      const mouseHandler = new MouseGestureHandler(target, {swipeTrigDistance: triggerDistance, onSwipe})
       
-      return handler.disable.bind(handler)
+      return () => {
+        touchHandler.disable()
+        mouseHandler.disable()
+      }
     }
   }, [target])
 }
