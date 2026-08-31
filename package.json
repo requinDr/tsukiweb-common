@@ -19,7 +19,8 @@
 		"./utils/Bbcode": "./src/utils/Bbcode.tsx",
 		"./*.scss": "./src/*.scss",
 		"./tools/*": "./tools/*",
-		"./*": "./src/*.ts"
+		"./*": "./src/*.ts",
+		"./icons/*": "./src/assets/icons/*.tsx"
 	},
 	"dependencies": {
 		"classnames": "^2.5.1",
