@@ -10,5 +10,5 @@ export { default as SceneShortcut } from "./components/SceneShortcut"
 export { default as RatioContainer } from "./components/RatioContainer"
 
 export { default as PageSection } from "./layouts/PageSection"
-export { default as PageTabsLayout } from "./layouts/PageTabsLayout"
+export { default as PageLayout } from "./layouts/PageLayout"
 export { default as PageTitle } from "./layouts/PageTitle"

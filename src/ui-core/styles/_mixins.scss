@@ -31,3 +31,25 @@
 		}
 	}
 }
+
+@mixin page-container {
+	--page-padding: 1rem;
+	max-width: var(--page-width);
+	margin-inline: auto;
+	height: 100%;
+	width: 100%;
+	min-width: 0;
+	min-height: 0;
+}
+
+@mixin mobile-portrait {
+	@media screen and (orientation: portrait) and (max-width: 760px) {
+		@content;
+	}
+}
+
+@mixin mobile-landscape {
+	@media screen and (orientation: landscape) and (max-height: 680px) {
+		@content;
+	}
+}

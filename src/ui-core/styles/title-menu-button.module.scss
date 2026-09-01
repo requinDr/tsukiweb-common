@@ -43,10 +43,10 @@
 	&::after {
 		content: "";
 		position: absolute;
-		bottom: -6px;
-		left: 0;
-		width: 100%;
-		height: 1px;
+		bottom: -7px;
+		left: -6px;
+		right: -6px;
+		height: 2px;
 		transition: var(--transition);
 		transition-delay: 0.1s;
 		opacity: 0.1;
@@ -67,7 +67,6 @@
 		}
 
 		&::after {
-			width: 100%;
 			background-image: linear-gradient(
 				to right,
 				#0a9eab00,

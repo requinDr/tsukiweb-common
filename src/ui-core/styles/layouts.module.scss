@@ -1,9 +1,7 @@
+@use './mixins' as *;
+
 .pageContent {
-	--page-padding: 1rem;
-	max-width: var(--page-width);
-	margin-inline: auto;
-	height: inherit;
-	width: inherit;
+	@include page-container;
 	display: flex;
 	flex-direction: column;
 	align-self: center;
@@ -25,37 +23,109 @@
 	grid-area: content;
 	display: flex;
 	min-height: 0;
+	min-width: 0;
 }
-.backButton {
-	grid-area: back-button;
+.navigation {
+	grid-area: navigation;
+	min-width: 0;
+	margin-top: var(--page-padding);
+
+	> :global(.tabs) {
+		width: 100%;
+	}
+}
+.secondary {
+	grid-area: secondary;
+	display: flex;
+	min-width: 0;
+	min-height: 0;
+
+	> * {
+		flex: 1;
+		min-width: 0;
+		min-height: 0;
+	}
+}
+.actions {
+	grid-area: actions;
+	display: flex;
+	align-items: flex-start;
 	align-self: flex-start;
-	margin-bottom: var(--page-padding);
+	width: 100%;
+	padding: .5rem;
+	padding-bottom: calc(1.5rem + var(--safe-area-max-inset-bottom));
 }
 
-.pageTabsLayout {
+.pageLayout {
 	display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas:
-		"page-title tabs"
-		"content content"
-		"back-button back-button";
-  grid-template-rows: auto 1fr auto;
 
-	@media screen and (orientation: landscape) and (max-height: 680px) {
+	.pageTitle {
+		margin-top: var(--page-padding);
+	}
+
+	@include mobile-landscape {
+		.pageTitle,
+		.navigation {
+			margin-top: 0;
+		}
+	}
+
+	@include mobile-portrait {
+		.pageTitle {
+			margin-top: 0;
+		}
+	}
+}
+
+.tabsLayout {
+	grid-template-columns: auto 1fr;
+	grid-template-areas:
+		"page-title navigation"
+		"content content"
+		"actions actions";
+	grid-template-rows: auto 1fr auto;
+
+	@include mobile-landscape {
 		grid-template-columns: 180px 1fr;
 		grid-template-areas:
 				"page-title content"
-				"tabs content"
-				"back-button content";
+				"navigation content"
+				"actions content";
 		grid-template-rows: auto 1fr auto;
 	}
-	@media screen and (max-width: 760px) and (orientation: portrait) {
+	@include mobile-portrait {
 		grid-template-areas:
-			"tabs tabs"
+			"navigation navigation"
 			"content content"
-			"back-button page-title";
+			"actions page-title";
 		grid-template-columns: 1fr min-content;
 		grid-template-rows: auto 3fr min-content;
+	}
+}
+
+.masterDetailLayout {
+	grid-template-areas:
+		"page-title page-title"
+		"content secondary"
+		"actions actions";
+	grid-template-columns: 3fr minmax(280px, 1fr);
+	grid-template-rows: min-content 1fr min-content;
+
+	@include mobile-landscape {
+		grid-template-columns: 264px 1fr;
+		grid-template-areas:
+			"page-title content"
+			"secondary content"
+			"actions content";
+	}
+
+	@include mobile-portrait {
+		grid-template-areas:
+			"secondary secondary"
+			"content content"
+			"actions page-title";
+		grid-template-columns: 1fr min-content;
+		grid-template-rows: minmax(160px, 2fr) 5fr min-content;
 	}
 }
 

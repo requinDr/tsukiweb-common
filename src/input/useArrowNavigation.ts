@@ -53,7 +53,7 @@ export function useNavBackRef<T extends Node>(back: VoidFunction,
 		else if (refObj.current)
 			backMap.delete(refObj.current)
 		refObj.current = node
-	}, [])
+	}, [back, refObj])
 	return callback
 }
 
