@@ -1,7 +1,7 @@
 import { SVGProps } from "react"
 
 export const ScrollUp = (props: SVGProps<SVGSVGElement>)=>
-<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 256 256"
+<svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 256 256"
      height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" {...props}>
  <path d= "m128 38c-2.55 2.74e-4 -5 0.971-6.85 2.71l-33.5 31.5c-4.02 3.78-4.22
  10.1-0.436 14.1 3.78 4.02 10.1 4.22 14.1 0.436l26.7-25.1 26.7 25.1c4.02 3.78
