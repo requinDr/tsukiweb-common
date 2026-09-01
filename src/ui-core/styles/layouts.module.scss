@@ -1,8 +1,7 @@
 .pageContent {
-	--page-padding: .8rem;
+	--page-padding: 1rem;
 	max-width: var(--page-width);
 	margin-inline: auto;
-	padding-block: var(--page-padding);
 	height: inherit;
 	width: inherit;
 	display: flex;
@@ -12,7 +11,7 @@
 
 .pageTitle {
 	padding-inline: var(--page-padding);
-	font-size: 2.6rem;
+	font-size: 3rem;
 	letter-spacing: -1px;
 	margin-block: 0;
 	font-family: "Times New Roman", "Times-Roman", serif;
@@ -30,6 +29,7 @@
 .backButton {
 	grid-area: back-button;
 	align-self: flex-start;
+	margin-bottom: var(--page-padding);
 }
 
 .pageTabsLayout {
@@ -56,9 +56,6 @@
 			"back-button page-title";
 		grid-template-columns: 1fr min-content;
 		grid-template-rows: auto 3fr min-content;
-		.pageTitle {
-			margin-bottom: 0;
-		}
 	}
 }
 
