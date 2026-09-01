@@ -1,5 +1,47 @@
-.tabs {
+.tabsViewport {
 	grid-area: tabs;
+	position: relative;
+	min-width: 0;
+
+	&::before,
+	&::after {
+		position: absolute;
+		z-index: 1;
+		top: 50%;
+		translate: 0 -50%;
+		background: var(--surface-dark);
+		padding-inline: 4px;
+		font-size: 1.4rem;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity .15s ease-out;
+	}
+	&::before {
+		content: "<";
+		left: 0;
+		border-radius: 0 10px 10px 0;
+	}
+	&::after {
+		content: ">";
+		right: 0;
+		border-radius: 10px 0 0 10px;
+	}
+	&[data-overflow-before]::before,
+	&[data-overflow-after]::after {
+		opacity: 1;
+	}
+	&[data-overflow-before] .tabs {
+		--tabs-mask-start: transparent;
+	}
+	&[data-overflow-after] .tabs {
+		--tabs-mask-end: transparent;
+	}
+}
+
+.tabs {
+	--tabs-mask-start: #000;
+	--tabs-mask-end: #000;
+
 	display: flex;
 	flex-direction: row;
 	padding-right: 1em;
@@ -7,11 +49,20 @@
 	flex: none;
 	min-height: 60px;
 	gap: .1px; // Fix overlapping tabs
+	scrollbar-width: none;
+	mask-image: linear-gradient(to right,
+		var(--tabs-mask-start),
+		#000 2.5rem,
+		#000 calc(100% - 2.5rem),
+		var(--tabs-mask-end));
+	-webkit-mask-image: linear-gradient(to right,
+		var(--tabs-mask-start),
+		#000 2.5rem,
+		#000 calc(100% - 2.5rem),
+		var(--tabs-mask-end));
 
-	@media (pointer: coarse) {
-		&::-webkit-scrollbar {
-			display: none;
-		}
+	&::-webkit-scrollbar {
+		display: none;
 	}
 }
 

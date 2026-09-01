@@ -27,10 +27,11 @@
 }
 .navigation {
 	grid-area: navigation;
+	align-self: end;
 	min-width: 0;
 	margin-top: var(--page-padding);
 
-	> :global(.tabs) {
+	> :global(.tabs-viewport) {
 		width: 100%;
 	}
 }
@@ -67,6 +68,10 @@
 		.pageTitle,
 		.navigation {
 			margin-top: 0;
+		}
+		.navigation {
+			align-self: stretch;
+			overflow-y: auto;
 		}
 	}
 
