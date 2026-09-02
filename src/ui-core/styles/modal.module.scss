@@ -16,7 +16,7 @@
 	padding: 1.8em 2em;
 	overflow-y: auto;
 	overscroll-behavior: contain;
-	outline-color: transparent;
+	outline: none;
 	opacity: 0;
 
 	&::backdrop {
