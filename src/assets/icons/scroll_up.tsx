@@ -12,7 +12,6 @@ c-26.5-0.0276-48-21.5-48-48v-96c0.0276-26.5 21.5-48 48-48zm16 58
 c-7.24 0-12 4.76-12 12v38c0 7.24 4.76 10 12 10 7.24 0 12-2.76 12-10l3.9e-4 -38
 c6e-5 -7.24-4.77-12-12-12z" />
 
-    <path fill="none" stroke-linecap="round" stroke-linejoin="round"
-        stroke-width="20" d="m97.5 84.5 30.5-29 31 29" />
-
+    <path fill="none" strokeLinecap="round" strokeLinejoin="round"
+        strokeWidth="20" d="m97.5 84.5 30.5-29 31 29" />
 </svg>
