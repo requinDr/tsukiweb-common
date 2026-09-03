@@ -11,6 +11,16 @@
 	border-radius: 8px;
 	corner-shape: scoop;
 	outline: 1px solid hsl(0deg 0% 100% / 10%);
+
+	@supports not (corner-shape: scoop) {
+		border-radius: 4px;
+	}
+	//on mobile disable corner shape due to perf issues
+	@media (pointer: coarse) {
+		corner-shape: unset;
+		border-radius: 4px;
+	}
+
 	
 	&.attention {
 		overflow: hidden;
