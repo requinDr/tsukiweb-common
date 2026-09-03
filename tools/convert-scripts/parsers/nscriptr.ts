@@ -98,7 +98,7 @@ function parseCommand(lineIndex: number, str: string) {
                     break
                 args.push(arg)
             }
-            return [new CommandToken(lineIndex, cmd, args)]
+            return [new CommandToken(lineIndex, cmd.toLowerCase(), args)]
     }
 }
 
@@ -116,10 +116,10 @@ type Tokenizer = (i: number, str: string)=>Token[]
 const tokensRE = new Map<string, [string|RegExp, Tokenizer|null]>(Object.entries({
     'comment'       : [/^(\s*(;.*)?\r?\n)+/, null],
     'asciiText'     : [/^\s*`[^\n`]*(`|\r?\n|$)/, parseText],
-    'nonAsciiText'  : [/^\s*[^ \t\na-z;`*@\\+!:,~"#][^\n\\]*/u, parseText],
+    'nonAsciiText'  : [/^\s*[^ \t\na-zA-Z;`*@\\+!:,~"#][^\n\\]*/u, parseText],
     'return'        : [/^\s*return\s*\r?\n/, parseReturn],
     'condition'     : [/^\s*(not)?if\s[^\n]*/, parseCondition],
-    'cmd'           : [/^\s*(?<cmd>[a-z]\w+)[ \t]*(?<args>(([\w%$_#*-]*|"([^\n"]|(_"))*"|`[^`]*`)(,\s*)?[ \t]*)+)?/u, parseCommand],
+    'cmd'           : [/^\s*(?<cmd>[a-zA-Z]\w+)[ \t]*(?<args>(([\w%$_#*-]*|"([^\n"]|(_"))*"|`[^`]*`)(,\s*)?[ \t]*)+)?/u, parseCommand],
     'cmd2'          : [/^\s*[@\\+~]/, parseCommand],
     'cmd3'          : [/^\s*![a-z]+\d*/, parseCommand],
     'cmd4'          : [/^\s*#[\da-fA-F]+/, parseCommand],
