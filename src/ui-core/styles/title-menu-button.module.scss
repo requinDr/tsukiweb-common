@@ -86,9 +86,11 @@
 		span {
 			rotate: 23deg;
 			position: absolute;
-			top: 0;
+			top: -0.1em;
 			bottom: 0;
 			align-self: center;
+			margin-left: .5ch;
+			font-size: 1.2em;
 			color: var(--attention);
 			pointer-events: none;
 			-webkit-text-fill-color: initial;

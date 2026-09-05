@@ -21,25 +21,6 @@
 		border-radius: 4px;
 	}
 
-	
-	&.attention {
-		overflow: hidden;
-		&::before {
-			content: "!";
-			font-size: 2.5em;
-			position: absolute;
-			top: 32px;
-			right: 0;
-			left: 0;
-			display: grid;
-			justify-content: center;
-			color: var(--attention);
-			z-index: 1;
-
-			@include hover-scale("attention", 1.2);
-		}
-	}
-
 	&.unlocked {
 		@include active-shadow;
 	}
@@ -73,6 +54,23 @@
 			margin-top: 0.2em;
 			font-size: .86em;
 			opacity: 0.8;
+		}
+	}
+	&.attention {
+		overflow: hidden;
+		.sceneTitle::after {
+			content: "!";
+			position: relative;
+			display: inline-block;
+			rotate: 23deg;
+			width: 0;
+			line-height: 0;
+			translate: .5ch 0;
+			font-size: 1.6em;
+			color: var(--attention);
+			z-index: 1;
+
+			@include hover-scale("attention", 1.2);
 		}
 	}
 }

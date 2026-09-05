@@ -41,4 +41,4 @@ const TitleMenuButton = ({ active, attention, audio, children, ...props}: TitleM
 
 export default TitleMenuButton
 
-const Attention = () => <span> !</span>
+const Attention = () => <span>!</span>
