@@ -25,6 +25,7 @@ export type FlowchartNodeAttrs<NodeId extends string> = {
 export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<any>> {
   id: NodeId
   private _parents: (this|NodeId)[] = []
+  private _group: string|undefined
   private _flowchart: F
 
   constructor(id: NodeId, {from}: FlowchartNodeAttrs<NodeId>,
@@ -33,10 +34,24 @@ export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<a
     this._flowchart = flowchart
     if (from)
       this._parents.push(...from)
+    this._group = undefined
   }
 
   get flowchart() {
     return this._flowchart
+  }
+
+  get group() {
+    if (this._group)
+      return this._group
+    for (const p of this.parents) {
+      const g = p.group
+      if (g) {
+        this._group = g
+        break
+      }
+    }
+    return this._group
   }
 
   get parents(): this[] {
@@ -45,7 +60,8 @@ export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<a
     return this._parents as this[]
   }
   
-  finalize() {
+  finalize(group?: string) {
+    this._group = group
     this._parents.splice(0, this._parents.length, ...this._parents.map(id=> {
       let x: NodeId|this|undefined = id
       if (!(x instanceof FlowchartNode))
@@ -61,13 +77,21 @@ export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<a
 export abstract class Flowchart<N extends FlowchartNode<any, any>> {
   private _nodes: Map<N['id'], N>
 
-  constructor(nodes: Record<N['id'], Record<any, any>>) {
+  constructor(nodes: Record<N['id'], Record<any, any>>, groups?: Record<string, N['id'][]>) {
     const entries = Object.entries(nodes)
+    const groupsMap = new Map()
+    if (groups) {
+      for (const [group, ids] of Object.entries(groups)) {
+        for (const id of ids) {
+          groupsMap.set(id, group)
+        }
+      }
+    }
     this._nodes = new Map(entries.map(([id, attrs])=>
       [id, this.createNode(id as N['id'], attrs as Record<any, any>)]
     ))
     for (const node of this._nodes.values()) {
-      node.finalize()
+      node.finalize(groupsMap.get(node.id))
     }
   }
 
