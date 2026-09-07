@@ -25,7 +25,7 @@ export type FlowchartNodeAttrs<NodeId extends string> = {
 export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<any>> {
   id: NodeId
   private _parents: (this|NodeId)[] = []
-  private _group: string|undefined
+  private _group: string|null|undefined
   private _flowchart: F
 
   constructor(id: NodeId, {from}: FlowchartNodeAttrs<NodeId>,
@@ -41,17 +41,18 @@ export abstract class FlowchartNode<NodeId extends string, F extends Flowchart<a
     return this._flowchart
   }
 
-  get group() {
-    if (this._group)
-      return this._group
-    for (const p of this.parents) {
-      const g = p.group
-      if (g) {
-        this._group = g
-        break
+  get group(): string|undefined {
+    if (this._group === undefined) {
+      this._group = null
+      for (const p of this.parents) {
+        const g: string|undefined = p.group
+        if (g !== undefined) {
+          this._group = g
+          break
+        }
       }
     }
-    return this._group
+    return this._group ?? undefined
   }
 
   get parents(): this[] {
