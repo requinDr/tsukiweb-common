@@ -28,6 +28,7 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 			fadeIn={effect}
 			onAnimationEnd={onAnimationEnd}
 			bg-align={transition?.to.bgAlign ?? bgAlign}
+			{...(Object.hasOwn(transition?.to ?? {}, 'c')? {} : {className:'bg-transition'})} // transition.to.{l,c,r} set to "" for standard bg command.
 		/>
 	)
 }
