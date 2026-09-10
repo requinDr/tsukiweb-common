@@ -1,4 +1,4 @@
-import { Stored } from "../utils/storage"
+import { StoredSerializable } from "../utils/storage"
 import { Queue } from "../utils/queue"
 import { JSONDiff, JSONObject, PartialJSON } from "../types"
 import { jsonDiff, jsonMerge } from "../utils/utils"
@@ -104,7 +104,7 @@ export abstract class HistoryBase<
     SP extends SPB<DP, DS>, PageType extends string,
     DP extends JSONObject, DS extends JSONObject,
     PE extends PageAdds<PageType|'text'|'skip'>
-    > extends Stored {
+    > extends StoredSerializable {
   
 
   constructor({limit, storageId, restore = false, defaultPage, defaultBlock}: Params<DP, DS>) {
@@ -208,9 +208,6 @@ export abstract class HistoryBase<
     if (!this._enabled || script.text.length == 0)
       return
     
-    if (this.pageContext == null && script.currentBlock)
-      this.onPageStart(script.pageContext() as PageContext<SP>)
-    
     const text = script.text.replace(/^\[\r\n]*/, '')
     if (this.pages.length > 0) {
       let lastPage = this.lastPage
@@ -219,6 +216,8 @@ export abstract class HistoryBase<
         lastPage.text = text
       else
         this.setPage({type: 'text', text})
+    } else if (this.pageContext == null && script.currentBlock) {
+      this.onPageStart(script.pageContext() as PageContext<SP>)
     } else {
       this.setPage({type: 'text'})
     }
