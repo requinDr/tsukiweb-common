@@ -1,4 +1,4 @@
-import { StoredSerializable } from "../utils/storage"
+import { sessionRM, Stored } from "../utils/storage"
 import { Queue } from "../utils/queue"
 import { JSONDiff, JSONObject, PartialJSON } from "../types"
 import { jsonDiff, jsonMerge } from "../utils/utils"
@@ -104,11 +104,11 @@ export abstract class HistoryBase<
     SP extends SPB<DP, DS>, PageType extends string,
     DP extends JSONObject, DS extends JSONObject,
     PE extends PageAdds<PageType|'text'|'skip'>
-    > extends StoredSerializable {
+    > extends Stored {
   
 
   constructor({limit, storageId, restore = false, defaultPage, defaultBlock}: Params<DP, DS>) {
-    super(storageId, true, true)
+    super(sessionRM, storageId, true)
     this.pages = new PagesQueue(defaultPage, limit) as any
     this.scenes = new ScenesQueue(defaultBlock) as any
     this.pageContext = null

@@ -1,6 +1,6 @@
 import { createContext, createElement, type PropsWithChildren, useContext, useSyncExternalStore } from "react"
 import { observe, unobserve } from "../utils/Observer"
-import { ValueStorage } from "../utils/storage"
+import { localRM, sessionRM, ValueStorage } from "../utils/storage"
 import { deepAssign, fetchJson, insertDirectory } from "../utils/utils"
 import { LangDesc, LanguagesType, pickDefaultTranslation, TranslationId, UpdateDateFormat } from "./lang"
 
@@ -23,10 +23,14 @@ export function createTranslationStore<T extends Record<string, any>>(
 ) {
   type Strings = TranslationStrings<T>
 
-  const languagesStorage = new ValueStorage<LanguagesType>(`${storagePrefix}languages`, false, JSON.stringify, JSON.parse)
-  const stringsStorage = new ValueStorage<Strings>(`${storagePrefix}strings`, true, JSON.stringify, JSON.parse)
-  const languages = languagesStorage.get() || {} as LanguagesType
-  const strings = stringsStorage.get() || deepAssign({}, defaultStrings) as Strings
+  const languagesStorage = new ValueStorage<LanguagesType>(localRM, `${storagePrefix}languages`, JSON.stringify, JSON.parse)
+  const stringsStorage = new ValueStorage<Strings>(sessionRM, `${storagePrefix}strings`, JSON.stringify, JSON.parse)
+  const languages = {} as LanguagesType
+  let strings = deepAssign({}, defaultStrings) as Strings
+  
+  languagesStorage.get().then(l=> l && deepAssign(languages, l))
+  stringsStorage.get().then(s=> s && deepAssign(strings, s))
+
   strings.id = ""
   const selection = {ready: false}
   const ignoredPaths = new Set(optionalPaths)
@@ -77,7 +81,7 @@ export function createTranslationStore<T extends Record<string, any>>(
       return
     selection.ready = false
     deepAssign(strings, await loadTranslation(id), {clean: true})
-    stringsStorage.set(strings)
+    await stringsStorage.set(strings)
     selection.ready = true
   }
 

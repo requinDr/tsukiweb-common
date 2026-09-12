@@ -1,5 +1,5 @@
 import { observeChildren, observe } from "./Observer"
-import { StoredJSON } from "./storage"
+import { localRM, StoredJSON } from "./storage"
 import { TEXT_SPEED, ViewRatio } from "../constants"
 
 export const DEFAULT_GAME_FONT = 'Ubuntu'
@@ -46,7 +46,7 @@ export class Settings extends StoredJSON {
   #saveDelay: number
 
   constructor(name: string, saveOnBlur: boolean = true, saveDelay = 0) {
-    super(name, false, saveOnBlur)
+    super(localRM, name, saveOnBlur)
     this.#saveDelay = saveDelay
     // If no child class, finish initialization now. Children classes
     // should call `init()` after calling the constructor.
@@ -56,9 +56,9 @@ export class Settings extends StoredJSON {
     if (this.constructor == Settings)
       this.init()
   }
-  protected init() {
+  protected async init() {
     this.setAsDiffReference()
-    this.restoreFromStorage()
+    await this.restoreFromStorage()
 
     const postPoneSave = this.postPoneSave.bind(this)
     for (const key of this.listAttributes()) {
@@ -77,7 +77,7 @@ export class Settings extends StoredJSON {
     return this.completedScenes.includes(scene)
   }
 
-  override saveToStorage(): void {
+  override async saveToStorage() {
     this.completedScenes.sort()
     super.saveToStorage()
     if (this.#saveTimeout != 0) {

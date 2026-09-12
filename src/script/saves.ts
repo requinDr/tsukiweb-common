@@ -1,4 +1,4 @@
-import { Stored } from "../utils/storage"
+import { localRM, Stored } from "../utils/storage"
 import { textFileUserDownload } from "../utils/utils"
 
 export type SaveState = {
@@ -14,7 +14,7 @@ export abstract class SavesManager<SS extends SaveState> extends Stored {
     private _changeListeners: Set<VoidFunction>
     
     constructor(storageName: string) {
-        super(storageName, false)
+        super(localRM, storageName)
         this._saveStates = new Map()
         this._changeListeners = new Set
         this.restoreFromStorage()

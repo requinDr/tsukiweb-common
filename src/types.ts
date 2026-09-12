@@ -2,7 +2,7 @@
 //#region                          BASE TYPES
 //##############################################################################
 
-type Primitive = string | number | boolean | undefined | null
+export type Primitive = string | number | bigint | boolean | null | undefined | symbol
 
 export type Digit = '0'|'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'
 export type LcLetter = 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'
@@ -59,6 +59,8 @@ export type Entries<T> = {
   [K in keyof T]: [K, T[K]];
 }[keyof T][];
 
+export type StrKey<T extends Record<string, any>> = keyof T & string
+
 
 //#endregion ###################################################################
 //#region                          JSON TYPES
@@ -69,7 +71,7 @@ type PartialJSONEntry<T extends any> =
   : T extends PartialJSON ? PartialJSON<T>
   : never
 
-export type JSONPrimitive = Exclude<Primitive, undefined>
+export type JSONPrimitive = Exclude<Primitive, undefined|Symbol>
 export type JSONObject = {
   [key: string]: JSONPrimitive | JSONObject | Array<JSONPrimitive | JSONObject>
 }
