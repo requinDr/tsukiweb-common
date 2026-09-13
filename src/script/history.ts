@@ -1,4 +1,4 @@
-import { StoredSerializable } from "../utils/storage"
+import { Stored } from "../utils/storage"
 import { Queue } from "../utils/queue"
 import { JSONDiff, JSONObject, PartialJSON } from "../types"
 import { jsonDiff, jsonMerge } from "../utils/utils"
@@ -104,7 +104,7 @@ export abstract class HistoryBase<
     SP extends SPB<DP, DS>, PageType extends string,
     DP extends JSONObject, DS extends JSONObject,
     PE extends PageAdds<PageType|'text'|'skip'>
-    > extends StoredSerializable {
+    > extends Stored {
   
 
   constructor({limit, storageId, restore = false, defaultPage, defaultBlock}: Params<DP, DS>) {
