@@ -21,7 +21,7 @@ const SceneShortcut = ({unlocked, images, title, subtitle, attention, ...props}:
 			role="button"
 			onContextMenu={e => e.preventDefault()}
 		>
-			{unlocked ?
+			{images ?
 				<GraphicsGroup
 					className={styles.image}
 					images={images}
@@ -33,7 +33,7 @@ const SceneShortcut = ({unlocked, images, title, subtitle, attention, ...props}:
 			
 			<div className={styles.text}>
 				<div className={`${styles.sceneTitle} title`}>
-					{unlocked ? title : "???"}
+					{title || "???"}
 				</div>
 				
 				<div className={`${styles.sceneSubtitle} subtitle`}>
