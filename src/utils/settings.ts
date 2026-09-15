@@ -14,6 +14,7 @@ export class Settings extends StoredJSON {
   
   gameFont: string = DEFAULT_GAME_FONT
   fixedRatio: ViewRatio = ViewRatio.unconstrained
+  smoothFlashes: number = 0
   
   eroBlur: boolean = true
   eroSkip: 'no' | 'ask' = 'ask'
