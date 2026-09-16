@@ -177,8 +177,8 @@ export abstract class HistoryBase<
   }
 
   onPageStart(context: PageContext<SP>) {
-    if (!this._enabled)
-      return
+    //if (!this._enabled)
+    //  return
     this.pageContext = context
     if (this.pages.length > 0) { // remove duplicate last page if necessary
       const lastPage = this.lastPage
