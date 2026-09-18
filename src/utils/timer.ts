@@ -16,6 +16,9 @@ export default class Timer {
 	get delay() {
 		return this.time
 	}
+	get remainingTime() {
+		return this.timestamp + this.time - Date.now()
+	}
 	set delay(value: number) {
 		this.time = value
 		if (this.started) {
