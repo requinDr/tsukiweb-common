@@ -80,7 +80,9 @@ export class AudioManager<AssetProviderKey extends string = string> {
         this._wave = null
         this._context = new AutoMuteAudioContext(false)
         this._masterGainNode = this._context.createGain()
-        if (enableAudioElements && document.createElement('audio').canPlayType('audio/webm; codecs="opus"') == "probably") {
+        // WebKit's WebM player bypass the gain nodes (no volume/mute control).
+        const isWebKit = navigator.vendor.startsWith('Apple')
+        if (enableAudioElements && !isWebKit) {
             this._trackNode = new StreamingAudioNode(this._context)
         } else {
             this._trackNode = new AudioSourceNode(this._context)
