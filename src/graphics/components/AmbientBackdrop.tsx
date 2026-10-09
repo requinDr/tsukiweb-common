@@ -1,10 +1,43 @@
 import { memo, RefObject, useLayoutEffect, useRef } from "react"
 
-// The backdrop is rendered once on a small canvas (mirrored edges of the image,
-// blurred)
+// The backdrop is rendered once on a small canvas
+// (mirrored edges of the image, blurred)
 const RESOLUTION = 96 // canvas pixels along the longest side
 const BLUR = 3 // canvas pixels
 const RATIO = 4 / 3
+
+/** box blur (3 passes ≈ gaussian) */
+function blur(px: Uint8ClampedArray, W: number, H: number, r: number) {
+	const src = px.slice()
+	const pass = (n: number, m: number, stride: number, step: number) => {
+		for (let j = 0; j < m; j++) {
+			const base = j * stride
+			for (let c = 0; c < 4; c++) {
+				let sum = 0
+				for (let k = -r; k <= r; k++)
+					sum += src[base + Math.min(n - 1, Math.max(0, k)) * step + c]
+				for (let i = 0; i < n; i++) {
+					px[base + i * step + c] = sum / (2 * r + 1)
+					sum += src[base + Math.min(n - 1, i + r + 1) * step + c]
+						 - src[base + Math.max(0, i - r) * step + c]
+				}
+			}
+		}
+	}
+	pass(W, H, W * 4, 4)
+	src.set(px)
+	pass(H, W, 4, W * 4)
+}
+
+function adjustColors(px: Uint8ClampedArray, saturation: number, brightness: number) {
+	for (let i = 0; i < px.length; i += 4) {
+		const r = px[i], g = px[i + 1], b = px[i + 2]
+		const l = 0.2126 * r + 0.7152 * g + 0.0722 * b
+		px[i]     = (l + (r - l) * saturation) * brightness
+		px[i + 1] = (l + (g - l) * saturation) * brightness
+		px[i + 2] = (l + (b - l) * saturation) * brightness
+	}
+}
 
 function draw(canvas: HTMLCanvasElement, img: HTMLImageElement) {
 	const { clientWidth: cw, clientHeight: ch } = canvas
@@ -13,44 +46,43 @@ function draw(canvas: HTMLCanvasElement, img: HTMLImageElement) {
 	const W = canvas.width = Math.max(1, Math.round(cw * scale))
 	const H = canvas.height = Math.max(1, Math.round(ch * scale))
 
-	// same geometry as the framed image (contain in the canvas, cover inside the frame)
 	const fw = Math.min(W, H * RATIO), fh = Math.min(H, W / RATIO)
 	const fx = (W - fw) / 2, fy = (H - fh) / 2
 	const iw = img.naturalWidth, ih = img.naturalHeight
 	const sw = Math.min(iw, ih * RATIO), sh = Math.min(ih, iw / RATIO)
 	const sx = (iw - sw) / 2, sy = (ih - sh) / 2
 
-	const tmp = document.createElement("canvas")
-	tmp.width = W
-	tmp.height = H
-	const t = tmp.getContext("2d")!
-	t.drawImage(img, sx, sy, sw, sh, fx, fy, fw, fh)
+	const ctx = canvas.getContext("2d")!
+	ctx.clearRect(0, 0, W, H)
+	ctx.drawImage(img, sx, sy, sw, sh, fx, fy, fw, fh)
 
-	// mirror the image on the sides, so the backdrop continues its edges
 	if (fx > 0) {
 		const w = Math.min(fx, fw), s = w * sw / fw
-		t.save()
-		t.scale(-1, 1)
-		t.drawImage(img, sx, sy, s, sh, -fx, fy, w, fh)
-		t.drawImage(img, sx + sw - s, sy, s, sh, -(fx + fw + w), fy, w, fh)
-		t.restore()
+		ctx.save()
+		ctx.scale(-1, 1)
+		ctx.drawImage(img, sx, sy, s, sh, -fx, fy, w, fh)
+		ctx.drawImage(img, sx + sw - s, sy, s, sh, -(fx + fw + w), fy, w, fh)
+		ctx.restore()
 	}
 	if (fy > 0) {
 		const h = Math.min(fy, fh), s = h * sh / fh
-		t.save()
-		t.scale(1, -1)
-		t.drawImage(img, sx, sy, sw, s, fx, -fy, fw, h)
-		t.drawImage(img, sx, sy + sh - s, sw, s, fx, -(fy + fh + h), fw, h)
-		t.restore()
+		ctx.save()
+		ctx.scale(1, -1)
+		ctx.drawImage(img, sx, sy, sw, s, fx, -fy, fw, h)
+		ctx.drawImage(img, sx, sy + sh - s, sw, s, fx, -(fy + fh + h), fw, h)
+		ctx.restore()
 	}
 
-	const ctx = canvas.getContext("2d")!
-	ctx.clearRect(0, 0, W, H)
-	ctx.filter = `blur(${BLUR}px) saturate(1.3) brightness(0.7)`
-	ctx.drawImage(tmp, 0, 0)
-	ctx.filter = "none"
+	// filter done by hand: Safari doesn't support `filter` on canvas contexts
+	try {
+		const data = ctx.getImageData(0, 0, W, H)
+		blur(data.data, W, H, BLUR)
+		blur(data.data, W, H, BLUR)
+		blur(data.data, W, H, BLUR)
+		adjustColors(data.data, 1.3, 0.7)
+		ctx.putImageData(data, 0, 0)
+	} catch {}
 
-	// fade to black away from the frame
 	const fade = (x0: number, y0: number, x1: number, y1: number) => {
 		const gradient = ctx.createLinearGradient(x0, y0, x1, y1)
 		gradient.addColorStop(0, "rgb(0 0 0 / 0.1)")
