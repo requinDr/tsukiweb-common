@@ -1,6 +1,5 @@
 import { Link } from "wouter"
 import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef, JSX, useCallback } from "react"
-import Timer from "./timer"
 import { innerText, TSForceType } from "./utils"
 
 
@@ -377,6 +376,9 @@ type TWProps = Props & {
 	onFinish?: VoidFunction
 }
 
+// avoids revealing the whole text at once when coming back to a hidden tab
+const MAX_FRAME_DELTA = 100
+
 export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 		rootPrefix, rootSuffix, restartOnAppend=false, paused = false,
 		hideTag=undefined, hideTagArg="", onFinish, ...props}: TWProps)=> {
@@ -388,34 +390,61 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 		root.current ? hideTree(root.current, cursors.current, hideTag, hideTagArg) : undefined, undefined)
 
 	const finished = useRef<boolean>(true)
-	const timer = useRef<Timer>(new Timer(charDelay, ()=> {
-		if (atEnd(path.current, cursors.current)) {
-			onEnd()
-		} else {
-			moveCursors(path.current, cursors.current, 0)
-			updateTree()
+	const delay = useRef<number>(charDelay)
+	const frame = useRef<number>(0)
+	const elapsed = useRef<number>(0)
+
+	const stopAnim = useCallback(()=> {
+		if (frame.current) {
+			cancelAnimationFrame(frame.current)
+			frame.current = 0
 		}
-	}, true))
+	}, [])
 
 	const onEnd = useCallback<VoidFunction>(()=> {
-		timer.current.stop()
+		stopAnim()
 		if (!finished.current) {
 			finished.current = true
 			onFinish?.()
 		}
-	}, [onFinish])
+	}, [onFinish, stopAnim])
+
+	const onEndRef = useRef(onEnd)
+	useEffect(()=> { onEndRef.current = onEnd }, [onEnd])
+
+	const startAnim = useCallback(()=> {
+		if (frame.current)
+			return
+		let last = performance.now()
+		const step = (now: number)=> {
+			elapsed.current += Math.min(Math.max(now - last, 0), MAX_FRAME_DELTA)
+			last = now
+			const count = Math.floor(elapsed.current / delay.current)
+			if (count > 0) {
+				elapsed.current -= count * delay.current
+				for (let i = 0; i < count && !atEnd(path.current, cursors.current); i++)
+					moveCursors(path.current, cursors.current, 0)
+				updateTree()
+				if (atEnd(path.current, cursors.current))
+					return onEndRef.current()
+			}
+			frame.current = requestAnimationFrame(step)
+		}
+		frame.current = requestAnimationFrame(step)
+	}, [])
+
+	useEffect(()=> stopAnim, [stopAnim])
 
 	useEffect(()=> {
 		if (paused) {
-			if (timer.current.started)
-				timer.current.pause()
+			stopAnim()
 		} else {
 			if (path.current.length > 0
 					&& !finished.current
 					&& charDelay != 0)
-				timer.current.start()
+				startAnim()
 		}
-	}, [charDelay, paused])
+	}, [charDelay, paused, startAnim, stopAnim])
 
 	useEffect(()=> {
 		if (text == prevText.current)
@@ -432,11 +461,11 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 			} else {
 				path.current = pathFromCursors(root.current, cursors.current)
 			}
-			timer.current.start()
+			startAnim()
 		}
 		prevText.current = text
 		updateTree()
-	}, [charDelay, onEnd, restartOnAppend, text])
+	}, [charDelay, onEnd, restartOnAppend, text, startAnim])
 
 	useEffect(()=> {
 		if (charDelay == 0) {
@@ -447,7 +476,7 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 				onEnd()
 			}
 		} else {
-			timer.current.delay = charDelay
+			delay.current = charDelay
 		}
 	}, [charDelay, onEnd])
 
