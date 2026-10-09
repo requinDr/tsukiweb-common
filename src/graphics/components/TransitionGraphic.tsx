@@ -37,6 +37,7 @@ const TransitionGraphic = ({
 	...rest}: Props)=> {
 	const { imageSrc, cg } = useGameConfig()
 	const getUrl = (img: string) => imageSrc(img, resolution)
+	const framed = (pos === 'bg' && cg.shouldFrame) || false
 
 //____________________________________image_____________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -97,6 +98,7 @@ const TransitionGraphic = ({
 					image={image}
 					getUrl={getUrl}
 					blur={cg.shouldBlur}
+					framed={framed}
 					props={{
 						...rest,
 						...imageProps,

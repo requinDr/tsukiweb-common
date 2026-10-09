@@ -2,19 +2,22 @@ import { DivProps } from "../../types";
 import { bb } from "../../utils/Bbcode";
 import { splitFirst } from "../../utils/utils";
 import classNames from "classnames";
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { SpritePos } from "../types";
+import AmbientBackdrop from "./AmbientBackdrop";
 
 type Props = {
 	pos: SpritePos
 	image: string
 	getUrl: (img: string) => string
 	blur?: boolean | ((img: string) => boolean)
+	framed?: boolean | ((img: string) => boolean)
 	lazy?: boolean
 	props?: DivProps
 }
 
-const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = false, props: extraProps = {} }: Props) => {
+const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, framed: rawFramed = false, lazy = false, props: extraProps = {} }: Props) => {
+	const imgRef = useRef<HTMLImageElement>(null)
 	image = image || (pos == "bg" ? "#000000" : "#00000000")
 	if (image.startsWith('"')) image = image.replaceAll('"', '')
 	
@@ -24,6 +27,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 
 	let imageElement: ReactNode
 	let overlay: ReactNode
+	let framed = false
 
 	if (isColor) {
 		const { style, ...attrs } = extraProps
@@ -35,16 +39,19 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 		const imgUrl = getUrl(image)
 		const alt = `[[sprite:${image}]]`
 		const blur = typeof rawBlur === "function" ? rawBlur(image) : rawBlur
+		framed = typeof rawFramed === "function" ? rawFramed(image) : rawFramed
 
-		imageElement = (
+		imageElement = <>
 			<img
+				ref={imgRef}
 				src={imgUrl}
 				alt={alt}
 				draggable={false}
 				className={classNames({ blur })}
 				{...(lazy ? { loading: "lazy", decoding: "async" } : {})}
 			/>
-		)
+			{framed && <AmbientBackdrop source={imgRef} image={image} />}
+		</>
 	}
 
 	if (text) {
@@ -63,7 +70,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, lazy = fals
 	return (
 		<div
 			{...extraProps}
-			className={classNames(pos, extraProps.className)}
+			className={classNames(pos, { framed }, extraProps.className)}
 		>
 			{imageElement}
 			{overlay}

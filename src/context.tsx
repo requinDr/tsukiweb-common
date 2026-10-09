@@ -5,6 +5,7 @@ export type LibConfig = {
 	imageSrc: (src: string, res?: ResolutionId) => string
 	cg: {
 		shouldBlur: (img: string) => boolean
+		shouldFrame?: (img: string) => boolean
 	}
 }
 
