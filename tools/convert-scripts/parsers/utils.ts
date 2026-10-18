@@ -206,7 +206,7 @@ export class Block {
 		})
 	}
 	findLastIndex(predicate: (t: Token, i: number, b: Block)=>boolean,
-				  fromIndex: number = 0, ignoreCount: number = 0) {
+				  fromIndex: number = this._tokens.length, ignoreCount: number = 0) {
 		return this._tokens.slice(0, fromIndex).findLastIndex((t, i)=>{
 			if (predicate(t, i, this))
 				return (ignoreCount--) <= 0
@@ -224,7 +224,7 @@ export class Block {
 				return i
 		}
 	}
-	lastIndexOf(item: Token|string, fromIndex: number = 0) {
+	lastIndexOf(item: Token|string, fromIndex: number = this._tokens.length) {
 		if (item instanceof Token)
 			return this._tokens.lastIndexOf(item, fromIndex)
 		else
