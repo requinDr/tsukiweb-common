@@ -180,17 +180,38 @@ export class Block {
 	}
 //________________________________find methods__________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	find(predicate: (t: Token, i: number, b: Block)=>boolean) {
-		return this._tokens.find((t, i)=>predicate(t, i, this))
+	find(predicate: (t: Token, i: number, b: Block)=>boolean,
+		 fromIndex: number = 0, ignoreCount: number = 0) {
+		return this._tokens.slice(fromIndex).find((t, i)=> {
+			if (predicate(t, i, this))
+				return (ignoreCount--) <= 0
+			return false
+		})
 	}
-	findIndex(predicate: (t: Token, i: number, b: Block)=>boolean) {
-		return this._tokens.findIndex((t, i)=>predicate(t, i, this))
+	findIndex(predicate: (t: Token, i: number, b: Block)=>boolean,
+			  fromIndex: number = 0, ignoreCount: number = 0) {
+		const index = this._tokens.slice(fromIndex).findIndex((t, i)=>{
+			if (predicate(t, i, this))
+				return (ignoreCount--) <= 0
+			return false
+		})
+		return index + fromIndex
 	}
-	findLast(predicate: (t: Token, i: number, b: Block)=>boolean) {
-		return this._tokens.findLast((t, i)=>predicate(t, i, this))
+	findLast(predicate: (t: Token, i: number, b: Block)=>boolean,
+			 fromIndex: number = 0, ignoreCount: number = 0) {
+		return this._tokens.slice(0, fromIndex).findLast((t, i)=> {
+			if (predicate(t, i, this))
+				return (ignoreCount--) <= 0
+			return false
+		})
 	}
-	findLastIndex(predicate: (t: Token, i: number, b: Block)=>boolean) {
-		return this._tokens.findLastIndex((t, i)=>predicate(t, i, this))
+	findLastIndex(predicate: (t: Token, i: number, b: Block)=>boolean,
+				  fromIndex: number = 0, ignoreCount: number = 0) {
+		return this._tokens.slice(0, fromIndex).findLastIndex((t, i)=>{
+			if (predicate(t, i, this))
+				return (ignoreCount--) <= 0
+			return false
+		})
 	}
 	indexOf(item: Token|string, fromIndex: number = 0) {
 		if (item instanceof Token)

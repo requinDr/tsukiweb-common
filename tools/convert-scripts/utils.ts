@@ -59,8 +59,25 @@ function addChoiceCondition(token: Token, label: string, condition: string) {
 	return false
 }
 
-function isCmd<C extends string>(token: Token, cmd: C): token is CommandToken<C> {
-    return token instanceof CommandToken && token.cmd == cmd
+function isCmd<C extends string>(token: Token, cmd: C, ...args: (null|undefined|string|RegExp)[]): token is CommandToken<C> {
+    if(token instanceof CommandToken && token.cmd == cmd) {
+        for (const [i, arg] of args.entries()) {
+            if (typeof arg)
+            switch (typeof arg) {
+                case 'string' :
+                    if (token.args[i] != arg)
+                        return false
+                    break
+                case 'undefined' : break
+                default :
+                    if (arg && !(arg as RegExp).test(token.args[i]))
+                        return false
+                    break
+            }
+        }
+        return true
+    }
+    return false
 }
 
 export {
