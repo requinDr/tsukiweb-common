@@ -59,8 +59,13 @@ function addChoiceCondition(token: Token, label: string, condition: string) {
 	return false
 }
 
+function isCmd<C extends string>(token: Token, cmd: C): token is CommandToken<C> {
+    return token instanceof CommandToken && token.cmd == cmd
+}
+
 export {
     switch_regex,
     processCondition,
-    addChoiceCondition
+    addChoiceCondition,
+    isCmd
 }
