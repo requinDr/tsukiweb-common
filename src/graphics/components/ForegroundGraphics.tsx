@@ -21,7 +21,7 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 	if (currImg == prevImg && transition?.to.bgAlign && transition.effect.endsWith("scroll")) return null; // scroll animation only affects background
 
 	return (
-		<TransitionGraphic key={currImg}
+		<TransitionGraphic key={`${prevImg}-${currImg}`}
 			pos='bg'
 			image={currImg}
 			fadeTime={fadeTime}
