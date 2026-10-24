@@ -37,14 +37,18 @@ type FcCanvasContent = {
 	overlay?: FcOverlayDrawer
 }
 
-type Stroke = { color: string, width: number }
+/** `glow` and `tint` come from the CSS variables `--fc-link-glow` and `--fc-scene-tint` */
+type Stroke = { color: string, width: number, glow?: string, tint?: string }
 type Styles = ReturnType<typeof createStyleReader>
 
 const IMAGE_RADIUS = SCENE_HEIGHT / 14
 const HIDDEN_RADIUS = SCENE_HEIGHT / 10
 const FRAME_RADIUS = 1.6
 const HIGHLIGHT_WIDTH = 1.5 // frame of the hovered or focused scene
-const LINK_GLOW = { color: "rgb(0 0 255 / 0.35)", width: 2 }
+const LINK_GLOW_LAYERS = [
+	{ width: 2.3, alpha: 0.15 },
+	{ width: 1.5, alpha: 0.3 },
+]
 
 //#endregion ###################################################################
 //#region                           HELPERS
@@ -116,6 +120,8 @@ function createStyleReader(root: HTMLElement) {
 			cache.set(key, value = {
 				color: style.stroke,
 				width: Number.parseFloat(style.strokeWidth) || 0.6,
+				glow: style.getPropertyValue('--fc-link-glow').trim(),
+				tint: style.getPropertyValue('--fc-scene-tint').trim(),
 			})
 		}
 		return value
@@ -130,6 +136,8 @@ function createStyleReader(root: HTMLElement) {
 }
 
 const groupClass = (group?: string) => group ? ` group-${group}` : ''
+const sceneClass = ({ disabled, group }: FcCanvasItem) =>
+	`fc-scene unlocked${disabled ? ' disabled' : ''}${groupClass(group)}`
 
 //#endregion ###################################################################
 //#region                          RENDERER
@@ -140,7 +148,6 @@ export class FlowchartRenderer {
 	private ctx: CanvasRenderingContext2D
 	private camera: Camera
 	private styleRoot: HTMLElement
-	private glow = matchMedia('(pointer: fine)').matches
 	private dprX = 1
 	private dprY = 1
 	private frame = 0
@@ -237,6 +244,15 @@ export class FlowchartRenderer {
 		ctx.fill(disabled)
 		ctx.globalCompositeOperation = 'multiply'
 		ctx.fill(disabled)
+		ctx.globalCompositeOperation = 'color'
+		for (const item of visible) {
+			const tint = item.disabled && styles.stroke(sceneClass(item)).tint
+			if (tint) {
+				const { left, top, right, bottom } = item.node
+				ctx.fillStyle = tint
+				ctx.fillRect(left, top, right - left, bottom - top)
+			}
+		}
 
 		// Round the corners of all the scenes at once. Clipping each scene
 		// instead is expensive on mobile.
@@ -267,10 +283,14 @@ export class FlowchartRenderer {
 	private drawLinks(links: FcLinks, styles: Styles) {
 		const disabled = styles.stroke("fc-link disabled")
 		const enabled = (group?: string) => styles.stroke(`fc-link enabled${groupClass(group)}`)
-		if (this.glow) {
-			links.enabled.forEach(([_, d]) => this.stroke(path2D(d), LINK_GLOW))
-			links.enabledDashed.forEach(({ d, dash }) => this.stroke(path2D(d), LINK_GLOW, dash))
+		for (const { width, alpha } of LINK_GLOW_LAYERS) {
+			this.ctx.globalAlpha = alpha
+			const glow = (group?: string) => ({ color: enabled(group).glow!, width })
+			links.enabled.forEach(([group, d]) => enabled(group).glow && this.stroke(path2D(d), glow(group)))
+			links.enabledDashed.forEach(({ d, dash, group }) =>
+				enabled(group).glow && this.stroke(path2D(d), glow(group), dash))
 		}
+		this.ctx.globalAlpha = 1
 		links.disabledDashed.forEach(({ d, dash }) => this.stroke(path2D(d), disabled, dash))
 		if (links.disabled)
 			this.stroke(path2D(links.disabled), disabled)
@@ -303,7 +323,7 @@ export class FlowchartRenderer {
 		} else { // no thumbnail, or not loaded yet
 			ctx.fillStyle = item.kind == 'box'
 				? styles.color("var(--active-connection)")
-				: styles.stroke("fc-scene unlocked disabled").color
+				: styles.stroke(sceneClass({ ...item, disabled: true })).color
 			ctx.fillRect(left, top, width, height)
 		}
 	}
@@ -314,8 +334,7 @@ export class FlowchartRenderer {
 			this.stroke(null, styles.stroke("fc-scene"))
 			return
 		}
-		const frame = styles.stroke(item.disabled ? "fc-scene unlocked disabled"
-			: `fc-scene unlocked${groupClass(item.group)}`)
+		const frame = styles.stroke(sceneClass(item))
 		const id = item.node.id
 		const highlighted = !item.disabled && (id == this.hovered || id == this.focused)
 		roundRect(this.ctx, item.node, FRAME_RADIUS)
