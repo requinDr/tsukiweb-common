@@ -1,8 +1,6 @@
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react"
 import styles from '../styles/modal.module.scss'
 import { createPortal } from "react-dom"
-import dialogPolyfill from 'dialog-polyfill'
-import 'dialog-polyfill/dist/dialog-polyfill.css'
 import { multiRef } from "../../utils/utils"
 import { useNavBackRef } from "../../hooks"
 
@@ -75,10 +73,7 @@ const [render, setRender] = useState(show)
 	const ref = useRef<HTMLDialogElement>(null)
 
 	const setRef = useCallback((node: HTMLDialogElement | null) => {
-		if (node && !node.showModal) {
-			dialogPolyfill.registerDialog(node)
-		}
-		(ref as any).current = node
+		ref.current = node
 	}, [])
 
 	useEffect(() => {
