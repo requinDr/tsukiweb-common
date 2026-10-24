@@ -1,0 +1,41 @@
+.fc-viewport {
+	position: relative;
+	flex: 1;
+	align-self: stretch;
+	min-height: 0;
+	overflow: clip;
+	touch-action: none;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+
+	.fc-canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	// Transparent buttons over the scenes, moved with the camera
+	.fc-hit-layer {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 0;
+		height: 0;
+		transform-origin: 0 0;
+		will-change: transform;
+	}
+
+	.fc-hit {
+		position: absolute;
+		padding: 0;
+		margin: 0;
+		border: none;
+		background: transparent;
+		outline: none;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+	}
+}
