@@ -52,7 +52,14 @@
 		opacity: 0.1;
 	}
 
-	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus, &.active {
+	&.active {
+		background: none;
+		-webkit-text-fill-color: unset;
+		color: var(--btn-title-menu-active-color);
+		text-shadow: 0 0 8px var(--btn-title-menu-active-shadow);
+	}
+
+	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus {
 		--menu-bg-opacity: 1;
 		text-shadow: 0 0 6px var(--btn-title-menu-shadow);
 		text-decoration: none;
