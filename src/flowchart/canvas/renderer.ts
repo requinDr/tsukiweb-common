@@ -24,6 +24,7 @@ export type FcCanvasItem<N extends FcCanvasNode = FcCanvasNode> = {
 /** Reads computed CSS values in the flowchart, e.g. to resolve variables */
 export type StyleReader = {
 	color: (css: string) => string
+	stroke: (className: string) => { color: string }
 	property: (name: string) => string
 }
 
@@ -42,7 +43,6 @@ type Stroke = { color: string, width: number, glow?: string, tint?: string }
 type Styles = ReturnType<typeof createStyleReader>
 
 const IMAGE_RADIUS = SCENE_HEIGHT / 14
-const HIDDEN_RADIUS = SCENE_HEIGHT / 10
 const FRAME_RADIUS = 1.6
 const HIGHLIGHT_WIDTH = 1.5 // frame of the hovered or focused scene
 const LINK_GLOW_LAYERS = [
@@ -258,7 +258,7 @@ export class FlowchartRenderer {
 		// instead is expensive on mobile.
 		const corners = new Path2D()
 		for (const item of visible)
-			addCorners(corners, item.node, item.kind == 'hidden' ? HIDDEN_RADIUS : IMAGE_RADIUS)
+			addCorners(corners, item.node, IMAGE_RADIUS)
 		ctx.globalCompositeOperation = 'destination-out'
 		ctx.fill(corners)
 		ctx.globalCompositeOperation = 'source-over'
@@ -330,7 +330,7 @@ export class FlowchartRenderer {
 
 	private drawFrame(item: FcCanvasItem, styles: Styles) {
 		if (item.kind == 'hidden') {
-			roundRect(this.ctx, item.node, HIDDEN_RADIUS)
+			roundRect(this.ctx, item.node, FRAME_RADIUS)
 			this.stroke(null, styles.stroke("fc-scene"))
 			return
 		}
