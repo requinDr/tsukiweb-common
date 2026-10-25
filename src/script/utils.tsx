@@ -11,7 +11,7 @@ function getTokenValue(token: string, script: SPB): number {
 		return parseInt(token)
 }
 
-const opRegexp = /\s*([=!<>&|]{1,2}|[()])\s*/g
+const opRegexp = /\s*([=!<>&|]{1,2}|[()+-])\s*/g
 
 export function tokenizeCondition(condition: string): string[] {
 	
