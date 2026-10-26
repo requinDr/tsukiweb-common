@@ -7,7 +7,7 @@ export const FLAG_BACKGROUND = "var(--flag-background)"
 export const STRIKE_COLOR = "#ff3b3b"
 const FLAG_CONTENT = { x: 0.15, y: -0.55, scale: 0.95 }
 const FLAG_CONTENT_TRANSFORM = `translate(${FLAG_CONTENT.x},${FLAG_CONTENT.y}) scale(${FLAG_CONTENT.scale})`
-const HEART_SCALE = 0.75
+const HEART_SCALE = 0.85
 
 const HEART_PATH = `m0,2.5l-2.5,-2.5a1.66,1.66,0,1,1,2.5,-2.2a1.66,1.66,0,1,1,2.5,2.2`
 export const BADGE_PATHS = {
@@ -164,12 +164,12 @@ export const RegardBadge = ({ char, img, value = 0, ...props }: RegardBadgeProps
       {sign != 0 ? [...Array(abs)].map((_, i) => (
         <HeartSVGIcon key={i} value={sign}
           fill={`url(#${char}_grad)`}
-          strokeWidth=".8"
+          strokeWidth={.6 / HEART_SCALE}
           transform={`translate(-${i*ICON_SIZE*HEART_SCALE},0) scale(${HEART_SCALE})`}/>
           
       )) : <HeartSVGIcon
         fill={`url(#${char}_grad)`}
-        strokeWidth=".8"
+        strokeWidth={.6 / HEART_SCALE}
         transform={`scale(${HEART_SCALE})`}/>}
     </BadgeBase>
 	)
