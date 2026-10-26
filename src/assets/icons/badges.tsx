@@ -157,7 +157,6 @@ export const RegardBadge = ({ char, img, value = 0, ...props }: RegardBadgeProps
     <BadgeBase viewBox={`${left} -${ICON_SIZE/2} ${width} ${ICON_SIZE}`} {...props}>
       {img && <image
         href={img}
-        className="badge"
         x={left}
         y={-ICON_SIZE/2}
         height={ICON_SIZE}
