@@ -29,20 +29,15 @@ m-2.29,-0.3l-0.91,-0.7l0.7,-1.2`.repeat(-n-1)}`,
 v-.5m.8-.2v-.5c0-.22-.18-.4-.4-.4-.22 0-.4.18-.4.4v.5`
 }
 
-type BadgeBaseProps = {
+export type BadgeBaseProps = {
   persists?: boolean,
-} & (
-  {plus?: boolean, minus?: never} |
-  {plus?: never, minus?: boolean}
-) & SVGProps<SVGSVGElement>
+} & SVGProps<SVGSVGElement>
 
 const BadgeBase = ({children, persists = false, viewBox = BADGE_VIEWBOX,
-                    plus, minus, ...props}: BadgeBaseProps)=> {
+                    ...props}: BadgeBaseProps)=> {
   return <svg className="badge" viewBox={viewBox} height="1em" {...props}>
     {children}
     {persists && <BadgeLinkSVGIcon transform="translate(2.5,-1.9) scale(1.3)"/>}
-    {plus && <BadgePlusSVGIcon transform="translate(0.3,0.4)"/>}
-    {minus && <BadgeMinusSVGIcon transform="translate(0.3,0.4)"/>}
   </svg>
 }
 
@@ -66,7 +61,7 @@ const BadgePlusSVGIcon = (props: SVGProps<SVGPathElement>)=>
   <path d={BADGE_PATHS.pointPlus} stroke="var(--regard-plus-color, #00ff00)" fill="none" {...props}/>
 
 const BadgeMinusSVGIcon = (props: SVGProps<SVGPathElement>)=>
-  <path d={BADGE_PATHS.pointPlus} stroke="var(--regard-plus-color, #ff0000)" fill="none" {...props}/>
+  <path d={BADGE_PATHS.pointMinus} stroke="var(--regard-minus-color, #ff0000)" fill="none" {...props}/>
 
 const BadgeLinkSVGIcon = (props: SVGProps<SVGPathElement>)=>
   <>
@@ -97,62 +92,77 @@ const PointSVGIcon = ({open = false, ...props}: {open?: boolean} & SVGProps<SVGG
     </g> : <circle {...circle_props}/>
 }
 
-type PointBadgeProps = BadgeBaseProps & {
-    icon: ReactNode
-} & (
-    {plus?: boolean, minus?: never} |
-    {plus?: never, minus?: boolean}
-)
-export const PointBadge = ({icon, ...props}: PointBadgeProps) => {
-    const content =
-      (typeof icon != "string") ? icon
-      : (icon.length == 1) ? <BadgeChar>{icon}</BadgeChar>
-      : <use href={`#${icon}-icon`}/>
-    return <BadgeBase {...props}>
-      <PointSVGIcon open={props.plus}/>
-      {content}
-    </BadgeBase>
-}
-
 type FlagBadgeProps = {
-    flag: ReactNode
+    icon: ReactNode
     negative?: boolean
 } & BadgeBaseProps
 
-export const FlagBadge = ({flag, negative, ...props}: FlagBadgeProps) => {
-	let content
-    if (typeof flag == 'string') {
-      if (flag.length > 1)
-        content = <use href={`#${flag}-icon`}/>
-      else
-        content = <text y="1.6" stroke={FLAG_BACKGROUND} fill="white"
-          strokeWidth=".7" paintOrder="stroke" textAnchor="middle">
-          {flag}
-        </text>
-    } else {
-      content = flag
+export const FlagBadge = ({icon, negative, ...props}: FlagBadgeProps) =>
+  <BadgeBase {...props}>
+    <FlagSVGIcon neg={negative}/>
+    <g transform={FLAG_CONTENT_TRANSFORM}>
+      {(typeof icon == "string") ?
+        <BadgeChar stroke={FLAG_BACKGROUND}>{icon}</BadgeChar>
+      : icon}
+    </g>
+  </BadgeBase>
+
+type PointBadgeProps = BadgeBaseProps & {
+    icon: ReactNode,
+    value?: number
+}
+export const PointBadge = ({icon, value = 0, ...props}: PointBadgeProps) => {
+  let content
+  if (value == 0) {
+      content = <>
+        <PointSVGIcon/>
+        {(typeof icon == "string") ? <BadgeChar>{icon}</BadgeChar> : icon}
+      </>
+  } else {
+    const abs = Math.abs(value)
+    const sign = Math.sign(value)
+    if (abs > 1) {
+      const width = ICON_SIZE * abs
+      props = {
+        viewBox:`-${width - ICON_SIZE/2} -${ICON_SIZE/2} ${width} ${ICON_SIZE}`,
+        ...props
+      }
     }
-	return (
-    <BadgeBase {...props}>
-      <FlagSVGIcon neg={negative}/>
-			<g transform={FLAG_CONTENT_TRANSFORM}>
-        {content}
-			</g>
-    </BadgeBase>
-	)
+    const signTransform = "translate(0.3,0.4)"
+    content = [...Array(abs)].map((_,i)=>
+      <g key={i} transform={`translate(-${i*ICON_SIZE},0)`}>
+        <PointSVGIcon open/>
+        {(typeof icon == "string") ? <BadgeChar>{icon}</BadgeChar> : icon}
+        {(value > 0) ?
+          <BadgePlusSVGIcon transform={signTransform}/>
+        : <BadgeMinusSVGIcon transform={signTransform}/>}
+      </g>
+    )
+  }
+  return <BadgeBase {...props}>
+    {content}
+  </BadgeBase>
 }
 
-type RegardBadgeProps = {
-  char: string,
+type RegardBadgeProps = BadgeBaseProps & {
+  fill: string,
   img?: string,
   value?: number
-} & BadgeBaseProps
+}
 
-export const RegardBadge = ({ char, img, value = 0, ...props }: RegardBadgeProps) => {
+export const RegardBadge = ({ fill, img, value = 0, ...props }: RegardBadgeProps) => {
 	const abs = Math.max(Math.abs(value), 1)
 	const sign = Math.sign(value)
-  const width = ICON_SIZE * ((abs-0.5) * HEART_SCALE + 1.5)
-  const left = -(width - ICON_SIZE*0.5)
+  let width, left, dX, scale
+  if (img) {
+    width = ICON_SIZE * ((abs-0.5) * HEART_SCALE + 1.5)
+    scale = HEART_SCALE
+  } else {
+    width = ICON_SIZE * abs
+    scale = 1
+  }
+  left = -(width - ICON_SIZE*0.5)
+  dX = ICON_SIZE*scale
 	return (
     <BadgeBase viewBox={`${left} -${ICON_SIZE/2} ${width} ${ICON_SIZE}`} {...props}>
       {img && <image
@@ -163,12 +173,12 @@ export const RegardBadge = ({ char, img, value = 0, ...props }: RegardBadgeProps
       />}
       {sign != 0 ? [...Array(abs)].map((_, i) => (
         <HeartSVGIcon key={i} value={sign}
-          fill={`url(#${char}_grad)`}
+          fill={fill}
           strokeWidth={.6 / HEART_SCALE}
-          transform={`translate(-${i*ICON_SIZE*HEART_SCALE},0) scale(${HEART_SCALE})`}/>
+          transform={`translate(-${i*dX},0) scale(${scale})`}/>
           
       )) : <HeartSVGIcon
-        fill={`url(#${char}_grad)`}
+        fill={fill}
         strokeWidth={.6 / HEART_SCALE}
         transform={`scale(${HEART_SCALE})`}/>}
     </BadgeBase>
