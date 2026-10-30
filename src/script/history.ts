@@ -313,9 +313,7 @@ export abstract class HistoryBase<
     if (sceneIndex < 0)
       throw Error(`Unable to retrieve scene for page ${page} from history`)
     const scene = this.scenes.get(sceneIndex)!
-    return {
-      ...scene, ...page
-    }
+    return jsonMerge({...page}, scene)
   }
 
   protected rollbackToPage(pageIndex: number) {
