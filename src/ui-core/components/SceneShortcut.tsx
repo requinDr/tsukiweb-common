@@ -5,7 +5,7 @@ import { Graphics, GraphicsGroup } from "../../graphics"
 
 type Props = {
 	unlocked: boolean
-	images: Partial<Graphics>
+	images?: Partial<Graphics>
 	title: ReactNode
 	subtitle?: ReactNode
 	attention?: boolean
