@@ -33,6 +33,11 @@ const Modal = ({ show, onRequestClose, children, shouldCloseOnEsc = true, ...pro
 		const dialogElement = ref.current
 		if (!dialogElement) return
 
+		const {clientX: x, clientY: y} = e
+		if (x == 0 && y == 0 && e.target instanceof HTMLElement &&
+			dialogElement.contains(e.target)) // click performed without cursor
+			return
+		
 		const rect = dialogElement.getBoundingClientRect()
 		const isInDialog = (
 			e.clientX >= rect.left &&
