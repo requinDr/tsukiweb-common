@@ -31,11 +31,11 @@
 	"peerDependencies": {
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1",
-		"sass": "^1.106.1",
+		"sass": "^1.107.0",
 		"wouter": "^3.13.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.6.5",
+		"@types/node": "^26.6.6",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"typescript": "^7.0.2",
