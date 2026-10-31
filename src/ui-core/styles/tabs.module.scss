@@ -104,18 +104,25 @@
 	-webkit-text-fill-color: transparent;
 
 	&::before {
-		content: ">";
-		letter-spacing: -2px;
-		margin-right: 0.5em;
-		opacity: 0;
-		transition: opacity 0.2s ease-in-out;
-		background: inherit;
+		content: "";
+		display: inline-block;
+		width: .8em;
+		height: .8em;
+		margin-right: .5em;
+		vertical-align: -.05em;
+		background: var(--text-color);
+		clip-path: polygon(22% 18%, 38% 18%, 78% 50%, 38% 82%, 22% 82%, 62% 50%);
+	}
+	&:hover::before, &:focus-visible::before, :global(.keyboard-navigating) &:focus::before {
+		background: var(--surface-light-active);
 	}
 	&.active::before {
-		opacity: 1;
+		background: var(--theme-cyan);
+		clip-path: polygon(50% 12%, 88% 50%, 50% 88%, 12% 50%);
+		filter: drop-shadow(0 0 4px var(--theme-cyan));
 	}
 
-	&::before, &:hover, &:focus-visible, :global(.keyboard-navigating) &:focus, &.active {
+	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus, &.active {
 		--menu-bg-opacity: 1;	
 		text-shadow: 0 0 10px var(--btn-title-menu-shadow);
 		text-decoration: none;

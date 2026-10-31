@@ -10,14 +10,18 @@
 .pageTitle {
 	padding-inline: var(--page-padding);
 	font-size: 3rem;
-	letter-spacing: -1px;
 	margin-block: 0;
 	font-family: "Times New Roman", "Times-Roman", serif;
 	font-weight: 500;
 	white-space: nowrap;
 	grid-area: page-title;
 	width: fit-content;
-	text-shadow: 0 0 14px var(--btn-title-menu-shadow);
+	letter-spacing: 2px;
+	background: var(--page-title);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	filter: drop-shadow(0 0 12px var(--btn-title-menu-shadow));
 }
 .content {
 	grid-area: content;
@@ -137,7 +141,7 @@
 .pageSection {
 	padding-inline: var(--page-padding);
 	padding-block: .9rem;
-	border-block: 2px solid var(--separator);
+	background: linear-gradient(180deg, var(--page-section-edge), transparent 14%, transparent 86%, var(--page-section-edge));
 	position: relative;
 	flex-grow: 1;
 	overflow-y: auto;
