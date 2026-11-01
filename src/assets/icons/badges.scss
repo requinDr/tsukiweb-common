@@ -1,0 +1,11 @@
+.badge {
+	overflow: visible;
+	stroke: white;
+	stroke-width: .6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	font-family: var(--ui-font);
+	text {
+		font-size: 4px;
+	}
+}
