@@ -107,7 +107,7 @@ type FlagBadgeProps = {
     negative?: boolean
 } & BadgeBaseProps
 
-export const FlagBadge = ({icon, negative, ...props}: FlagBadgeProps) =>
+export const FlagBadge = ({icon, negative, children, ...props}: FlagBadgeProps) =>
   <BadgeBase {...props}>
     <FlagSVGIcon neg={negative}/>
     <g transform={FLAG_CONTENT_TRANSFORM}>
@@ -115,6 +115,7 @@ export const FlagBadge = ({icon, negative, ...props}: FlagBadgeProps) =>
         <BadgeChar stroke={FLAG_BACKGROUND}>{icon}</BadgeChar>
       : icon}
     </g>
+    {children}
   </BadgeBase>
 
 type PointBadgeProps = BadgeBaseProps & {
@@ -122,7 +123,7 @@ type PointBadgeProps = BadgeBaseProps & {
     value?: number,
     fill?: string
 }
-export const PointBadge = ({icon, value = 0, fill, ...props}: PointBadgeProps) => {
+export const PointBadge = ({icon, value = 0, fill, children, ...props}: PointBadgeProps) => {
   let content
   if (value == 0) {
       content = <>
@@ -152,6 +153,7 @@ export const PointBadge = ({icon, value = 0, fill, ...props}: PointBadgeProps) =
   }
   return <BadgeBase {...props}>
     {content}
+    {children}
   </BadgeBase>
 }
 
@@ -161,5 +163,5 @@ type RegardBadgeProps = BadgeBaseProps & {
   value?: number
 }
 
-export const RegardBadge = ({ img, ...props }: RegardBadgeProps) =>
-  <PointBadge icon={img && <HeadSVGIcon img={img}/>} {...props}/>
+export const RegardBadge = ({ img, children, ...props }: RegardBadgeProps) =>
+  <PointBadge icon={img && <HeadSVGIcon img={img}/>} {...props}>{children}</PointBadge>
