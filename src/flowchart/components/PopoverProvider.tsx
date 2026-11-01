@@ -98,10 +98,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 			const hit = resolve(e.target)
 			if (!hit) return
 			startPos.current = { x: e.clientX, y: e.clientY }
-			// Open on a frame: Motion 14 starts animations from performance.now(), delaying the popover's fade-in
-			longPressTimer.current = setTimeout(() =>
-				requestAnimationFrame(() => openPopover(hit[1], hit[0])), LONG_PRESS_DELAY
-			)
+			longPressTimer.current = setTimeout(() => openPopover(hit[1], hit[0]), LONG_PRESS_DELAY)
 		}
 
 		const onPointerMove = (e: PointerEvent) => {
