@@ -92,7 +92,7 @@ const HitTarget = memo(<N extends FcCanvasNode>({ item, onClick }: HitTargetProp
 				width: node.right - node.left, height: node.bottom - node.top,
 				pointerEvents: disabled ? 'none' : undefined,
 			}}
-			{...(nav && { 'nav-scroll': 'none', 'nav-x': nav.x, 'nav-y': nav.y })}
+			{...(nav && { 'nav-scroll': 'none', 'nav-auto': 1 })}
 			{...(!disabled && popover && trigger)}
 			onClick={disabled ? undefined : () => onClick(node)}
 		/>
