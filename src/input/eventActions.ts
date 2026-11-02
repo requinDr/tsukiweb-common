@@ -1,5 +1,5 @@
 
-import { RefObject, useEffect, useRef } from "react"
+import { DependencyList, RefObject, useEffect, useRef } from "react"
 import { NoMethods } from "../types"
 import { objectMatch } from "../utils/utils"
 
@@ -148,7 +148,8 @@ export function useEventActions<M extends Mapping>(
 		callback: Callback<M>,
 		target: GlobalEventHandlers|RefObject<GlobalEventHandlers|null|undefined>,
 		options?: boolean|(Opts & AddEventListenerOptions),
-		enabled = true
+		enabled = true,
+		deps: DependencyList = []
 	) {
 	const handler = useRef<EventActions>(undefined)
 	
@@ -163,7 +164,7 @@ export function useEventActions<M extends Mapping>(
 		return ()=> {
 			handler.current?.clearActions()
 		}
-	}, [mapping, options])
+	}, [mapping, options, ...deps])
 
 	useEffect(()=> {
 		if (!enabled)
