@@ -22,12 +22,6 @@ if (typeof document !== "undefined") {
 	document.addEventListener("touchcancel", () => { isTouchActive = false }, opts)
 }
 
-let rootElement: HTMLElement | null = null
-const getRootElement = () => {
-	if (!rootElement) rootElement = document.getElementById("root")
-	return rootElement as HTMLElement
-}
-
 const LONG_PRESS_DELAY          = 500
 const LONG_PRESS_MOVE_THRESHOLD = 10
 
@@ -69,26 +63,26 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 
 	// Delegated listeners
 	useEffect(() => {
-		const longPressTimer = { current: null as ReturnType<typeof setTimeout> | null }
-		const startPos       = { current: null as { x: number; y: number } | null }
+		let longPressTimer: ReturnType<typeof setTimeout> | undefined
+		let startPos: { x: number, y: number } | null = null
 
-		const resolve = (target: EventTarget | null): [Element, T] | null => {
+		const resolve = (target: EventTarget | null): [T, Element] | null => {
 			const el = (target as Element)?.closest?.("[data-popover-id]")
 			if (!el) return null
 			const getItem = registry.get(el.getAttribute("data-popover-id")!)
-			return getItem ? [el, getItem()] : null
+			return getItem ? [getItem(), el] : null
 		}
 
 		const clearLongPress = () => {
-			if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
-			startPos.current = null
+			clearTimeout(longPressTimer)
+			startPos = null
 		}
 
 		// Desktop: hover
 		const onMouseOver = (e: MouseEvent) => {
 			if (isTouchActive) return
 			const hit = resolve(e.target)
-			if (hit) openPopover(hit[1], hit[0])
+			if (hit) openPopover(...hit)
 			else closePopover()
 		}
 
@@ -97,14 +91,14 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 			if (e.pointerType !== "touch") return
 			const hit = resolve(e.target)
 			if (!hit) return
-			startPos.current = { x: e.clientX, y: e.clientY }
-			longPressTimer.current = setTimeout(() => openPopover(hit[1], hit[0]), LONG_PRESS_DELAY)
+			startPos = { x: e.clientX, y: e.clientY }
+			longPressTimer = setTimeout(() => openPopover(...hit), LONG_PRESS_DELAY)
 		}
 
 		const onPointerMove = (e: PointerEvent) => {
-			if (!startPos.current) return
-			const dx = Math.abs(e.clientX - startPos.current.x)
-			const dy = Math.abs(e.clientY - startPos.current.y)
+			if (!startPos) return
+			const dx = Math.abs(e.clientX - startPos.x)
+			const dy = Math.abs(e.clientY - startPos.y)
 			if (dx > LONG_PRESS_MOVE_THRESHOLD || dy > LONG_PRESS_MOVE_THRESHOLD) clearLongPress()
 		}
 
@@ -123,7 +117,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 		const onFocusIn = (e: FocusEvent) => {
 			if (isTouchActive) return
 			const hit = resolve(e.target)
-			if (hit) openPopover(hit[1], hit[0])
+			if (hit) openPopover(...hit)
 		}
 
 		const onFocusOut = (e: FocusEvent) => {
@@ -131,26 +125,21 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 			if (!resolve(e.relatedTarget)) closePopover()
 		}
 
-		const p = { passive: true }
-		document.addEventListener("mouseover",   onMouseOver)
-		document.addEventListener("pointerdown", onPointerDown, p)
-		document.addEventListener("pointermove", onPointerMove, p)
-		document.addEventListener("pointerup",   onPointerUp,   p)
-		document.addEventListener("pointercancel", clearLongPress, p)
-		document.addEventListener("contextmenu", onContextMenu)
-		document.addEventListener("focusin",     onFocusIn)
-		document.addEventListener("focusout",    onFocusOut)
+		const controller = new AbortController()
+		const { signal } = controller
+		const passive = { passive: true, signal }
+		document.addEventListener("mouseover",     onMouseOver,    { signal })
+		document.addEventListener("pointerdown",   onPointerDown,  passive)
+		document.addEventListener("pointermove",   onPointerMove,  passive)
+		document.addEventListener("pointerup",     onPointerUp,    passive)
+		document.addEventListener("pointercancel", clearLongPress, passive)
+		document.addEventListener("contextmenu",   onContextMenu,  { signal })
+		document.addEventListener("focusin",       onFocusIn,      { signal })
+		document.addEventListener("focusout",      onFocusOut,     { signal })
 
 		return () => {
 			clearLongPress()
-			document.removeEventListener("mouseover",   onMouseOver)
-			document.removeEventListener("pointerdown", onPointerDown)
-			document.removeEventListener("pointermove", onPointerMove)
-			document.removeEventListener("pointerup",   onPointerUp)
-			document.removeEventListener("pointercancel", clearLongPress)
-			document.removeEventListener("contextmenu", onContextMenu)
-			document.removeEventListener("focusin",     onFocusIn)
-			document.removeEventListener("focusout",    onFocusOut)
+			controller.abort()
 		}
 	}, [openPopover, closePopover, registry])
 
@@ -162,7 +151,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 				{children}
 				{createPortal(
 					popoverMounted && (
-						<div className="popover-container" ref={setFloating} style={floatingStyles ?? {}}>
+						<div className="popover-container" ref={setFloating} style={floatingStyles}>
 							<AnimatePresence onExitComplete={onExitComplete}>
 								{currentItem && (
 									<m.div
@@ -178,7 +167,7 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 							</AnimatePresence>
 						</div>
 					),
-					getRootElement()
+					document.getElementById("root")!
 				)}
 			</PopoverRegistryContext.Provider>
 		</PopoverActionsContext.Provider>

@@ -282,21 +282,21 @@ export class FlowchartRenderer {
 
 	private drawLinks(links: FcLinks, styles: Styles) {
 		const disabled = styles.stroke("fc-link disabled")
-		const enabled = (group?: string) => styles.stroke(`fc-link enabled${groupClass(group)}`)
+		const enabled = links.enabled.map(({ d, group, dash }) => ({
+			path: path2D(d), dash,
+			style: styles.stroke(`fc-link enabled${groupClass(group)}`),
+		}))
 		for (const { width, alpha } of LINK_GLOW_LAYERS) {
 			this.ctx.globalAlpha = alpha
-			const glow = (group?: string) => ({ color: enabled(group).glow!, width })
-			links.enabled.forEach(([group, d]) => enabled(group).glow && this.stroke(path2D(d), glow(group)))
-			links.enabledDashed.forEach(({ d, dash, group }) =>
-				enabled(group).glow && this.stroke(path2D(d), glow(group), dash))
+			for (const { path, dash, style } of enabled)
+				if (style.glow)
+					this.stroke(path, { color: style.glow, width }, dash)
 		}
 		this.ctx.globalAlpha = 1
-		links.disabledDashed.forEach(({ d, dash }) => this.stroke(path2D(d), disabled, dash))
-		if (links.disabled)
-			this.stroke(path2D(links.disabled), disabled)
-		links.enabled.forEach(([group, d]) => this.stroke(path2D(d), enabled(group)))
-		links.enabledDashed.forEach(({ d, dash, group }) =>
-			this.stroke(path2D(d), enabled(group), dash))
+		for (const { d, dash } of links.disabled)
+			this.stroke(path2D(d), disabled, dash)
+		for (const { path, dash, style } of enabled)
+			this.stroke(path, style, dash)
 		this.ctx.setLineDash([])
 	}
 
@@ -329,13 +329,8 @@ export class FlowchartRenderer {
 	}
 
 	private drawFrame(item: FcCanvasItem, styles: Styles) {
-		if (item.kind == 'hidden') {
-			roundRect(this.ctx, item.node, FRAME_RADIUS)
-			this.stroke(null, styles.stroke("fc-scene"))
-			return
-		}
-		const frame = styles.stroke(sceneClass(item))
-		const id = item.node.id
+		const frame = styles.stroke(item.kind == 'hidden' ? "fc-scene" : sceneClass(item))
+		const { id } = item.node
 		const highlighted = !item.disabled && (id == this.hovered || id == this.focused)
 		roundRect(this.ctx, item.node, FRAME_RADIUS)
 		this.stroke(null, highlighted ? { ...frame, width: HIGHLIGHT_WIDTH } : frame)

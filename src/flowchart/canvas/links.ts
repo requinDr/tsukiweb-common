@@ -10,19 +10,17 @@ export interface FcLinkNode {
 	parents: FcLinkNode[]
 }
 
-/** Link overlaping another link */
-export type FcDashedLink = {
-	group?: string
+/** `dash` is set for the links overlaping another link */
+export type FcLink = {
 	d: string
-	dash: number[]
+	group?: string
+	dash?: number[]
 }
 
-/** SVG path of the links, merged when they share the same style */
+/** SVG paths of the links, in drawing order, merged when they share the same style */
 export type FcLinks = {
-	disabled: string
-	enabled: [group: string | undefined, d: string][]
-	disabledDashed: FcDashedLink[]
-	enabledDashed: FcDashedLink[]
+	disabled: FcLink[]
+	enabled: FcLink[]
 }
 
 /** Path from the bottom of a parent to the top of a child */
@@ -47,8 +45,8 @@ export function computeLinks<N extends FcLinkNode>(nodes: N[],
 		pathD = linkPath): FcLinks {
 	const disabled: string[] = []
 	const enabledByGroup = new Map<string | undefined, string[]>()
-	const enabledDashed: FcDashedLink[] = []
-	const disabledDashed: FcDashedLink[] = []
+	const enabledDashed: FcLink[] = []
+	const disabledDashed: FcLink[] = []
 
 	for (const node of nodes) {
 		const { centerX: x2, top: y2 } = node
@@ -61,11 +59,8 @@ export function computeLinks<N extends FcLinkNode>(nodes: N[],
 				const totalLength = (y2 - y1) + Math.abs(x2 - x1)
 				const cutLength = node.cutAt * DY
 				const halfBreak = OVERLAP_BREAK_LENGTH / 2
-				const link = {
-					group, d,
-					dash: [totalLength - cutLength - halfBreak, OVERLAP_BREAK_LENGTH, cutLength - halfBreak],
-				}
-				;(linkDisabled ? disabledDashed : enabledDashed).push(link)
+				const dash = [totalLength - cutLength - halfBreak, OVERLAP_BREAK_LENGTH, cutLength - halfBreak]
+				;(linkDisabled ? disabledDashed : enabledDashed).push({ group, d, dash })
 			} else if (linkDisabled) {
 				disabled.push(d)
 			} else {
@@ -77,9 +72,10 @@ export function computeLinks<N extends FcLinkNode>(nodes: N[],
 	}
 
 	return {
-		disabled: disabled.join(' '),
-		enabled: Array.from(enabledByGroup, ([group, paths]) => [group, paths.join(' ')]),
-		disabledDashed,
-		enabledDashed,
+		disabled: [...disabledDashed, { d: disabled.join(' ') }],
+		enabled: [
+			...Array.from(enabledByGroup, ([group, paths]) => ({ group, d: paths.join(' ') })),
+			...enabledDashed,
+		],
 	}
 }
