@@ -45,6 +45,7 @@ type Styles = ReturnType<typeof createStyleReader>
 const IMAGE_RADIUS = SCENE_HEIGHT / 14
 const FRAME_RADIUS = 1.6
 const HIGHLIGHT_WIDTH = 1.5 // frame of the hovered or focused scene
+const DISABLED_PLACEHOLDER_SHADE = "rgb(0 0 0 / 0.5)"
 const LINK_GLOW_LAYERS = [
 	{ width: 2.3, alpha: 0.15 },
 	{ width: 1.5, alpha: 0.3 },
@@ -178,6 +179,14 @@ export class FlowchartRenderer {
 		this.requestDraw()
 	}
 
+	private createStyles(items: FcCanvasItem[]) {
+		const styles = createStyleReader(this.styleRoot)
+		for (const item of items)
+			if (item.disabled)
+				getThumbnail(item, 0, styles.stroke(sceneClass(item)))
+		return styles
+	}
+
 	/**
 	 * @param width,height size of the canvas in CSS px
 	 * @param pixelWidth,pixelHeight size of the canvas in device px. Must
@@ -213,7 +222,7 @@ export class FlowchartRenderer {
 		ctx.clearRect(0, 0, canvas.width, canvas.height)
 		if (!content)
 			return
-		const styles = this.styles ??= createStyleReader(this.styleRoot)
+		const styles = this.styles ??= this.createStyles(content.items)
 		ctx.setTransform(camera.scale * dprX, 0, 0, camera.scale * dprY,
 			camera.tx * dprX, camera.ty * dprY)
 		ctx.lineJoin = 'round'
@@ -232,27 +241,6 @@ export class FlowchartRenderer {
 		const visible = content.items.filter(item => intersects(item.node, view))
 		for (const item of visible)
 			this.drawSceneContent(item, styles, level)
-
-		// Disabled scenes: same as the CSS filter `grayscale(1) brightness(0.5)`,
-		// applied on all of them at once (`ctx.filter` is not supported on Safari)
-		const disabled = new Path2D()
-		for (const { node, disabled: isDisabled } of visible)
-			if (isDisabled)
-				disabled.rect(node.left, node.top, node.right - node.left, node.bottom - node.top)
-		ctx.fillStyle = "rgb(128 128 128)"
-		ctx.globalCompositeOperation = 'saturation'
-		ctx.fill(disabled)
-		ctx.globalCompositeOperation = 'multiply'
-		ctx.fill(disabled)
-		ctx.globalCompositeOperation = 'color'
-		for (const item of visible) {
-			const tint = item.disabled && styles.stroke(sceneClass(item)).tint
-			if (tint) {
-				const { left, top, right, bottom } = item.node
-				ctx.fillStyle = tint
-				ctx.fillRect(left, top, right - left, bottom - top)
-			}
-		}
 
 		// Round the corners of all the scenes at once. Clipping each scene
 		// instead is expensive on mobile.
@@ -316,7 +304,8 @@ export class FlowchartRenderer {
 			this.stroke(null, { color: "black", width: 0.4 })
 			return
 		}
-		const image = getThumbnail(item, level)
+		const image = getThumbnail(item, level,
+			item.disabled ? styles.stroke(sceneClass(item)) : undefined)
 		if (image) {
 			const [source, sx, sy, sw, sh] = image
 			ctx.drawImage(source, sx, sy, sw, sh, left, top, width, height)
@@ -325,6 +314,10 @@ export class FlowchartRenderer {
 				? styles.color("var(--active-connection)")
 				: styles.stroke(sceneClass({ ...item, disabled: true })).color
 			ctx.fillRect(left, top, width, height)
+			if (item.disabled) {
+				ctx.fillStyle = DISABLED_PLACEHOLDER_SHADE
+				ctx.fillRect(left, top, width, height)
+			}
 		}
 	}
 

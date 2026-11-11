@@ -59,6 +59,56 @@ function blur(canvas: HTMLCanvasElement, sigma: number) {
 	ctx.putImageData(image, 0, 0)
 }
 
+type Rgb = [r: number, g: number, b: number]
+
+const DIM_FACTOR = 128 / 255
+const luminosity = (r: number, g: number, b: number) => 0.3 * r + 0.59 * g + 0.11 * b
+
+let colorProbe: CanvasRenderingContext2D | undefined
+
+function parseColor(css: string): Rgb {
+	colorProbe ??= createCanvas(1, 1).getContext('2d', { willReadFrequently: true })!
+	colorProbe.fillStyle = "#000"
+	colorProbe.fillStyle = css
+	colorProbe.fillRect(0, 0, 1, 1)
+	const [r, g, b] = colorProbe.getImageData(0, 0, 1, 1).data
+	return [r, g, b]
+}
+
+/**
+ * Look of the disabled scenes, applied in place on RGBA pixels: same as the
+ * CSS filter `grayscale(1) brightness(0.5)`, then the hue and saturation of
+ * `tint` (blend modes `saturation`, `multiply` and `color`).
+ */
+function dim(px: Uint8ClampedArray, tint?: Rgb) {
+	let dr = 0, dg = 0, db = 0
+	if (tint) {
+		const [r, g, b] = tint
+		const l = luminosity(r, g, b)
+		dr = r - l; dg = g - l; db = b - l
+	}
+	const below = -Math.min(dr, dg, db), above = Math.max(dr, dg, db)
+	for (let i = 0; i < px.length; i += 4) {
+		const l = luminosity(px[i], px[i + 1], px[i + 2]) * DIM_FACTOR
+		const k = Math.min(1, below > l ? l / below : 1, above > 255 - l ? (255 - l) / above : 1)
+		px[i] = l + dr * k
+		px[i + 1] = l + dg * k
+		px[i + 2] = l + db * k
+	}
+}
+
+/** Canvas with the pixels of `image` modified in place by `edit` */
+function editPixels(image: ImageBitmap, edit: (px: Uint8ClampedArray) => void) {
+	const { width, height } = image
+	const canvas = createCanvas(width, height)
+	const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+	ctx.drawImage(image, 0, 0)
+	const data = ctx.getImageData(0, 0, width, height)
+	edit(data.data)
+	ctx.putImageData(data, 0, 0)
+	return canvas
+}
+
 /**
  * Spritesheet at decreasing resolutions. Drawing from the level closest to
  * the displayed size keeps the thumbnails sharp on every browser: large
@@ -128,6 +178,61 @@ const blurredTile = ({ file, source }: Thumbnail) =>
 		return createImageBitmap(canvas)
 	})
 
+const dimmedBlurredTile = (thumbnail: Thumbnail, tint = "") =>
+	cached(`blur-dim:${thumbnail.file}:${thumbnail.source}:${tint}`, async () =>
+		createImageBitmap(editPixels(await blurredTile(thumbnail).promise,
+			px => dim(px, tint ? parseColor(tint) : undefined))))
+
+/** Disabled version of a spritesheet, built again when the tint of a thumbnail changes */
+type DimmedSheet = {
+	tints: Map<string, string> // by source rectangle
+	levels?: ImageBitmap[]
+	stale: boolean
+	building: boolean
+}
+const dimmedSheets = new Map<string, DimmedSheet>()
+
+async function buildDimmedSheet(file: string, dimmed: DimmedSheet) {
+	dimmed.building = true
+	try {
+		const [image] = await sheet(file).promise
+		dimmed.stale = false
+		const canvas = editPixels(image, px => {
+			const original = px.slice()
+			dim(px)
+			for (const [source, tint] of dimmed.tints) {
+				const [x, y, w, h] = source.split(',').map(Number)
+				const rgb = parseColor(tint)
+				for (let row = y; row < y + h; row++) {
+					const start = (row * image.width + x) * 4, end = start + w * 4
+					px.set(original.subarray(start, end), start)
+					dim(px.subarray(start, end), rgb)
+				}
+			}
+		})
+		dimmed.levels = await createMipmap(canvas)
+		listeners.forEach(listener => listener())
+	} catch {
+		dimmed.stale = true
+	} finally {
+		dimmed.building = false
+	}
+}
+
+function dimmedSheet({ file, source }: Thumbnail, tint = "") {
+	let dimmed = dimmedSheets.get(file)
+	if (!dimmed)
+		dimmedSheets.set(file, dimmed = { tints: new Map(), stale: true, building: false })
+	const key = String(source)
+	if (tint != (dimmed.tints.get(key) ?? "")) {
+		dimmed.tints.set(key, tint)
+		dimmed.stale = true
+	}
+	if (dimmed.stale && !dimmed.building)
+		buildDimmedSheet(file, dimmed)
+	return dimmed.levels
+}
+
 /** Calls `listener` each time a thumbnail is ready. Returns an unsubscribe function. */
 export function onThumbnailReady(listener: VoidFunction) {
 	listeners.add(listener)
@@ -138,16 +243,19 @@ export function onThumbnailReady(listener: VoidFunction) {
  * Image to draw for a thumbnail, with the source rectangle in it, or null if
  * it is not ready yet (its preparation is then started).
  * @param level mipmap level, ignored for the blurred thumbnails
+ * @param disabled set to get the thumbnail with the look of a disabled scene,
+ *        colored with `tint` if any
  */
 export function getThumbnail({ thumbnail, blur }: { thumbnail?: Thumbnail, blur?: boolean },
-		level: number): [CanvasImageSource, number, number, number, number] | null {
+		level: number, disabled?: { tint?: string }): [CanvasImageSource, number, number, number, number] | null {
 	if (!thumbnail)
 		return null
 	if (blur) {
-		const bitmap = blurredTile(thumbnail).value
+		const bitmap = (disabled ? dimmedBlurredTile(thumbnail, disabled.tint) : blurredTile(thumbnail)).value
 		return bitmap ? [bitmap, 0, 0, bitmap.width, bitmap.height] : null
 	}
-	const image = sheet(thumbnail.file).value?.[level]
+	const levels = disabled ? dimmedSheet(thumbnail, disabled.tint) : sheet(thumbnail.file).value
+	const image = levels?.[level]
 	if (!image)
 		return null
 	const [x, y, w, h] = thumbnail.source.map(v => v / (1 << level))
