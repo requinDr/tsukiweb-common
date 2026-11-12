@@ -183,34 +183,41 @@ const dimmedBlurredTile = (thumbnail: Thumbnail, tint = "") =>
 		createImageBitmap(editPixels(await blurredTile(thumbnail).promise,
 			px => dim(px, tint ? parseColor(tint) : undefined))))
 
-/** Disabled version of a spritesheet, built again when the tint of a thumbnail changes */
+/**
+ * Disabled thumbnails of a spritesheet, laid out in a grid with one slot for
+ * each tint of each thumbnail.
+ */
 type DimmedSheet = {
-	tints: Map<string, string> // by source rectangle
+	slots: Map<string, { source: Thumbnail['source'], tint: string, index: number }>
 	levels?: ImageBitmap[]
+	built: number // number of slots in `levels`
 	stale: boolean
 	building: boolean
 }
+const DIMMED_COLUMNS = 16
 const dimmedSheets = new Map<string, DimmedSheet>()
+
+const slotPosition = (index: number, w: number, h: number) =>
+	[(index % DIMMED_COLUMNS) * w, Math.floor(index / DIMMED_COLUMNS) * h] as const
 
 async function buildDimmedSheet(file: string, dimmed: DimmedSheet) {
 	dimmed.building = true
 	try {
 		const [image] = await sheet(file).promise
 		dimmed.stale = false
-		const canvas = editPixels(image, px => {
-			const original = px.slice()
-			dim(px)
-			for (const [source, tint] of dimmed.tints) {
-				const [x, y, w, h] = source.split(',').map(Number)
-				const rgb = parseColor(tint)
-				for (let row = y; row < y + h; row++) {
-					const start = (row * image.width + x) * 4, end = start + w * 4
-					px.set(original.subarray(start, end), start)
-					dim(px.subarray(start, end), rgb)
-				}
-			}
+		const slots = [...dimmed.slots.values()]
+		const [, , w, h] = slots[0].source
+		const canvas = createCanvas(DIMMED_COLUMNS * w, Math.ceil(slots.length / DIMMED_COLUMNS) * h)
+		const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+		slots.forEach(({ source: [sx, sy], tint, index }) => {
+			const [x, y] = slotPosition(index, w, h)
+			ctx.drawImage(image, sx, sy, w, h, x, y, w, h)
+			const data = ctx.getImageData(x, y, w, h)
+			dim(data.data, tint ? parseColor(tint) : undefined)
+			ctx.putImageData(data, x, y)
 		})
 		dimmed.levels = await createMipmap(canvas)
+		dimmed.built = slots.length
 		listeners.forEach(listener => listener())
 	} catch {
 		dimmed.stale = true
@@ -219,18 +226,26 @@ async function buildDimmedSheet(file: string, dimmed: DimmedSheet) {
 	}
 }
 
-function dimmedSheet({ file, source }: Thumbnail, tint = "") {
+function dimmedTile({ file, source }: Thumbnail, level: number, tint = ""):
+		[CanvasImageSource, number, number, number, number] | null {
 	let dimmed = dimmedSheets.get(file)
 	if (!dimmed)
-		dimmedSheets.set(file, dimmed = { tints: new Map(), stale: true, building: false })
-	const key = String(source)
-	if (tint != (dimmed.tints.get(key) ?? "")) {
-		dimmed.tints.set(key, tint)
+		dimmedSheets.set(file, dimmed = { slots: new Map(), built: 0, stale: true, building: false })
+	const key = `${source}:${tint}`
+	let slot = dimmed.slots.get(key)
+	if (!slot) {
+		dimmed.slots.set(key, slot = { source, tint, index: dimmed.slots.size })
 		dimmed.stale = true
 	}
 	if (dimmed.stale && !dimmed.building)
 		buildDimmedSheet(file, dimmed)
-	return dimmed.levels
+	const image = dimmed.levels?.[level]
+	if (!image || slot.index >= dimmed.built)
+		return null
+	const [, , w, h] = source
+	const [x, y] = slotPosition(slot.index, w, h)
+	const scale = 1 << level
+	return [image, x / scale, y / scale, w / scale, h / scale]
 }
 
 /** Calls `listener` each time a thumbnail is ready. Returns an unsubscribe function. */
@@ -254,8 +269,9 @@ export function getThumbnail({ thumbnail, blur }: { thumbnail?: Thumbnail, blur?
 		const bitmap = (disabled ? dimmedBlurredTile(thumbnail, disabled.tint) : blurredTile(thumbnail)).value
 		return bitmap ? [bitmap, 0, 0, bitmap.width, bitmap.height] : null
 	}
-	const levels = disabled ? dimmedSheet(thumbnail, disabled.tint) : sheet(thumbnail.file).value
-	const image = levels?.[level]
+	if (disabled)
+		return dimmedTile(thumbnail, level, disabled.tint)
+	const image = sheet(thumbnail.file).value?.[level]
 	if (!image)
 		return null
 	const [x, y, w, h] = thumbnail.source.map(v => v / (1 << level))
