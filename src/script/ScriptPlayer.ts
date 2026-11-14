@@ -43,7 +43,8 @@ type InitContext<LN extends string, PointId extends string> = PartialJSON<{
     flags: string[]
     points: Record<PointId, number>
     textPrefix: string
-    continueScript: boolean
+    singleScene: boolean
+    extra: boolean
 }>
 
 type PageContext<LN extends string, Content extends JSONObject> = {
@@ -59,7 +60,8 @@ type BlockContext<LN extends string, PointId extends string, Content extends JSO
     label: LN
     flags: string[]
     points: Partial<Record<PointId, number>>
-    continueScript: boolean
+    singleScene: boolean
+    extra: boolean
 } & Content
 
 //##############################################################################
@@ -197,7 +199,8 @@ export abstract class ScriptPlayerBase<
     private _initPage: number
     private _commands: CommandMap<any>
     private _blockSkipped: boolean = false
-    private _continueScript: boolean
+    private _singleScene: boolean
+    private _extra: boolean
 
     // not private because accessible by BlockPlayer. Do not use outside these classes
     _ffwStopCondition: FFwStopPredicate<any>|undefined = undefined
@@ -225,7 +228,8 @@ export abstract class ScriptPlayerBase<
     get currentPage() { return this._blockPlayer?.pageIndex ?? -1 }
     
     get paused() { return this._blockPlayer?.paused ?? false}
-    get continueScript() { return this._continueScript }
+    get singleScene() { return this._singleScene }
+    get extra() { return this._extra }
     
     get fastForwarding() { return this._ffwStopCondition != undefined }
     get ffwStopCondition() { return this._ffwStopCondition }
@@ -310,9 +314,10 @@ export abstract class ScriptPlayerBase<
         this._nextLabel = label as LN|undefined ?? null
         this._initLabel = label as LN|undefined ?? null
         ;({
-            page           : this._initPage       = 0,
-            continueScript : this._continueScript = true,
-            textPrefix     : this._textPrefix     = ""
+            page        : this._initPage    = 0,
+            singleScene : this._singleScene = false,
+            extra       : this._extra       = false,
+            textPrefix  : this._textPrefix  = ""
         } = init)
 
         this._graphics = {
@@ -447,7 +452,8 @@ export abstract class ScriptPlayerBase<
             label: label,
             flags: [...this.flags],
             points: Object.fromEntries(this.points.entries()) as Partial<Record<PointId, number>>,
-            continueScript: this._continueScript,
+            singleScene: this._singleScene,
+            extra: this._extra,
             ...this.blockContent()
         }
     }
@@ -465,7 +471,8 @@ export abstract class ScriptPlayerBase<
     static defaultBlockContext() {
         return {
             flags: [] as string[],
-            continueScript: true,
+            singleScene: false,
+            extra: false,
             points: { }
         }
     }
