@@ -344,8 +344,10 @@ export abstract class ScriptPlayerBase<
         this._blockPlayer?.skip(nb_lines)
     }
 
-    setNextLabel(label: LN) {
-        this._nextLabel = label
+    setNextLabel(label: LN | `*${LN}`) {
+		if (label.startsWith('*'))
+			label = label.substring(1) as LN
+        this._nextLabel = label as LN
     }
 
     next() {
