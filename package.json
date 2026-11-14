@@ -7,6 +7,7 @@
 		"check": "tsc --noEmit"
 	},
 	"exports": {
+		"./choices": "./src/choices/index.ts",
 		"./constants": "./src/constants.ts",
 		"./context": "./src/context.tsx",
 		"./flowchart": "./src/flowchart/index.ts",

@@ -38,6 +38,13 @@
 	--theme-glow: 0 0 10px hsl(198 100% 55% / 70%), 0 0 28px hsl(215 100% 55% / 45%);
 	--theme-panel-border: hsl(198 100% 55% / 45%);
 
+	--choice-accent: var(--theme-cyan);
+	--choice-glow: hsl(198 100% 55% / 65%);
+	--choice-line: linear-gradient(90deg, transparent 0%, hsl(199 100% 56%) 50%, transparent 100%);
+	--choice-band: rgb(1 18 44 / 74%);
+	--choice-band-active: rgb(8 110 200 / 74%);
+	--choice-text-active: hsl(198 100% 92%);
+
 	--placeholder: hsl(205 100 26);
 	--attention: hsl(195 89% 46%);
 	--off-color: hsl(0 100 56);

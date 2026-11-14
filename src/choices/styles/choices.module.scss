@@ -1,0 +1,254 @@
+@use '../../ui-core/styles/mixins' as *;
+
+@mixin game-text {
+	font-family: var(--game-font), sans-serif;
+	letter-spacing: 1px;
+	--sc: #000;
+	--ts: clamp(.8px, .045em, 1.1px);
+	--nts: calc(-1 * var(--ts));
+	text-shadow:
+		var(--ts) var(--ts) var(--ts) var(--sc),
+		var(--nts) var(--ts) var(--ts) var(--sc),
+		var(--nts) var(--nts) var(--ts) var(--sc),
+		var(--ts) var(--nts) var(--ts) var(--sc),
+		0 0 calc(var(--ts) * 2) var(--sc);
+}
+
+@mixin band-lines($opacity) {
+	&::before, &::after {
+		content: "";
+		position: absolute;
+		inset-inline: 0;
+		height: 1px;
+		background-image: var(--choice-line);
+		opacity: $opacity;
+	}
+	&::before {
+		top: 0;
+	}
+	&::after {
+		bottom: 0;
+	}
+}
+
+.marker {
+	flex: none;
+	position: relative;
+	rotate: 45deg;
+	border: 1px solid var(--choice-accent);
+}
+
+.text {
+	position: relative;
+}
+
+//##############################################################################
+//#region                          IN-GAME MENU
+//##############################################################################
+
+.menu {
+	display: flex;
+	overflow-y: auto;
+	overflow-x: hidden;
+	background:
+		radial-gradient(ellipse 70% 60% at 50% 50%, rgb(0 0 0 / 28%), rgb(0 0 0 / 66%));
+	backdrop-filter: blur(2px);
+}
+
+.container {
+	margin: auto;
+	width: 100%;
+	max-width: 920px;
+	padding: max(1.5rem, 6vh) 0;
+	display: flex;
+	flex-direction: column;
+	gap: clamp(.8rem, 3vh, 1.6rem);
+}
+
+.question {
+	@include game-text;
+	position: relative;
+	font-size: clamp(1.05em, min(2.4cqw, 3.8cqh), 1.9em);
+	line-height: 1.94;
+	text-align: center;
+	text-wrap: balance;
+	padding: 0 2rem .6em;
+
+	span {
+		white-space: pre-wrap;
+		overflow-wrap: break-word;
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		left: 20%;
+		right: 20%;
+		bottom: 0;
+		height: 1px;
+		background-image: var(--choice-line);
+	}
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(.35rem, 1.6vh, .8rem);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.item {
+	display: grid;
+}
+
+.choice {
+	@include game-text;
+	@include band-lines(.28);
+	position: relative;
+	width: 100%;
+	gap: .9em;
+	padding: .55em 12% .55em max(8%, 2.2rem);
+	font-size: clamp(1em, min(2.2vw, 3.6vh), 1.45em);
+	line-height: 1.6;
+	text-align: start;
+	color: var(--text-color);
+	background: linear-gradient(90deg,
+		transparent,
+		var(--choice-band) 14%,
+		var(--choice-band) 70%,
+		transparent);
+	isolation: isolate;
+	transition: color .25s ease-out;
+
+	&::before, &::after {
+		transition: opacity .25s ease-out;
+	}
+
+	.marker {
+		width: .5em;
+		height: .5em;
+		opacity: .55;
+		transition: background-color .25s, box-shadow .25s, opacity .25s, scale .25s;
+	}
+
+	.text {
+		transition: translate .3s cubic-bezier(.22, 1, .36, 1);
+	}
+
+	&:not(:disabled) {
+		cursor: pointer;
+	}
+
+	&:not(:disabled):is(:hover, :focus-visible),
+	:global(.keyboard-navigating) &:not(:disabled):focus {
+		outline: none;
+		color: var(--choice-text-active);
+		background:
+			linear-gradient(90deg,
+				transparent,
+				var(--choice-band-active) 14%,
+				var(--choice-band) 78%,
+				transparent);
+
+		&::before, &::after {
+			opacity: 1;
+		}
+		.marker {
+			opacity: 1;
+			scale: 1.15;
+			background-color: var(--choice-accent);
+			box-shadow: 0 0 8px var(--choice-glow), 0 0 18px var(--choice-glow);
+		}
+		.text {
+			translate: .35em 0;
+		}
+	}
+
+	&:active:not(:disabled) .text {
+		translate: .2em 0;
+	}
+
+	&:disabled {
+		color: var(--text-muted);
+		opacity: .55;
+
+		.marker {
+			opacity: .3;
+			border-color: currentColor;
+		}
+		.text {
+			text-decoration-line: line-through;
+			text-decoration-thickness: 1px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.text {
+			transition: none;
+		}
+	}
+}
+
+@include mobile-portrait {
+	.choice {
+		padding-inline: 1.2rem 1.6rem;
+		background: linear-gradient(90deg,
+			var(--choice-band) 0%,
+			var(--choice-band) 70%,
+			transparent);
+	}
+	.question {
+		padding-inline: 1.2rem;
+	}
+}
+
+//#endregion ###################################################################
+//#region                       SAVE THUMBNAIL PREVIEW
+//##############################################################################
+
+.preview {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 3px;
+	padding-block: 6px;
+	overflow: hidden;
+	font-family: var(--game-font), sans-serif;
+	font-size: 0.5em;
+	letter-spacing: 0.5px;
+	line-height: 1.5;
+	color: var(--text-color);
+	text-shadow: 0 0 2px #000, 0 0 1px #000;
+	background: rgb(0 0 0 / 30%);
+
+	.marker {
+		width: .45em;
+		height: .45em;
+		opacity: .7;
+	}
+	.text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+
+.previewChoice {
+	@include band-lines(.35);
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: .7em;
+	padding: 2px 10% 2px 8%;
+	white-space: nowrap;
+	background: linear-gradient(90deg,
+		transparent,
+		var(--choice-band) 10%,
+		var(--choice-band) 70%,
+		transparent);
+}
+
+//#endregion
