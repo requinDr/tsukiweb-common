@@ -157,9 +157,8 @@ export async function saveSpritesheet(
   await sharp(canvas)
     .composite(compositeImages)
     .avif({
-      quality: 40,
+      quality: 30,
       effort: 9,
-      tune: 'psnr',
       chromaSubsampling: '4:4:4',
       bitdepth: 8,
     })

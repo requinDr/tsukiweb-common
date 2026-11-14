@@ -23,8 +23,8 @@ interface SpritesheetMeta {
 }
 
 const BATCH_SIZE = 90
-const THUMB_WIDTH = 108
-const THUMB_HEIGHT = 72
+const THUMB_WIDTH = 216
+const THUMB_HEIGHT = 144
 
 const getPath = (img: string | undefined, dir: string) =>
   img && !isHexColor(img) ? path.join(dir, `${img}.${img.startsWith('tachi/') ? 'png' : 'jpg'}`) : img
