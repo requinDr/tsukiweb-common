@@ -192,7 +192,10 @@ export abstract class HistoryBase<
     if (!this._enabled)
       return
     const {label} = context
-    if (this.isScene(label as any) && label != this.lastScene.label) {
+    if (this.isScene(label as any)) {
+      if (label == this.lastScene.label) {
+        this.scenes.pop()
+      }
       this.scenes.push(context)
     }
   }
@@ -221,6 +224,12 @@ export abstract class HistoryBase<
     } else {
       this.setPage({type: 'text'})
     }
+  }
+
+  onChoice(choice: number) {
+    const scene = this.lastScene
+    if (scene)
+      scene.choice = choice
   }
 
   enable() {

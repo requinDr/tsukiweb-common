@@ -62,6 +62,7 @@ type BlockContext<LN extends string, PointId extends string, Content extends JSO
     points: Partial<Record<PointId, number>>
     singleScene: boolean
     extra: boolean
+    choice: number
 } & Content
 
 //##############################################################################
@@ -456,6 +457,7 @@ export abstract class ScriptPlayerBase<
             points: Object.fromEntries(this.points.entries()) as Partial<Record<PointId, number>>,
             singleScene: this._singleScene,
             extra: this._extra,
+            choice: -1,
             ...this.blockContent()
         }
     }
@@ -466,7 +468,7 @@ export abstract class ScriptPlayerBase<
             graphics: {bg: "", l:"", c:"", r:"", monochrome: ""} as Graphics,
             audio: {track: null, looped_se: null} as Audio,
             textPrefix: "",
-            text: ""
+            text: "",
         }
     }
 
@@ -475,7 +477,8 @@ export abstract class ScriptPlayerBase<
             flags: [] as string[],
             singleScene: false,
             extra: false,
-            points: { }
+            points: { },
+            choice: -1,
         }
     }
 
