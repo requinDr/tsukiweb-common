@@ -78,6 +78,7 @@ const ChoicesMenu = <T extends ChoiceItem>({show, choices, question, onSelect,
 									//i-0.5 to place cursor on second choice when pressing down
 									{...(navigable && {'nav-y': i-0.5})}
 								>
+									<span className={styles.highlight} aria-hidden="true" />
 									<span className={styles.marker} aria-hidden="true" />
 									<span className={styles.text}>
 										<Bbcode text={choice.str} />

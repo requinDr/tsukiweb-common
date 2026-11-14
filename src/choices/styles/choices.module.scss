@@ -1,4 +1,5 @@
 @use '../../ui-core/styles/mixins' as *;
+@use 'highlight' as *;
 
 @mixin game-text {
 	font-family: var(--game-font), sans-serif;
@@ -133,8 +134,21 @@
 		transition: background-color .25s, box-shadow .25s, opacity .25s, scale .25s;
 	}
 
-	.text {
-		transition: translate .3s cubic-bezier(.22, 1, .36, 1);
+	.highlight {
+		position: absolute;
+		z-index: -1;
+		top: 0;
+		left: 0;
+		height: 100%;
+		pointer-events: none;
+		@include choice-highlight;
+		opacity: 0;
+		clip-path: inset(0 100% 0 0);
+		translate: -1em 0;
+		transition:
+			opacity .3s ease-out,
+			clip-path .5s cubic-bezier(.22, 1, .36, 1),
+			translate .5s cubic-bezier(.22, 1, .36, 1);
 	}
 
 	&:not(:disabled) {
@@ -161,13 +175,17 @@
 			background-color: var(--choice-accent);
 			box-shadow: 0 0 8px var(--choice-glow), 0 0 18px var(--choice-glow);
 		}
-		.text {
-			translate: .35em 0;
+		.highlight {
+			opacity: .6;
+			clip-path: inset(0);
+			translate: 0;
+			animation: highlight-glow 2.4s .5s ease-in-out infinite alternate;
 		}
 	}
 
-	&:active:not(:disabled) .text {
-		translate: .2em 0;
+	&:active:not(:disabled) .highlight {
+		opacity: .7;
+		transition-duration: .1s;
 	}
 
 	&:disabled {
@@ -185,9 +203,18 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.text {
-			transition: none;
+		.highlight {
+			transition: opacity .3s ease-out;
+			clip-path: none;
+			translate: 0;
+			animation: none !important;
 		}
+	}
+}
+
+@keyframes highlight-glow {
+	to {
+		opacity: .4;
 	}
 }
 

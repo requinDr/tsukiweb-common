@@ -1,0 +1,10 @@
+@mixin choice-highlight($fade: 22%) {
+	aspect-ratio: 56 / 13;
+	background: linear-gradient(90deg,
+		var(--choice-accent),
+		color-mix(in srgb, var(--choice-accent) 50%, transparent));
+	mask:
+		url('../assets/choice-select.svg') left center / 100% 100% no-repeat,
+		linear-gradient(90deg, transparent, #000 $fade);
+	mask-composite: intersect;
+}
