@@ -132,6 +132,7 @@
 		height: .5em;
 		opacity: .55;
 		transition: background-color .25s, box-shadow .25s, opacity .25s, scale .25s;
+		will-change: scale;
 	}
 
 	.highlight {
@@ -145,6 +146,7 @@
 		opacity: 0;
 		clip-path: inset(0 100% 0 0);
 		translate: -1em 0;
+		will-change: opacity, translate, clip-path, filter;
 		transition:
 			opacity .3s ease-out,
 			clip-path .5s cubic-bezier(.22, 1, .36, 1),
@@ -213,8 +215,11 @@
 }
 
 @keyframes highlight-glow {
+	from {
+		filter: opacity(1);
+	}
 	to {
-		opacity: .4;
+		filter: opacity(.65);
 	}
 }
 
