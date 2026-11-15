@@ -9,7 +9,7 @@ type Props = {
 	title: ReactNode
 	subtitle?: ReactNode
 	attention?: boolean
-} & React.HTMLAttributes<HTMLDivElement>
+} & Omit<React.HTMLAttributes<HTMLDivElement>, "title">
 
 const SceneShortcut = ({unlocked, images, title, subtitle, attention, ...props}: Props) => {
 
