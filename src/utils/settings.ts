@@ -6,7 +6,7 @@ export const DEFAULT_GAME_FONT = 'Ubuntu'
 
 export class Settings extends StoredJSON {
 
-  textSpeed: TEXT_SPEED = TEXT_SPEED.normal
+  textSpeed: TEXT_SPEED = 20
   autoClickDelay: number = 600
   nextPageDelay: number = 2500
   fastForwardDelay: number = 5

@@ -6,9 +6,8 @@ export enum ViewRatio {
   sixteenByNine = "16/9",
 }
 
-export enum TEXT_SPEED {
-  instant = 0,
-  fast = 1,
-  normal = 20,
-  slow = 50,
-}
+export const TEXT_SPEEDS = [
+  250, 200, 175, 150, 125, 100, 90, 80, 70, 60, 50, 45, 40, 35,
+  30, 25, 20, 18, 16, 14, 12, 10, 8, 6, 5, 4, 3, 2, 1, 0,
+] as const
+export type TEXT_SPEED = (typeof TEXT_SPEEDS)[any]
