@@ -2,7 +2,7 @@ import { createContext, createElement, type PropsWithChildren, useContext, useSy
 import { observe, unobserve } from "../utils/Observer"
 import { ValueStorage } from "../utils/storage"
 import { deepAssign, fetchJson, insertDirectory } from "../utils/utils"
-import { LangDesc, LanguagesType, pickDefaultTranslation, TranslationId, UpdateDateFormat } from "./lang"
+import { LanguagesType, pickDefaultTranslation, TranslationId, UpdateDateFormat } from "./lang"
 
 export type TranslationStrings<T> = T & {
   id: TranslationId
@@ -26,11 +26,12 @@ export function createTranslationStore<T extends Record<string, any>>(
   const languagesStorage = new ValueStorage<LanguagesType>(`${storagePrefix}languages`, false, JSON.stringify, JSON.parse)
   const stringsStorage = new ValueStorage<Strings>(`${storagePrefix}strings`, true, JSON.stringify, JSON.parse)
   const languages = languagesStorage.get() || {} as LanguagesType
-  const strings = stringsStorage.get() || deepAssign({}, defaultStrings) as Strings
+  const strings = deepAssign(deepAssign({}, defaultStrings), stringsStorage.get() ?? {} as Strings) as Strings
   strings.id = ""
   const selection = {ready: false}
   const ignoredPaths = new Set(optionalPaths)
   const StringsContext = createContext<string|null|undefined>(undefined)
+  let targetId: TranslationId = ""
 
   function coversAllKeys(source: object, reference: object, path = ""): boolean {
     for (const [key, refVal] of Object.entries(reference)) {
@@ -49,56 +50,72 @@ export function createTranslationStore<T extends Record<string, any>>(
     return true
   }
 
-  async function loadTranslation(requestedId: TranslationId): Promise<Strings> {
-    const id = Object.hasOwn(languages, requestedId)
-      ? requestedId
-      : Object.getOwnPropertyNames(languages)[0]
-    const {dir, fallback, "last-update": lastUpdate} = languages[id]
-    const path = dir.startsWith("./") ? assetsPath + dir.substring(2) : dir
-    const [lang, game] = await Promise.all([
-      fetchJson(`${path}/lang.json?v=${appVersion}`).then(json => insertDirectory(json, dir)),
-      fetchJson(`${path}/game.json?v=${appVersion}`).then(json => insertDirectory(json, dir)),
-    ])
-    const merged = deepAssign(deepAssign({}, lang), game)
-    const result = fallback && !coversAllKeys(merged, defaultStrings)
-      ? await loadTranslation(fallback)
-      : deepAssign({}, defaultStrings) as Strings
+  function fallbackChain(id: TranslationId): TranslationId[] {
+    const chain: TranslationId[] = []
+    let current: TranslationId | undefined = id
+    while (current) {
+      if (!Object.hasOwn(languages, current) || chain.includes(current)) {
+        console.warn(`translation "${chain.at(-1)}" has an invalid fallback "${current}"`)
+        break
+      }
+      chain.push(current)
+      current = languages[current].fallback
+    }
+    return chain
+  }
 
+  async function fetchTranslationFiles(id: TranslationId): Promise<Record<string, any>> {
+    const {dir, "last-update": lastUpdate} = languages[id]
+    const path = dir.startsWith("./") ? assetsPath + dir.substring(2) : dir
+    const [lang, game] = await Promise.all(["lang", "game"].map(name =>
+      fetchJson(`${path}/${name}.json?v=${appVersion}-${lastUpdate}`)
+        .then(json => insertDirectory(json, dir))
+    ))
+    return deepAssign(lang, game)
+  }
+
+  async function loadTranslation(id: TranslationId): Promise<Strings> {
+    let merged: Record<string, any> = {}
+    let lastUpdate = ""
+    for (const langId of fallbackChain(id)) {
+      merged = deepAssign(await fetchTranslationFiles(langId), merged)
+      if (languages[langId]["last-update"] > lastUpdate)
+        lastUpdate = languages[langId]["last-update"]
+      if (coversAllKeys(merged, defaultStrings))
+        break
+    }
+    const result = deepAssign(deepAssign({}, defaultStrings), merged) as Strings
     result.id = id
-    if (!result.lastUpdate || lastUpdate > result.lastUpdate)
-      result.lastUpdate = lastUpdate
-    deepAssign(result, lang)
-    deepAssign(result, game)
+    result.lastUpdate = lastUpdate as UpdateDateFormat
     return result
   }
 
-  async function updateLanguage(id: TranslationId, forceUpdate = false) {
-    if (!forceUpdate && strings.id === id)
+  function defaultLanguage() {
+    return pickDefaultTranslation(languages, [...navigator.languages, "en"]) as TranslationId
+  }
+
+  async function selectLanguage(requestedId: TranslationId) {
+    const id = Object.hasOwn(languages, requestedId) ? requestedId : defaultLanguage()
+    settings.language = id
+    if (id === targetId)
       return
+    targetId = id
     selection.ready = false
-    deepAssign(strings, await loadTranslation(id), {clean: true})
-    stringsStorage.set(strings)
-    selection.ready = true
-  }
-
-  function setDefaultLanguage() {
-    if (settings.language === "default")
-      settings.language = pickDefaultTranslation(languages, [...navigator.languages, "en"]) as string
-  }
-
-  async function fetchAvailableLanguages() {
-    deepAssign(languages, await fetchJson(`${assetsPath}languages.json?v=${appVersion}`))
-    languagesStorage.set(languages)
-    setDefaultLanguage()
-    let id: TranslationId | undefined = settings.language
-    let lastUpdate = ""
-    while (id) {
-      const desc: LangDesc = languages[id]
-      lastUpdate = desc["last-update"] > lastUpdate ? desc["last-update"] : lastUpdate
-      id = desc.fallback
+    try {
+      const loaded = await loadTranslation(id)
+      if (targetId !== id)
+        return
+      deepAssign(strings, loaded, {clean: true})
+      stringsStorage.set(strings)
+    } catch (error) {
+      if (targetId !== id)
+        return
+      console.error(`unable to load translation "${id}"`, error)
+      targetId = strings.id
+      if (strings.id)
+        settings.language = strings.id
     }
-    if (strings.id !== settings.language || !strings.lastUpdate || lastUpdate > strings.lastUpdate)
-      await updateLanguage(settings.language, true)
+    selection.ready = true
   }
 
   function isLanguageLoaded() {
@@ -113,12 +130,8 @@ export function createTranslationStore<T extends Record<string, any>>(
   }
 
   function subscribeStrings(onStoreChange: VoidFunction) {
-    observe(strings, "id", onStoreChange)
     observe(selection, "ready", onStoreChange)
-    return () => {
-      unobserve(strings, "id", onStoreChange)
-      unobserve(selection, "ready", onStoreChange)
-    }
+    return () => unobserve(selection, "ready", onStoreChange)
   }
 
   function StringsProvider({children}: PropsWithChildren) {
@@ -140,17 +153,24 @@ export function createTranslationStore<T extends Record<string, any>>(
   }
 
   async function initTranslations() {
-    await fetchAvailableLanguages()
-
-    if (!strings.id || strings.id !== settings.language)
-      await updateLanguage(settings.language)
-    else
+    try {
+      const fetched = await fetchJson(`${assetsPath}languages.json?v=${appVersion}`, {cache: "no-cache"})
+      for (const id of Object.keys(languages))
+        delete languages[id]
+      Object.assign(languages, fetched)
+      languagesStorage.set(languages)
+    } catch (error) {
+      console.error("unable to fetch the list of translations", error)
+    }
+    if (Object.keys(languages).length === 0) {
       selection.ready = true
-
-    observe(settings, "language", lang => updateLanguage(lang))
+      return
+    }
+    observe(settings, "language", selectLanguage)
+    await selectLanguage(settings.language)
   }
 
-  window.addEventListener("load", initTranslations)
+  initTranslations()
 
   return {
     languages,
