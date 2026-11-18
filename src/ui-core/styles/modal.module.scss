@@ -2,35 +2,57 @@
 	position: fixed; 
 	inset: 0;
 	isolation: isolate;
+	margin: auto;
 
 	display: flex;
 	flex-direction: column;
 	color: inherit;
-	background-color: var(--surface-dark);
-	border-radius: 3px;
-	border: 1px solid var(--surface-light);
+	background-color: var(--modal-bg, var(--surface-dark));
+	background-image: linear-gradient(180deg, var(--modal-glow, color-mix(in srgb, var(--surface-light) 16%, transparent)), transparent 45%);
+	border: 1px solid var(--modal-border, color-mix(in srgb, var(--surface-light) 45%, transparent));
+	border-radius: 8px;
+	corner-shape: scoop;
+	box-shadow: 0 20px 60px rgb(0 0 0 / 55%), 0 0 0 1px rgb(0 0 0 / 35%);
 	max-width: 880px;
 	width: calc(100% - 1em);
-	min-height: min(100%, 54vh);
+	height: fit-content;
 	max-height: 80vh;
-	padding: 1.8em 2em;
+	padding: 2em 2.4em 1.6em;
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	outline: none;
 	opacity: 0;
 
+	@supports not (corner-shape: scoop) {
+		border-radius: 4px;
+	}
+	@media (pointer: coarse) {
+		corner-shape: unset;
+		border-radius: 4px;
+	}
+
+	&::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 12%;
+		right: 12%;
+		height: 1px;
+		background-image: var(--choice-line);
+		pointer-events: none;
+	}
+
 	&::backdrop {
-		background: transparent;
 		backdrop-filter: blur(1px);
 	}
 
 	&[open] {
 		opacity: 1;
 		pointer-events: auto;
-		animation: fadeIn 0.2s ease forwards;
+		animation: popIn 0.22s ease-out forwards;
 
 		&::backdrop {
-			animation: fadeIn 0.2s ease forwards;
+			animation: fadeIn 0.22s ease forwards;
 		}
 	}
 
@@ -65,26 +87,20 @@
 	width: calc(min(600px, 100%) - 1rem);
 	display: grid;
 	grid-template-rows: 1fr auto;
-	height: fit-content;
-	min-height: unset;
 	text-align: center;
 	text-wrap: balance;
 	user-select: none;
-	box-shadow: 0 0 1em hsl(0deg 0% 0% / 80%);
-	margin: auto;
 	font-size: 1.1rem;
 
 	color: #ffffffe8;
-	background-color: rgb(1 14 36);
-	background-color: color-mix(in srgb, rgb(1 14 36), var(--prompt-color) 25%);
-	border: 1px solid var(--prompt-color);
+	background-color: color-mix(in srgb, var(--modal-bg, var(--surface-dark)), var(--prompt-color) 12%);
+	background-image: linear-gradient(180deg, color-mix(in srgb, var(--prompt-color) 30%, transparent), transparent 60%);
+	border-color: color-mix(in srgb, var(--prompt-color) 75%, transparent);
 
-	&::backdrop {
-		backdrop-filter: unset;
-	}
-
-	&[open] {
-		animation: popIn 0.2s ease forwards;
+	&::before {
+		left: 0;
+		right: 0;
+		background-image: linear-gradient(90deg, transparent, var(--prompt-color), transparent);
 	}
 
 	&:focus-visible, .keyboard-navigating &:focus {
@@ -121,6 +137,6 @@
 }
 
 @keyframes popIn {
-	from { opacity: 0; transform: translateY(-10px); }
-	to { opacity: 1; transform: translateY(0); }
+	from { opacity: 0; transform: translateY(8px) scale(.98); }
+	to { opacity: 1; transform: none; }
 }

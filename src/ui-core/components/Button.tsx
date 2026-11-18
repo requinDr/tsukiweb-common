@@ -15,7 +15,7 @@ type SoundProps =
 	| { audio?: never; hoverSound?: never; clickSound?: never }
 
 type Props = SoundProps & NavigationProps &{
-	variant?: "default" | "select" | "elevation" | "underline-left" | null
+	variant?: "default" | "select" | "underline-left" | null
 	active?: boolean
 	className?: string
 } & (
@@ -31,7 +31,6 @@ const Button = ({children, className, variant = "default",
 	const classes = classNames(styles.btn, "btn", {
 		[styles.btnVariantDefault]: variant === "default",
 		[styles.btnVariantSelect]: variant === "select",
-		[styles.btnVariantElevation]: variant === "elevation",
 		[styles.btnVariantUnderlineLeft]: variant === "underline-left",
 		[styles.active]: active,
 	}, className)
