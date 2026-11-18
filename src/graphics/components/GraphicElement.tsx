@@ -2,9 +2,16 @@ import { DivProps } from "../../types";
 import { bb } from "../../utils/Bbcode";
 import { splitFirst } from "../../utils/utils";
 import classNames from "classnames";
-import { ReactNode, useRef } from "react";
-import { SpritePos } from "../types";
+import { AnimationEventHandler, ReactNode, useRef } from "react";
+import { SpritePos, TransitionEffect, TransitionPhase } from "../types";
 import AmbientBackdrop from "./AmbientBackdrop";
+
+export type EffectProps = {
+	'data-effect': TransitionEffect['kind']
+	'data-dir'?: TransitionEffect['dir']
+	'data-phase': TransitionPhase
+	onAnimationEnd: AnimationEventHandler
+}
 
 type Props = {
 	pos: SpritePos
@@ -13,10 +20,11 @@ type Props = {
 	blur?: boolean | ((img: string) => boolean)
 	framed?: boolean | ((img: string) => boolean)
 	lazy?: boolean
+	effectProps?: EffectProps
 	props?: DivProps
 }
 
-const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, framed: rawFramed = false, lazy = false, props: extraProps = {} }: Props) => {
+const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, framed: rawFramed = false, lazy = false, effectProps, props: extraProps = {} }: Props) => {
 	const imgRef = useRef<HTMLImageElement>(null)
 	image = image || (pos == "bg" ? "#000000" : "#00000000")
 	if (image.startsWith('"')) image = image.replaceAll('"', '')
@@ -28,6 +36,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, framed: raw
 	let imageElement: ReactNode
 	let overlay: ReactNode
 	let framed = false
+	const effectOnImg = pos != "bg" && !isColor
 
 	if (isColor) {
 		const { style, ...attrs } = extraProps
@@ -48,6 +57,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, framed: raw
 				alt={alt}
 				draggable={false}
 				className={classNames({ blur })}
+				{...(effectOnImg ? effectProps : {})}
 				{...(lazy ? { loading: "lazy", decoding: "async" } : {})}
 			/>
 			{framed && <AmbientBackdrop source={imgRef} image={image} />}
@@ -70,6 +80,7 @@ const GraphicElement = ({ pos, image, getUrl, blur: rawBlur = false, framed: raw
 	return (
 		<div
 			{...extraProps}
+			{...(effectOnImg ? {} : effectProps)}
 			className={classNames(pos, { framed }, extraProps.className)}
 		>
 			{imageElement}

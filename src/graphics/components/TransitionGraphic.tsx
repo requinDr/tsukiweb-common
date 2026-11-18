@@ -1,6 +1,6 @@
-import { CSSProperties, memo, useMemo } from "react"
-import GraphicElement from "./GraphicElement";
-import { SpritePos } from "../types"
+import { AnimationEvent, CSSProperties, memo, useMemo } from "react"
+import GraphicElement, { EffectProps } from "./GraphicElement";
+import { SpritePos, TransitionEffect, TransitionPhase } from "../types"
 import { ResolutionId } from "../../translation/lang";
 import { isImage } from "../../utils/images";
 import { useGameConfig } from "../../context";
@@ -11,101 +11,81 @@ type Props = {
 	pos: SpritePos
 	image: string
 	resolution?: ResolutionId
-} & ({
-	fadeIn?: undefined
-	fadeOut?: undefined
-	fadeTime?: 0
-	toImg?: undefined
-	onAnimationEnd?: VoidFunction
-} | (
-	{ fadeTime: number, onAnimationEnd?: VoidFunction } & (
-		{ fadeIn: string, fadeOut?: undefined, toImg?: undefined } |
-		{ fadeOut: string, fadeIn?: undefined, toImg: string }
-	)
-)) & DivProps
+	fadeTime?: number
+	effect?: TransitionEffect
+	phase?: TransitionPhase
+	toImg?: string
+	onFinish?: VoidFunction
+} & DivProps
 
 const TransitionGraphic = ({
 	pos,
 	image,
 	resolution="src",
 	fadeTime=0,
-	fadeIn=undefined,
-	fadeOut=undefined,
-	toImg=undefined,
-	onAnimationEnd=undefined,
+	effect,
+	phase,
+	toImg,
+	onFinish,
 	style,
 	...rest}: Props)=> {
 	const { imageSrc, cg } = useGameConfig()
 	const getUrl = (img: string) => imageSrc(img, resolution)
 	const framed = (pos === 'bg' && cg.shouldFrame) || false
+	const animated = fadeTime > 0 && effect != undefined && phase != undefined
 
-//____________________________________image_____________________________________
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	const imageProps = useMemo(()=> {
-		if (!image) return pos === 'bg' ? {} : null
-
-		// static image
-		if (fadeTime === 0) return onAnimationEnd ? { onAnimationEnd } : {}
-
-		// (dis)appearing image
-		const fadeAttr =
-			fadeIn ? { 'fade-in': fadeIn } :
-			fadeOut ? { 'fade-out': fadeOut } :
-			{}
+	const effectProps = useMemo<EffectProps|undefined>(()=> {
+		if (!animated) return undefined
 		return {
-			...fadeAttr,
-			style: {
-				'--transition-time': `${fadeTime}ms`
-			},
-			onAnimationEnd
-		}
-	}, [image, pos, fadeTime, fadeIn, fadeOut, onAnimationEnd])
-
-
-//________________________________crossfade mask________________________________
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	// add an opaque background to the crossfade-disappearing image to prevent
-	// the background from being visible by transparency
-	const maskProps = useMemo(()=> {
-		if (pos !== 'bg' && fadeTime > 0 && fadeOut === 'crossfade'
-				&& image && toImg && isImage(image) && isImage(toImg)) {
-			return {
-				'for-mask': "",
-				style: {
-					'--from-image': `url(${imageSrc(image)})`,
-					'--to-image': `url(${imageSrc(toImg)})`
-				} as CSSProperties
+			'data-effect': effect.kind,
+			'data-dir': effect.dir,
+			'data-phase': phase,
+			onAnimationEnd: (e: AnimationEvent)=> {
+				e.stopPropagation()
+				onFinish?.()
 			}
 		}
+	}, [animated, effect, phase, onFinish])
+
+	// add an opaque background to the crossfade-disappearing image to prevent
+	// the background from being visible by transparency
+	const crossfadeMask = animated && pos !== 'bg' && effect.kind == 'crossfade'
+		&& phase == 'out' && toImg && isImage(image) && isImage(toImg)
+
+	if (!image && pos !== 'bg')
 		return null
-	}, [pos, fadeTime, fadeOut, image, toImg, imageSrc])
 
 	return (
 		<>
-			{maskProps &&
+			{crossfadeMask &&
 				<GraphicElement
 					pos={pos}
 					image={image}
 					getUrl={getUrl}
 					blur={cg.shouldBlur}
-					props={maskProps}
-				/>
-			}
-
-			{imageProps &&
-				<GraphicElement
-					pos={pos}
-					image={image}
-					getUrl={getUrl}
-					blur={cg.shouldBlur}
-					framed={framed}
 					props={{
-						...rest,
-						...imageProps,
-						style: { ...(imageProps as {style?: CSSProperties}).style, ...style }
-					}}
+						'data-crossfade-mask': "",
+						style: {
+							'--from-image': `url(${imageSrc(image)})`,
+							'--to-image': `url(${imageSrc(toImg)})`
+						} as CSSProperties
+					} as DivProps}
 				/>
 			}
+			<GraphicElement
+				pos={pos}
+				image={image}
+				getUrl={getUrl}
+				blur={cg.shouldBlur}
+				framed={framed}
+				effectProps={effectProps}
+				props={{
+					...rest,
+					style: animated
+						? { '--transition-time': `${fadeTime}ms`, ...style } as CSSProperties
+						: style
+				}}
+			/>
 		</>
 	)
 }

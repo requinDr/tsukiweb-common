@@ -16,6 +16,12 @@ export type GraphicsTransition = {
 	onFinish: VoidFunction
 }
 
+export type TransitionEffect = {
+	kind: 'crossfade' | 'fade' | 'scroll' | 'shutter' | 'circle' | 'explosion'
+	dir?: 'l' | 'r' | 't' | 'b'
+}
+export type TransitionPhase = 'in' | 'out'
+
 export type Quake = {
 	duration: number
 	x: number
@@ -25,10 +31,10 @@ export type Quake = {
 
 export type Rocket = {
 	layer: typeof SPRITES_POSITIONS[number]
+	image: string
 	my: number
 	magnify: number
 	time: number
-	accel: number
 	opacity: number
 	onAnimationEnd: VoidFunction
 }

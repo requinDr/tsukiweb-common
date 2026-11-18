@@ -38,7 +38,6 @@ export function buildRocketProps(rocket: Rocket): RocketRenderProps {
 			'--rocket-my': `${rocket.my}px`,
 			'--rocket-magnify': rocket.magnify,
 			'--rocket-duration': `${rocket.time}ms`,
-			'--rocket-accel': rocket.accel,
 			'--rocket-opacity': rocket.opacity / 255,
 		} as CSSProperties,
 		onAnimationEnd: rocket.onAnimationEnd,

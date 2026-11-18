@@ -18,15 +18,16 @@ const ForegroundGraphics = ({image, transition, bgAlign}: Props) => {
 	} = resolveGraphicTransition('bg', image, transition, false)
 
 	if (prevImg === undefined) return null
-	if (currImg == prevImg && transition?.to.bgAlign && transition.effect.endsWith("scroll")) return null; // scroll animation only affects background
+	if (currImg == prevImg && transition?.to.bgAlign && effect.kind == 'scroll') return null; // scroll animation only affects background
 
 	return (
 		<TransitionGraphic key={`${prevImg}-${currImg}`}
 			pos='bg'
 			image={currImg}
 			fadeTime={fadeTime}
-			fadeIn={effect}
-			onAnimationEnd={onAnimationEnd}
+			effect={effect}
+			phase='in'
+			onFinish={onAnimationEnd}
 			bg-align={transition?.to.bgAlign ?? bgAlign}
 			{...(Object.hasOwn(transition?.to ?? {}, 'c')? {} : {className:'bg-transition'})} // transition.to.{l,c,r} set to "" for standard bg command.
 		/>

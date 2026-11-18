@@ -21,38 +21,42 @@ const SpriteGraphics = ({pos, image, transition, rocket, topLayer = false}: Spri
 	} = resolveGraphicTransition(pos, image, transition)
 	const rp = rocket ? buildRocketProps(rocket) : undefined
 	const topLayerClass = topLayer ? "top-layer" : undefined
+	const layerProps = (img: string) => rp && rocket?.image == img ? {
+		className: classNames(topLayerClass, rp.className),
+		style: rp.style,
+		onAnimationEnd: rp.onAnimationEnd,
+	} : { className: topLayerClass }
 
 	if (prevImg == undefined) // not loaded or no change
-		return (
+		return <>
 			<TransitionGraphic
 				key={currImg}
 				pos={pos}
 				image={currImg}
-				className={classNames(topLayerClass, rp?.className)}
-				style={rp?.style}
-				onAnimationEnd={rp?.onAnimationEnd}
+				{...layerProps(currImg)}
 			/>
-		)
+		</>
 	return <>
 		<TransitionGraphic
 			key={prevImg}
 			pos={pos}
 			image={prevImg}
-			fadeOut={effect}
+			effect={effect}
+			phase='out'
 			fadeTime={fadeTime}
 			toImg={currImg}
-			onAnimationEnd={currImg ? undefined :onAnimationEnd}
-			className={topLayerClass}
+			onFinish={currImg ? undefined : onAnimationEnd}
+			{...layerProps(prevImg)}
 		/>
 		<TransitionGraphic
 			key={currImg}
 			pos={pos}
 			image={currImg}
-			fadeIn={effect}
+			effect={effect}
+			phase='in'
 			fadeTime={fadeTime}
-			onAnimationEnd={rp?.onAnimationEnd ?? onAnimationEnd}
-			className={classNames(topLayerClass, rp?.className)}
-			style={rp?.style}
+			onFinish={onAnimationEnd}
+			{...layerProps(currImg)}
 		/>
 	</>
 }

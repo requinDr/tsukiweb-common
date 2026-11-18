@@ -1,206 +1,103 @@
-// background
-@keyframes fadeOut {
-	from { opacity: 1; }
-	to { opacity: 0; }
-}
-@keyframes fadeIn {
-	from { opacity: 0; }
-	to { opacity: 1; }
-}
+@use "sass:math";
 
-@mixin scroll($prefix, $from, $to) {
-	animation-name: #{$prefix}scroll;
+$shutter-size: 25px;
 
-	@keyframes #{$prefix}scroll {
-		from {
-			-webkit-mask-position: $from;
-			mask-position: $from;
-		}
-		to {
-			-webkit-mask-position: $to;
-			mask-position: $to;
-		}
-	}
+@property --progress {
+	syntax: "<number>";
+	inherits: false;
+	initial-value: 0;
 }
 
-$size: 25px;
-@mixin shutter($prefix, $from, $to) {
-	animation-name: #{$prefix}shutter;
-	
-	@keyframes #{$prefix}shutter {
-		from {
-			-webkit-mask-position: 0 0, $from;
-			mask-position: 0 0, $from;
-		}
-		to {
-			-webkit-mask-position: 0 0, $to;
-			mask-position: 0 0, $to;
-		}
-	}
-}
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes progress { to { --progress: 1; } }
 
-*[fade-in], *[fade-out] {
-	animation-duration: var(--transition-time); // var --transition-time changed in inline css
-	animation-timing-function: linear;
-	animation-iteration-count: 1;
-	animation-fill-mode: forwards;
+[data-effect] {
+	animation: var(--transition-time) linear forwards;
+	--step: calc(var(--progress) + var(--phase-offset));
 }
+[data-phase="in"]  { --phase-offset: -1; }
+[data-phase="out"] { --phase-offset: 0; }
 
-*[fade-out="crossfade"] { animation-name: fadeOut }
-*[fade-in ="crossfade"] { animation-name: fadeIn  }
-img[for-mask], *[for-mask] img {
-	-webkit-mask-image: var(--from-image),var(--to-image);
-	mask-image: var(--from-image),var(--to-image);
-	-webkit-mask-size: cover;
+[data-dir="l"] { --dx: 1;  --dy: 0;  --axis: to right; }
+[data-dir="r"] { --dx: -1; --dy: 0;  --axis: to right; }
+[data-dir="t"] { --dx: 0;  --dy: 1;  --axis: to bottom; }
+[data-dir="b"] { --dx: 0;  --dy: -1; --axis: to bottom; }
+
+//_________________________________crossfade____________________________________
+
+[data-effect="crossfade"][data-phase="in"],
+[data-effect="fade"][data-phase="in"]       { animation-name: fade-in; }
+[data-effect="crossfade"][data-phase="out"] { animation-name: fade-out; }
+
+[data-crossfade-mask] img {
+	mask-image: var(--from-image), var(--to-image);
 	mask-size: cover;
-	-webkit-mask-composite: destination-in;
 	mask-composite: intersect;
 }
 
-*[fade-out="lmaskcross"], *[fade-in="lmaskcross"],
-*[fade-out="rmaskcross"], *[fade-in="rmaskcross"],
-*[fade-out="lscroll"], *[fade-in="lscroll"],
-*[fade-out="rscroll"], *[fade-in="rscroll"],
-*[fade-out="tscroll"], *[fade-in="tscroll"],
-*[fade-out="bscroll"], *[fade-in="bscroll"] {
-	$linear-gradient:
-			linear-gradient(to right, #fff 20%, transparent 40%, transparent 60%, #fff 80%),
-			linear-gradient(to bottom, #fff 20%, transparent 40%, transparent 60%, #fff 80%);
-	-webkit-mask-image: $linear-gradient;
-	mask-image: $linear-gradient;
-	-webkit-mask-size: 500% 500%;
+//___________________________________scroll_____________________________________
+
+[data-effect="scroll"] {
+	animation-name: progress;
+	mask-image: linear-gradient(var(--axis),
+		transparent 20%, #fff 40%, #fff 60%, transparent 80%);
 	mask-size: 500% 500%;
+	mask-position:
+		calc(50% + 50% * var(--dx) * var(--step))
+		calc(50% + 50% * var(--dy) * var(--step));
 }
 
-*[fade-out="lmaskcross"],
-*[fade-out="lscroll"] { @include scroll("lo", left, center) }
-*[fade-in="lmaskcross"],
-*[fade-in="lscroll"] { @include scroll("li", center, right) }
+//__________________________________shutter_____________________________________
 
-*[fade-out="rmaskcross"],
-*[fade-out="rscroll"] { @include scroll("ro", right, center) }
-*[fade-in="rmaskcross"],
-*[fade-in="rscroll"] { @include scroll("ri", center, left) }
-
-*[fade-out="tscroll"] { @include scroll("to", top, center) }
-*[fade-in="tscroll"] { @include scroll("ti", center, bottom) }
-
-*[fade-out="bscroll"] { @include scroll("bo", bottom, center) }
-*[fade-in="bscroll"] { @include scroll("bi", center, top) }
-
-*[fade-out="lshutter"], *[fade-in="lshutter"],
-*[fade-out="rshutter"], *[fade-in="rshutter"],
-*[fade-out="lcartain"], *[fade-in="lcartain"],
-*[fade-out="rcartain"], *[fade-in="rcartain"] {
-	$linear-gradients:
-			linear-gradient(to right, transparent 50%, #fff 50%),
-			linear-gradient(to right, transparent 50%, #fff 50%);
-	-webkit-mask-image: $linear-gradients;
-	mask-image: $linear-gradients;
-	-webkit-mask-size: $size*2 100%, $size*2 100%;
-	mask-size: $size*2 100%, $size*2 100%;
-	-webkit-mask-repeat: repeat;
-	mask-repeat: repeat;
-	-webkit-mask-composite: xor;
+[data-effect="shutter"] {
+	$stripes: linear-gradient(var(--axis), transparent 50%, #fff 50%);
+	animation-name: progress;
+	mask-image: $stripes, $stripes;
+	mask-size: $shutter-size * 2 $shutter-size * 2;
 	mask-composite: exclude;
+	mask-position: 0 0,
+		calc($shutter-size * (1 + var(--dx) * var(--step)))
+		calc($shutter-size * (1 + var(--dy) * var(--step)));
 }
 
-*[fade-out="tshutter"], *[fade-in="tshutter"],
-*[fade-out="bshutter"], *[fade-in="bshutter"],
-*[fade-out="tcartain"], *[fade-in="tcartain"],
-*[fade-out="bcartain"], *[fade-in="bcartain"] {
-	$linear-gradients:
-			linear-gradient(to bottom, transparent 50%, #fff 50%),
-			linear-gradient(to bottom, transparent 50%, #fff 50%);
-	-webkit-mask-image: $linear-gradients;
-	mask-image: $linear-gradients;
-	-webkit-mask-size: 100% $size*2, 100% $size*2;
-	mask-size: 100% $size*2, 100% $size*2;
-	-webkit-mask-repeat: repeat;
-	mask-repeat: repeat;
-	-webkit-mask-composite: xor;
-	mask-composite: exclude;
+//______________________________circle, explosion_______________________________
+
+$circle-radius: math.div(6 * 0.25, math.sqrt(2)) * 100cqw;
+
+[data-effect="circle"]    { --origin: 50% 100%; }
+[data-effect="explosion"] { --origin: 20% 50%; }
+
+:is([data-effect="circle"], [data-effect="explosion"])[data-phase="in"] {
+	animation-name: progress;
+	mask-image: radial-gradient(circle at var(--origin),
+		#fff calc(var(--progress) * $circle-radius),
+		transparent calc(var(--progress) * $circle-radius * 2));
+	opacity: min(1, var(--progress) * 2);
 }
 
-*[fade-out="lshutter"],
-*[fade-out="lcartain"] { @include shutter('lo', ($size 0), ($size * 2 0)); }
+//____________________________________quake_____________________________________
 
-*[fade-in="lshutter"],
-*[fade-in="lcartain"] { @include shutter('li', (0 0), ($size 0)); }
+@keyframes quake {
+	0% { transform: translate(0, 0); }
+	25% { transform: translate(calc(-1 * var(--quake-x)), calc(-1 * var(--quake-y))); }
+	75% { transform: translate(var(--quake-x), var(--quake-y)); }
+	100% { transform: translate(0, 0); }
+}
 
-*[fade-out="rshutter"],
-*[fade-out="rcartain"] { @include shutter('ro', ($size 0), (0 0)); }
+.quake {
+	animation: quake var(--quake-time) linear forwards;
+}
 
-*[fade-in="rshutter"],
-*[fade-in="rcartain"] { @include shutter('ri', ($size*2 0), ($size 0)); }
+//____________________________________rocket____________________________________
 
-
-*[fade-out="tshutter"],
-*[fade-out="tcartain"] { @include shutter('to', (0 $size), (0 $size * 2)); }
-
-*[fade-in="tshutter"],
-*[fade-in="tcartain"] { @include shutter('ti', (0 0), (0 $size)); }
-
-
-*[fade-out="bshutter"],
-*[fade-out="bcartain"] { @include shutter('bo', (0 $size), (0 0)); }
-
-*[fade-in="bshutter"],
-*[fade-in="bcartain"] { @include shutter('bi', (0 $size*2), (0 $size)); }
-
-
-@mixin circle($originx, $originy) {
-	animation-name: circle-in;
-	-webkit-mask-image: radial-gradient(circle at center, #fff 25%, transparent 50%);
-	mask-image: radial-gradient(circle at center, #fff 25%, transparent 50%);
-	mask-repeat: no-repeat;
-	width: 100% !important;
-	aspect-ratio: 1 / 1;
-	height: unset !important;
-	margin-block: auto;
-	right: unset !important;
-	left: $originx !important;
-	top: $originy !important;
-	transform-origin: center;
-
-	@keyframes circle-in {
-		0% {
-			transform: scale(0);
-			opacity: 0;
-		}
-		50% {
-			opacity: 1;
-		}
-		100% {
-			transform: scale(6);
-			opacity: 1;
-		}
+@keyframes rocket {
+	to {
+		transform: translateY(var(--rocket-my)) scale(var(--rocket-magnify));
+		opacity: var(--rocket-opacity);
 	}
 }
 
-*[fade-in="lexpl"] {  
-	@include circle(-30%, 0%);
-}
-
-*[fade-in="lcircle"] {
-	@include circle(0%, 100%)
-}
-*[fade-in="ccircle"] {
-	animation-name: fadeIn
-}
-
-
-*.quake {
-	animation-duration: var(--quake-time);
-	animation-timing-function: linear;
-	animation-iteration-count: 1;
-	animation-fill-mode: forwards;
-	animation-name: quake;
-	
-	@keyframes quake {
-		0% { transform: translate(0, 0); }
-		25% { transform: translate(calc(-1 * var(--quake-x)), calc(-1 * var(--quake-y))); }
-		75% { transform: translate(var(--quake-x), var(--quake-y)); }
-		100% { transform: translate(0, 0); }
-	}
+.rocket {
+	animation: rocket var(--rocket-duration) ease-in-out forwards;
 }
