@@ -46,10 +46,11 @@ export function sortTranslations<T extends LanguagesType>(translations: T, local
 	const entries = Object.entries(translations)
 	const sorted = []
 	for (const locale of locales) {
-		const language = locale.split('-')[0] + '-'
 		let i = entries.findIndex(([, lang]) => lang.locale == locale)
-		if (i == -1)
+		if (i == -1) {
+			const language = locale.split('-')[0] + '-'
 			i = entries.findIndex(([, lang]) => lang.locale.startsWith(language))
+		}
 		if (i != -1)
 			sorted.push(...entries.splice(i, 1))
 	}
