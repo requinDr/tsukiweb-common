@@ -20,7 +20,7 @@
 	filter: drop-shadow(0 0 6px rgb(0 0 0 / 60%));
 	transition: color .2s, filter .2s, translate .2s;
 
-	&:hover, &:focus-visible, :global(.keyboard-navigating) &:focus {
+	:global(.keyboard-navigating) &:focus {
 		color: var(--choice-text-active, var(--text-color));
 		filter: drop-shadow(var(--theme-glow));
 	}
@@ -98,6 +98,15 @@
 		background: var(--theme-cyan);
 		border-color: var(--theme-cyan);
 		box-shadow: var(--theme-glow);
+	}
+	&:disabled {
+		cursor: default;
+
+		&::before {
+			width: .25rem;
+			height: .25rem;
+			opacity: .3;
+		}
 	}
 }
 

@@ -8,6 +8,7 @@ export type SwitcherPage = {
 	value: string
 	label: string
 	attention?: boolean
+	locked?: boolean
 }
 
 type Props = {
@@ -21,8 +22,13 @@ type Props = {
 const PageSwitcher = ({ pages, selected, onSelect, audio, className }: Props) => {
 	const index = Math.max(0, pages.findIndex(({ value }) => value === selected))
 	const page = pages[index]
-	const go = (delta: number) =>
-		onSelect(pages[(index + delta + pages.length) % pages.length].value)
+	const go = (delta: number) => {
+		for (let i = 1; i < pages.length; i++) {
+			const target = pages[(index + delta * i + pages.length * i) % pages.length]
+			if (!target.locked)
+				return onSelect(target.value)
+		}
+	}
 	const hasAttention = (from: number, to: number) =>
 		pages.slice(from, to).some(({ attention }) => attention)
 
@@ -38,7 +44,7 @@ const PageSwitcher = ({ pages, selected, onSelect, audio, className }: Props) =>
 					{page?.label}
 				</span>
 				<div className={styles.pips}>
-					{pages.map(({ value, label, attention }) =>
+					{pages.map(({ value, label, attention, locked }) =>
 						<button key={value} type="button"
 							className={classNames(styles.pip, {
 								[styles.active]: value === selected,
@@ -46,6 +52,7 @@ const PageSwitcher = ({ pages, selected, onSelect, audio, className }: Props) =>
 							})}
 							aria-label={label}
 							aria-current={value === selected}
+							disabled={locked}
 							onClick={() => onSelect(value)}
 						/>
 					)}
@@ -64,6 +71,7 @@ export default PageSwitcher
 type ArrowProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 	audio?: AudioManager
 	attention?: boolean
+	locked?: boolean
 }
 
 const SwitchArrow = ({ audio, attention, children, ...props }: ArrowProps) => {
