@@ -1,6 +1,6 @@
 import { Link } from "wouter"
-import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useReducer, useRef, JSX, useCallback } from "react"
-import { innerText, TSForceType } from "./utils"
+import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useLayoutEffect, useMemo, useRef, JSX, useCallback } from "react"
+import { innerText } from "./utils"
 
 
 type TagTranslator<T=string|undefined> = (tag: string, content: Array<string|JSX.Element>, arg: T, props?: Record<string, any>)=> JSX.Element
@@ -262,142 +262,82 @@ export const Bbcode = memo(({text, dict = defaultBBcodeDict, rootPrefix: prefix,
 //________________________________<BBTypeWriter>________________________________
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-function hideTree(root: Readonly<BbNode>, indices: number[], hideTag: string|undefined, hideArg: string) : BbNode|undefined {
-	let i = indices[0]
-	if (i == root.content.length)
-		return root
-	if (i == 0 && indices.length == 1)
-		return hideTag ? {tag: hideTag, arg: hideArg, content: [root]} : undefined
-	const content = root.content.slice(0, i)
-	let cutIdx = i
-	if (indices.length > 1) {
-		const current = root.content[i]
-		if (current.constructor == String) {
-			i = indices[1]
-			if (i > 0)
-				content.push(current.substring(0,i))
-			if (hideTag && i < current.length) {
-				const hiddenTxt = current.substring(i)
-				content.push({tag: hideTag, arg: hideArg, content: [hiddenTxt]})
-			}
-		} else {
-			const partial = hideTree(current as BbNode, indices.slice(1), hideTag, hideArg)
-			if (partial)
-				content.push(partial)
-		}
-		cutIdx++
-	}
-	if (hideTag && cutIdx < root.content.length) {
-		content.push({tag: hideTag, arg: hideArg, content: root.content.slice(cutIdx)})
-	}
-	return {...root, content}
+const UNIT_CLASS = "tw-u"
+const VISIBLE_CLASS = "tw-v"
+const UNIT_TAGS = new Set(["line", "copy", "ruby"])
+const NO_UNIT_TAGS = new Set(["br", "wbr"])
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" })
+
+type UnitRef = (el: HTMLElement | null)=> VoidFunction | undefined
+
+type TypewriterContext = {
+	dict: typeof defaultBBcodeDict
+	unitRef: (index: number)=> UnitRef
+	count: number
 }
 
-//....... tree-walking functions .......
-
-function moveCursors(path: (BbNode|string)[], indices: number[], level: number) {
-	const node = path[level]
-	const index = indices[level]
-	const content = (node.constructor == String) ? node : (node as BbNode).content
-	if (index >= content.length) {
-		return true
-	} else if (content.constructor == String) {
-		indices[level]++
-	} else {
-		TSForceType<(string|BbNode)[]>(content)
-		if (level == path.length-1) {
-			path.push(content[index])
-			indices.push(0)
-		}
-		if (moveCursors(path, indices, level+1)) {
-			indices[level]++
-			path.splice(level+1)
-			indices.splice(level+1)
-		}
-	}
-	return false
+function splitGraphemes(text: string, ctx: TypewriterContext) {
+	return Array.from(graphemeSegmenter.segment(text), ({segment}, i)=>
+		<span className={UNIT_CLASS} key={i} ref={ctx.unitRef(ctx.count++)}>{segment}</span>
+	)
 }
 
-function atEnd(path: (BbNode|string)[], cursors: number[]) {
-	const lastNode = path[path.length-1]
-	if (lastNode.constructor == String) {
-		if (cursors[cursors.length-1] < lastNode.length)
-			return false
-	} else if (cursors[cursors.length-1] < (lastNode as BbNode).content.length)
-		return false
-	for (let i=0; i < path.length; i++) {
-		const node = path[i]
-		const content = (node.constructor == String) ? node : (node as BbNode).content
-		const end = (i < path.length) ? content.length-1 : content.length
-		if (cursors[i] < end)
-			return false
-	}
-	return true
+function tagToTypewriterJSX(node: BbNode, ctx: TypewriterContext,
+							props?: Record<string, any>, isRoot = false): JSX.Element {
+	const {tag, arg, content} = node
+	const transform = ctx.dict[tag]
+	if (!transform)
+		throw Error(`Unknown bbcode tag ${tag}`)
+	const isUnit = !isRoot && (UNIT_TAGS.has(tag) || (content.length == 0 && !NO_UNIT_TAGS.has(tag)))
+	const unitIndex = isUnit ? ctx.count++ : -1
+	const children = content.map((n, i)=>
+		n.constructor == String ?
+			<Fragment key={i}>{splitGraphemes(n as string, ctx)}</Fragment>
+		: tagToTypewriterJSX(n as BbNode, ctx, {key: i})
+	)
+	if (!isUnit)
+		return transform(tag, children, arg, props)
+	const {key, ...attrs} = props ?? {}
+	return (
+		<span className={UNIT_CLASS} key={key} ref={ctx.unitRef(unitIndex)}>
+			{transform(tag, children, arg, attrs)}
+		</span>
+	)
 }
-
-function pathToEnd(root: BbNode): [(string|BbNode)[], number[]] {
-	const path: (string|BbNode)[] = [root]
-	const cursors: number[] = []
-	while (path[path.length-1].constructor != String && (path[path.length-1] as BbNode).content.length > 0) {
-		const node = path[path.length-1] as BbNode
-		const i = node.content.length-1
-		cursors.push(i)
-		path.push(node.content[i])
-	}
-	const lastNode = path[path.length-1]
-	if (lastNode.constructor == String)
-		cursors.push(lastNode.length)
-	else
-		cursors.push((lastNode as BbNode).content.length)
-	return [path, cursors]
-}
-
-function pathFromCursors(root: BbNode, cursors: number[]): (string|BbNode)[] {
-	const path: (string|BbNode)[] = [root]
-	let lastNode: string|BbNode = root
-	for (let i=0; i < cursors.length-1; i++) {
-		if (lastNode.constructor == String)
-			throw Error("Error while retrieving path in bbcode: Unexpected string")
-		lastNode = (lastNode as BbNode).content[cursors[i]]
-		path.push(lastNode)
-	}
-	return path
-}
-
-//............. component ..............
 
 type TWProps = Props & {
 	charDelay: number
-	startIndex?: number
 	restartOnAppend?: boolean
-	hideTag?: string
-	hideTagArg?: string
 	paused?: boolean
 	onFinish?: VoidFunction
 }
 
 // avoids revealing the whole text at once when coming back to a hidden tab
-const MAX_FRAME_DELTA = 100
+const MAX_TICK_DELTA = 100
 
+/**
+ * Display the bbcode text character by character.
+ * The whole text is rendered once with each character in a hidden span,
+ * and characters are revealed by adding a class to their span.
+ */
 export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 		rootPrefix, rootSuffix, restartOnAppend=false, paused = false,
-		hideTag=undefined, hideTagArg="", onFinish, ...props}: TWProps)=> {
-	const root = useRef<BbNode | undefined>(undefined)
+		onFinish, ...props}: TWProps)=> {
+	const units = useRef<(HTMLElement | undefined)[]>([])
+	const unitCount = useRef<number>(0)
+	const unitRefs = useRef<UnitRef[]>([])
+	const revealed = useRef<number>(0)
 	const prevText = useRef<string>("")
-	const cursors = useRef<number[]>([0])
-	const path = useRef<(BbNode | string)[]>([])
-	const [tree, updateTree] = useReducer(()=>
-		root.current ? hideTree(root.current, cursors.current, hideTag, hideTagArg) : undefined, undefined)
-
 	const finished = useRef<boolean>(true)
 	const delay = useRef<number>(charDelay)
-	const frame = useRef<number>(0)
+	const timer = useRef<number>(0)
 	const elapsed = useRef<number>(0)
 
 	const stopAnim = useCallback(()=> {
-		if (frame.current) {
-			cancelAnimationFrame(frame.current)
-			frame.current = 0
+		if (timer.current) {
+			clearTimeout(timer.current)
+			timer.current = 0
 		}
 	}, [])
 
@@ -412,81 +352,117 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 	const onEndRef = useRef(onEnd)
 	useEffect(()=> { onEndRef.current = onEnd }, [onEnd])
 
+	const unitRef = useCallback((index: number)=> {
+		unitRefs.current[index] ??= (el)=> {
+			if (!el)
+				return
+			units.current[index] = el
+			el.classList.toggle(VISIBLE_CLASS, index < revealed.current)
+			return ()=> {
+				if (units.current[index] == el)
+					units.current[index] = undefined
+			}
+		}
+		return unitRefs.current[index]
+	}, [])
+
+	const reveal = useCallback((count: number)=> {
+		const end = Math.min(revealed.current + count, unitCount.current)
+		for (let i = revealed.current; i < end; i++)
+			units.current[i]?.classList.add(VISIBLE_CLASS)
+		revealed.current = end
+		return end >= unitCount.current
+	}, [])
+
+
 	const startAnim = useCallback(()=> {
-		if (frame.current)
+		if (timer.current || document.hidden)
 			return
 		let last = performance.now()
-		const step = (now: number)=> {
-			elapsed.current += Math.min(Math.max(now - last, 0), MAX_FRAME_DELTA)
+		const tick = ()=> {
+			const now = performance.now()
+			elapsed.current += Math.min(Math.max(now - last, 0), MAX_TICK_DELTA)
 			last = now
 			const count = Math.floor(elapsed.current / delay.current)
 			if (count > 0) {
 				elapsed.current -= count * delay.current
-				for (let i = 0; i < count && !atEnd(path.current, cursors.current); i++)
-					moveCursors(path.current, cursors.current, 0)
-				updateTree()
-				if (atEnd(path.current, cursors.current))
+				if (reveal(count)) {
+					timer.current = 0
 					return onEndRef.current()
+				}
 			}
-			frame.current = requestAnimationFrame(step)
+			timer.current = window.setTimeout(tick, delay.current - elapsed.current)
 		}
-		frame.current = requestAnimationFrame(step)
-	}, [])
+		timer.current = window.setTimeout(tick, delay.current - elapsed.current)
+	}, [reveal])
 
 	useEffect(()=> stopAnim, [stopAnim])
 
+	const pausedRef = useRef(paused)
+	pausedRef.current = paused
+
 	useEffect(()=> {
-		if (paused) {
-			stopAnim()
-		} else {
-			if (path.current.length > 0
-					&& !finished.current
-					&& charDelay != 0)
+		const onVisibilityChange = ()=> {
+			if (document.hidden)
+				stopAnim()
+			else if (!pausedRef.current && !finished.current && delay.current != 0)
 				startAnim()
 		}
-	}, [charDelay, paused, startAnim, stopAnim])
+		document.addEventListener("visibilitychange", onVisibilityChange)
+		return ()=> document.removeEventListener("visibilitychange", onVisibilityChange)
+	}, [startAnim, stopAnim])
 
-	useEffect(()=> {
+	const root = useMemo(()=> {
+		const tree = createTree(text)
+		return tree.tag == "" ? tree : {tag: "", arg: "", content: [tree]}
+	}, [text])
+	const ctx: TypewriterContext = {dict, unitRef, count: 0}
+	let resultNode = tagToTypewriterJSX(root, ctx, props, true)
+	const renderedUnits = ctx.count
+	useLayoutEffect(()=> {
+		unitCount.current = renderedUnits
+		units.current.length = renderedUnits
+	})
+
+	useLayoutEffect(()=> {
 		if (text == prevText.current)
 			return
+		const appended = !restartOnAppend && prevText.current != ""
+			&& text.startsWith(prevText.current)
+		prevText.current = text
 		finished.current = false
-		root.current = createTree(text)
+		const keep = appended ? Math.min(revealed.current, unitCount.current) : 0
+		for (let i = 0; i < unitCount.current; i++)
+			units.current[i]?.classList.toggle(VISIBLE_CLASS, i < keep)
+		revealed.current = keep
 		if (charDelay == 0) {
-			[path.current, cursors.current] = pathToEnd(root.current)
+			reveal(Infinity)
 			onEnd()
-		} else {
-			if (restartOnAppend || prevText.current == "" || !text.startsWith(prevText.current)) {
-				cursors.current = [0]
-				path.current = [root.current]
-			} else {
-				path.current = pathFromCursors(root.current, cursors.current)
-			}
+		} else if (reveal(0)) {
+			onEnd()
+		} else if (!paused) {
 			startAnim()
 		}
-		prevText.current = text
-		updateTree()
-	}, [charDelay, onEnd, restartOnAppend, text, startAnim])
+	}, [text])
 
 	useEffect(()=> {
+		delay.current = charDelay
 		if (charDelay == 0) {
 			if (!finished.current) {
-				if (root.current)
-					[path.current, cursors.current] = pathToEnd(root.current)
-				updateTree()
+				reveal(Infinity)
 				onEnd()
 			}
-		} else {
-			delay.current = charDelay
+		} else if (paused) {
+			stopAnim()
+		} else if (!finished.current) {
+			startAnim()
 		}
-	}, [charDelay, onEnd])
+	}, [charDelay, paused, onEnd, reveal, startAnim, stopAnim])
 
-	let resultNode = (tree) ? tagToJSX(tree, dict, props) : undefined
 	if (rootPrefix || rootSuffix) {
 		rootPrefix = <Fragment key="prefix">{rootPrefix}</Fragment>
 		rootSuffix = <Fragment key="suffix">{rootSuffix}</Fragment>
-		resultNode = resultNode ? cloneElement(resultNode, undefined, [rootPrefix, ...resultNode.props.children, rootSuffix])
-							 : <>{rootPrefix}{rootSuffix}</>
+		resultNode = cloneElement(resultNode, undefined, [rootPrefix, ...resultNode.props.children, rootSuffix])
 	}
 	return resultNode
-	
 })

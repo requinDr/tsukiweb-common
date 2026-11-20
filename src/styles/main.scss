@@ -12,6 +12,10 @@ html, body {
 	user-select: none;
 }
 
+.tw-u:not(.tw-v) {
+	visibility: hidden;
+}
+
 img {
 	-webkit-user-drag: none;
 	user-select: none;
