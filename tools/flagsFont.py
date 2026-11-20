@@ -25,6 +25,7 @@ codes = [
 "🇨🇳",
 "🇨🇳",
 "🇰🇷",
+"🇻🇳",
 ]
 unicodes = set()
 unicodePrefixRegexp = re.compile(r'\\U0+')
@@ -36,10 +37,13 @@ for code in codes :
                 .upper()
         )
         unicodes.add(unicode)
+flagGlyphs = {"u" + "_".join(f"{ord(char):x}" for char in code) for code in codes}
 print(unicodes)
 sys.argv = [None, tempPath,
     '--no-subset-tables+=FFTM',
+    '--no-layout-closure',
     f'--unicodes={",".join(unicodes)}',
+    f'--glyphs={",".join(flagGlyphs)}',
     f'--output-file={outputFile}',
     '--flavor=woff2']
 ss()  # this is what actually does the subsetting and writes the output file

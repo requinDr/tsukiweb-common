@@ -1,4 +1,5 @@
 export { default as AdvTextFrame } from "./components/AdvTextFrame"
+export { default as ExternalLink } from "./components/ExternalLink"
 export { default as Button } from "./components/Button"
 export { EndLineIndicator, FfwIndicator } from "./components/GameUI"
 export { default as FixedFooter } from "./components/FixedFooter"
