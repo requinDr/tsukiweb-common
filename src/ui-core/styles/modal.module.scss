@@ -1,3 +1,5 @@
+@use 'mixins' as *;
+
 .modal {
 	position: fixed; 
 	inset: 0;
@@ -13,7 +15,7 @@
 	border-radius: 8px;
 	corner-shape: scoop;
 	box-shadow: 0 20px 60px rgb(0 0 0 / 55%), 0 0 0 1px rgb(0 0 0 / 35%);
-	max-width: 880px;
+	max-width: 50rem;
 	width: calc(100% - 1em);
 	height: fit-content;
 	max-height: 80vh;
@@ -63,8 +65,8 @@
 		}
 	}
 
-	@media screen and (orientation: landscape) and (max-height: 540px) {
-		max-width: 720px;
+	@include mobile-landscape {
+		max-width: 41rem;
 		max-height: 94vh;
 		width: calc(100% - 2em);
 	}
@@ -84,7 +86,7 @@
 .prompt {
 	--prompt-color: var(--btn-select-accent);
 	padding: 0;
-	width: calc(min(600px, 100%) - 1rem);
+	width: calc(min(34rem, 100%) - 1rem);
 	display: grid;
 	grid-template-rows: 1fr auto;
 	text-align: center;

@@ -75,8 +75,11 @@ class GestureHandler {
   }
 
   private onStart(event: PointerEvent|TouchEvent) {
-    if (this.start)
-      return false
+    if (this.start) {
+      if (!(event instanceof PointerEvent) && event.touches.length > 1)
+        return false
+      this.cancel()
+    }
     const info = getPointerInfo(event)!
     this.start = info
     return true

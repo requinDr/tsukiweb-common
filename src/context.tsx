@@ -7,6 +7,11 @@ export type LibConfig = {
 		shouldBlur: (img: string) => boolean
 		shouldFrame?: (img: string) => boolean
 	}
+	hints: {
+		back: string
+		confirm: string
+		navigate: string
+	}
 }
 
 const CommonConfigContext = createContext<LibConfig | null>(null)

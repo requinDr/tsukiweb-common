@@ -9,7 +9,6 @@ import "./canvas.scss"
 const MIN_SCALE = 0.45
 const MAX_SCALE = 3
 const FOCUS_MARGIN = 24
-const TOP_PADDING_REM = 4
 
 type Props<N extends FcCanvasNode> = {
 	items: FcCanvasItem<N>[]
@@ -17,6 +16,8 @@ type Props<N extends FcCanvasNode> = {
 	bounds: Rect
 	/** scene centered when the flowchart opens, e.g. the current scene */
 	center?: Rect
+	/** height in px covered at the top of the viewport, e.g. by an overlay */
+	topInset?: number
 	onSelect?: (node: N) => void
 	renderPopover: (node: N) => ReactNode
 	drawOverlay?: FcOverlayDrawer
@@ -105,7 +106,7 @@ const HitTarget = memo(<N extends FcCanvasNode>({ item, onClick }: HitTargetProp
 //##############################################################################
 
 const FlowchartCanvasView = <N extends FcCanvasNode>(
-		{ items, links, bounds, center, onSelect, drawOverlay }: Props<N>) => {
+		{ items, links, bounds, center, topInset = 0, onSelect, drawOverlay }: Props<N>) => {
 	const { closePopover } = usePopover()
 	const viewportRef = useRef<HTMLDivElement>(null)
 	const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -114,8 +115,8 @@ const FlowchartCanvasView = <N extends FcCanvasNode>(
 
 	const content = useMemo(() => ({ items, links, overlay: drawOverlay }),
 		[items, links, drawOverlay])
-	const propsRef = useRef({ content, bounds, center })
-	propsRef.current = { content, bounds, center }
+	const propsRef = useRef({ content, bounds, center, topInset })
+	propsRef.current = { content, bounds, center, topInset }
 
 	// create the camera and renderer, bind the inputs
 	useLayoutEffect(() => {
@@ -138,7 +139,7 @@ const FlowchartCanvasView = <N extends FcCanvasNode>(
 		const layout = (width: number, height: number, pixelWidth: number, pixelHeight: number) => {
 			if (width == 0 || height == 0)
 				return
-			const { bounds, center } = propsRef.current
+			const { bounds, center, topInset } = propsRef.current
 			const home = homeColumn(viewport)
 			const scale = initialScale(home.width, bounds)
 			camera.minScale = scale * MIN_SCALE
@@ -157,7 +158,7 @@ const FlowchartCanvasView = <N extends FcCanvasNode>(
 				const tx = contentWidth < home.width
 					? home.left + (home.width - contentWidth) / 2 - bounds.left * scale
 					: home.left - bounds.left * scale
-				camera.moveTo(scale, tx, TOP_PADDING_REM * remPx() - bounds.top * scale)
+				camera.moveTo(scale, tx, topInset + remPx() - bounds.top * scale)
 			}
 			camera.onChange()
 		}

@@ -76,7 +76,7 @@
 	text-decoration: none;
 	user-select: none;
 	-webkit-user-drag: none;
-	text-shadow: 0 0 10px #d0d3e16b;
+	text-shadow: 0 0 10px var(--menu-text-shadow, #d0d3e16b);
 	position: relative;
 	-webkit-tap-highlight-color: transparent;
 	text-align: center;

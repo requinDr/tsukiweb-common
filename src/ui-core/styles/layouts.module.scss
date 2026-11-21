@@ -23,6 +23,32 @@
 	-webkit-text-fill-color: transparent;
 	filter: drop-shadow(0 0 12px var(--btn-title-menu-shadow));
 }
+.pageHeader {
+	grid-area: header;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	gap: 1.5rem;
+	min-width: 0;
+	padding-block: .3rem .15rem;
+
+	.pageTitle {
+		margin: 0;
+		font-size: 2.5rem;
+		line-height: 1.2;
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: calc(50% - 50vw);
+		right: calc(50% - 50vw);
+		height: 1px;
+		background-image: var(--page-header-line, linear-gradient(90deg, transparent, rgb(255 255 255 / 40%) 15%, rgb(255 255 255 / 15%) 70%, transparent));
+		pointer-events: none;
+	}
+}
 .content {
 	grid-area: content;
 	display: flex;
@@ -31,9 +57,9 @@
 }
 .navigation {
 	grid-area: navigation;
+	flex: 1;
 	align-self: end;
 	min-width: 0;
-	margin-top: var(--page-padding);
 
 	> :global(.tabs-viewport) {
 		width: 100%;
@@ -53,46 +79,77 @@
 }
 .actions {
 	grid-area: actions;
-	display: flex;
-	align-items: flex-start;
-	align-self: flex-start;
-	width: 100%;
-	padding: .5rem;
-	padding-bottom: calc(1.5rem + var(--safe-area-max-inset-bottom));
 }
 
 .pageLayout {
 	display: grid;
 
-	.pageTitle {
-		margin-top: var(--page-padding);
-	}
-
 	@include mobile-landscape {
-		.pageTitle,
-		.navigation {
-			margin-top: 0;
+		.pageHeader {
+			display: contents;
+
+			&::after {
+				display: none;
+			}
 		}
 		.navigation {
 			align-self: stretch;
 			overflow-y: auto;
 		}
+		.actions {
+			padding-inline: var(--page-padding);
+			font-size: 1.1rem;
+			font-weight: 600;
+			background: none;
+			box-shadow: none;
+			clip-path: none;
+			border: 0;
+			border-image: none;
+
+			kbd {
+				display: none;
+			}
+			:global(.back-button-icon) {
+				display: block;
+			}
+		}
 	}
 
 	@include mobile-portrait {
-		.pageTitle {
-			margin-top: 0;
+		.pageHeader {
+			display: contents;
+
+			&::after {
+				display: none;
+			}
+		}
+		.actions {
+			padding-inline: var(--page-padding);
+			font-size: 1.1rem;
+			font-weight: 600;
+			background: none;
+			box-shadow: none;
+			clip-path: none;
+			border: 0;
+			border-image: none;
+
+			kbd {
+				display: none;
+			}
+			:global(.back-button-icon) {
+				display: block;
+			}
 		}
 	}
 }
 
 .tabsLayout {
-	grid-template-columns: auto 1fr;
+	grid-template-columns: minmax(0, 1fr);
 	grid-template-areas:
-		"page-title navigation"
-		"content content"
-		"actions actions";
-	grid-template-rows: auto 1fr auto;
+		"header"
+		"content"
+		"actions";
+	grid-template-rows: auto minmax(0, 1fr) auto;
 
 	@include mobile-landscape {
 		grid-template-columns: 180px 1fr;
@@ -114,7 +171,7 @@
 
 .masterDetailLayout {
 	grid-template-areas:
-		"page-title page-title"
+		"header header"
 		"content secondary"
 		"actions actions";
 	grid-template-columns: 3fr minmax(280px, 1fr);

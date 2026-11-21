@@ -1,14 +1,17 @@
 import classNames from "classnames"
 import { ReactNode } from "react"
+import { AudioManager } from "../../audio/AudioManager"
 import { useNavBackRef } from "../../hooks"
 import { DivProps } from "../../types"
+import HintsBar from "../components/HintsBar"
 import styles from "../styles/layouts.module.scss"
-import PageTitle from "./PageTitle"
+import PageHeader from "./PageHeader"
 
 type BaseProps = Omit<DivProps, "title"> & {
 	title: ReactNode
-	actions: ReactNode
+	actions?: ReactNode
 	onBack: VoidFunction
+	audio?: AudioManager
 	children: ReactNode
 }
 
@@ -32,6 +35,7 @@ const PageLayout = ({
 	secondary,
 	actions,
 	onBack,
+	audio,
 	children,
 	className,
 	...props
@@ -44,11 +48,12 @@ const PageLayout = ({
 		}, className)}
 		ref={useNavBackRef(onBack)}
 	>
-		<PageTitle>{title}</PageTitle>
-		{navigation && <div className={styles.navigation}>{navigation}</div>}
+		<PageHeader title={title}>
+			{navigation && <div className={styles.navigation}>{navigation}</div>}
+		</PageHeader>
 		<div className={styles.content}>{children}</div>
 		{secondary && <div className={styles.secondary}>{secondary}</div>}
-		<div className={styles.actions}>{actions}</div>
+		<HintsBar onBack={onBack} audio={audio} className={styles.actions}>{actions}</HintsBar>
 	</div>
 )
 

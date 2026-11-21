@@ -1,0 +1,79 @@
+@use 'mixins' as *;
+
+.hintsBar {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 1.3rem;
+	padding: .3rem var(--page-padding, 1rem);
+	font-size: .9rem;
+	padding-bottom: calc(.3rem + var(--safe-area-max-inset-bottom, 0px));
+	color: var(--hints-bar-color, var(--text-color));
+	background-color: var(--hints-bar-bg, rgb(0 0 0 / 55%));
+	box-shadow: 0 0 0 100vmax var(--hints-bar-bg, rgb(0 0 0 / 55%));
+	clip-path: inset(0 -100vmax);
+	border-top: 1px solid;
+	border-image: linear-gradient(var(--hints-bar-line, rgb(255 255 255 / 20%)) 0 0) 1 0 0 / 1px 0 0 / 0 100vmax;
+}
+
+.hint {
+	display: inline-flex;
+	align-items: center;
+	gap: .5em;
+	padding: 0;
+	font: inherit;
+	white-space: nowrap;
+	color: inherit;
+	background: none;
+	border: 0;
+
+	kbd {
+		min-width: 1.8em;
+		padding: .1em .45em;
+		font-family: inherit;
+		font-size: .8em;
+		text-align: center;
+		border: 1px solid var(--hints-key-border, rgb(255 255 255 / 35%));
+		border-radius: 3px;
+	}
+
+	@media (pointer: coarse) {
+		kbd {
+			display: none;
+		}
+	}
+}
+
+.gamepad .hint kbd {
+	display: inline-grid;
+	place-items: center;
+	min-width: 0;
+	width: 1.7em;
+	height: 1.7em;
+	padding: 0;
+	border-radius: 50%;
+	font-weight: 700;
+
+	svg {
+		font-size: 1.3em;
+	}
+}
+
+.keyHint {
+	@media (pointer: coarse) {
+		display: none;
+	}
+	@include mobile-landscape {
+		display: none;
+	}
+	@include mobile-portrait {
+		display: none;
+	}
+}
+
+.extra {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	height: 0;
+}

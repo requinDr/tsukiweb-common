@@ -42,14 +42,23 @@
 	min-height: 0;
 }
 
+$mobile-portrait: "screen and (orientation: portrait) and (max-width: 979px)";
+$mobile-landscape: "screen and (orientation: landscape) and (max-height: 500px)";
+
 @mixin mobile-portrait {
-	@media screen and (orientation: portrait) and (max-width: 760px) {
+	@media #{$mobile-portrait} {
 		@content;
 	}
 }
 
 @mixin mobile-landscape {
-	@media screen and (orientation: landscape) and (max-height: 680px) {
+	@media #{$mobile-landscape} {
+		@content;
+	}
+}
+
+@mixin mobile {
+	@media #{$mobile-portrait}, #{$mobile-landscape} {
 		@content;
 	}
 }
