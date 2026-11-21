@@ -267,7 +267,10 @@ const VISIBLE_CLASS = "tw-v"
 const UNIT_TAGS = new Set(["line", "copy", "ruby"])
 const NO_UNIT_TAGS = new Set(["br", "wbr"])
 
-const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" })
+const graphemeSegmenter = (("Intl" in window) && ("Segmenter" in Intl)) ?
+	new Intl.Segmenter(undefined, { granularity: "grapheme" })
+	// fallback to split chars and pretend they are segments
+	: { segment(text: string) { return text.split('').map(c=>({segment:c})) } }
 
 type UnitRef = (el: HTMLElement | null)=> VoidFunction | undefined
 
