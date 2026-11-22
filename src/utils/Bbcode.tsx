@@ -1,5 +1,5 @@
 import { Link } from "wouter"
-import { Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, memo, useEffect, useLayoutEffect, useMemo, useRef, JSX, useCallback } from "react"
+import { CSSProperties, Fragment, PropsWithoutRef, ComponentPropsWithoutRef, ReactNode, cloneElement, isValidElement, memo, useEffect, useLayoutEffect, useMemo, useRef, JSX, useCallback } from "react"
 import { innerText } from "./utils"
 
 
@@ -237,6 +237,14 @@ export function noBb(text: string): string {
 	return text ? innerBbText(createTree(text)) : ""
 }
 
+/**
+ * Render plain text with dashes displayed as continuous lines.
+ */
+export function textWithDashes(text: string): ReactNode[] {
+	return text.split(/([-―─]{2,})/).map((part, i)=>
+		i % 2 ? <span key={i} className="dash">{"\u{2013}".repeat(part.length)}</span> : part)
+}
+
 //#endregion ###################################################################
 //#region                           COMPONENTS
 //##############################################################################
@@ -251,10 +259,21 @@ type Props = {
 	rootSuffix?: ReactNode
 } & ComponentPropsWithoutRef<"span">
 
+function withSuffix(node: JSX.Element, suffix: JSX.Element): JSX.Element {
+	const children: ReactNode[] = [node.props.children].flat()
+	const last = children.at(-1)
+	if (isValidElement<{style?: CSSProperties, children?: ReactNode}>(last) && last.props.style?.display == "inline-block")
+		children[children.length - 1] = withSuffix(last, suffix)
+	else
+		children.push(suffix)
+	return cloneElement(node, undefined, children)
+}
+
 export const Bbcode = memo(({text, dict = defaultBBcodeDict, rootPrefix: prefix, rootSuffix: suffix, ...props}: Props)=> {
 	let root = bb(text, props, dict)
 	if (prefix || suffix) {
-		root = cloneElement(root, undefined, [prefix, ...root.props.children, suffix])
+		root = withSuffix(cloneElement(root, undefined, [prefix, ...root.props.children]),
+			<Fragment key="suffix">{suffix}</Fragment>)
 	}
 	return root
 })
@@ -464,8 +483,8 @@ export const BBTypeWriter = memo(({text, dict = defaultBBcodeDict, charDelay,
 
 	if (rootPrefix || rootSuffix) {
 		rootPrefix = <Fragment key="prefix">{rootPrefix}</Fragment>
-		rootSuffix = <Fragment key="suffix">{rootSuffix}</Fragment>
-		resultNode = cloneElement(resultNode, undefined, [rootPrefix, ...resultNode.props.children, rootSuffix])
+		resultNode = withSuffix(cloneElement(resultNode, undefined, [rootPrefix, ...resultNode.props.children]),
+			<Fragment key="suffix">{rootSuffix}</Fragment>)
 	}
 	return resultNode
 })
