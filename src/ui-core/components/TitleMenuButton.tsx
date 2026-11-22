@@ -29,7 +29,6 @@ const TitleMenuButton = ({ active, attention, audio, children, ...props}: TitleM
 	return (
 		<button
 			type="button"
-			onContextMenu={e => e.preventDefault()}
 			{...soundProps}
 			className={classes}
 		>

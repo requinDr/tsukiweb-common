@@ -84,7 +84,6 @@ const SwitchArrow = ({ audio, attention, children, ...props }: ArrowProps) => {
 	return (
 		<button
 			type="button"
-			onContextMenu={e => e.preventDefault()}
 			nav-auto={1}
 			{...soundProps}
 			className={classNames(styles.arrow, {[styles.attention]: attention})}

@@ -79,6 +79,8 @@ export class EventActions<A = string> {
 
 	handleEvent(evt: Event) {
         let filters
+		if (this._hideTextEdit && evt.type === 'contextmenu' && isEditableElement(evt.target))
+			return
 		// take only filters that match the event, and sort them with most specific match first
 		if (evt instanceof KeyboardEvent) {
             // special case for keyboard events: no event on text edits (optional),

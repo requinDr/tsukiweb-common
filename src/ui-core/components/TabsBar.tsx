@@ -86,7 +86,6 @@ const TabBtn = ({label, value, active, audio, ...props}: TabBtnProps) => {
 	return (
 		<button
 			className={classNames(styles.tab, "tab", { [styles.active]: active }, props?.className)}
-			onContextMenu={e => e.preventDefault()}
 			role="tab"
 			aria-selected={active}
 			data-tab={value}

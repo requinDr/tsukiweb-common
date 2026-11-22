@@ -109,10 +109,6 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 			if (!resolve(e.target)) closePopover()
 		}
 
-		const onContextMenu = (e: MouseEvent) => {
-			if (resolve(e.target)) e.preventDefault()
-		}
-
 		// Accessibility/keyboard navigation: focus
 		const onFocusIn = (e: FocusEvent) => {
 			if (isTouchActive) return
@@ -133,7 +129,6 @@ export const PopoverProvider = <T extends WithId>({ children, renderContent }: P
 		document.addEventListener("pointermove",   onPointerMove,  passive)
 		document.addEventListener("pointerup",     onPointerUp,    passive)
 		document.addEventListener("pointercancel", clearLongPress, passive)
-		document.addEventListener("contextmenu",   onContextMenu,  { signal })
 		document.addEventListener("focusin",       onFocusIn,      { signal })
 		document.addEventListener("focusout",      onFocusOut,     { signal })
 

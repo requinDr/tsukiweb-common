@@ -55,7 +55,7 @@ const Button = ({children, className, variant = "default",
 	}
 
 	return (
-		<button type="button" className={classes} onContextMenu={(e) => e.preventDefault()}
+		<button type="button" className={classes}
 				{...(props as ButtonProps)}>
 			{children}
 		</button>

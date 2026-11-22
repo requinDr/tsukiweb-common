@@ -19,7 +19,6 @@ const SceneShortcut = ({unlocked, images, title, subtitle, attention, ...props}:
 			className={classNames(styles.shortcut, {[styles.unlocked]: unlocked, "unlocked": unlocked, [styles.attention]: attention}, props.className)}
 			tabIndex={unlocked ? 0 : -1}
 			role="button"
-			onContextMenu={e => e.preventDefault()}
 		>
 			{images ?
 				<GraphicsGroup

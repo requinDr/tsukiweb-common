@@ -23,7 +23,6 @@ const BackButton = ({ audio, keyHint, compact = false, className, ...props }: Pr
 	return (
 		<button
 			type="button"
-			onContextMenu={e => e.preventDefault()}
 			{...soundProps}
 			className={classNames(styles.back, { [styles.compact]: compact }, className)}
 		>
