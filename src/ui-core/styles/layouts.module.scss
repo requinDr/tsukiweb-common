@@ -123,23 +123,6 @@
 				display: none;
 			}
 		}
-		.actions {
-			padding: .75rem var(--page-padding) calc(.75rem + var(--safe-area-max-inset-bottom, 0px));
-			font-size: 1.1rem;
-			font-weight: 600;
-			background: none;
-			box-shadow: none;
-			clip-path: none;
-			border: 0;
-			border-image: none;
-
-			kbd {
-				display: none;
-			}
-			:global(.back-button-icon) {
-				display: block;
-			}
-		}
 	}
 }
 

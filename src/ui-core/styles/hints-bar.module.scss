@@ -14,6 +14,19 @@
 	clip-path: inset(0 -100vmax);
 	border-top: 1px solid;
 	border-image: linear-gradient(var(--hints-bar-line, rgb(255 255 255 / 20%)) 0 0) 1 0 0 / 1px 0 0 / 0 100vmax;
+
+	@include mobile-portrait {
+		padding: .75rem var(--page-padding, 1rem) calc(.75rem + var(--safe-area-max-inset-bottom, 0px));
+		font-size: 1.1rem;
+		font-weight: 600;
+
+		kbd {
+			display: none;
+		}
+		:global(.back-button-icon) {
+			display: block;
+		}
+	}
 }
 
 .hint {
