@@ -124,7 +124,7 @@
 			}
 		}
 		.actions {
-			padding-inline: var(--page-padding);
+			padding: .75rem var(--page-padding) calc(.75rem + var(--safe-area-max-inset-bottom, 0px));
 			font-size: 1.1rem;
 			font-weight: 600;
 			background: none;
@@ -161,11 +161,11 @@
 	}
 	@include mobile-portrait {
 		grid-template-areas:
-			"navigation navigation"
-			"content content"
-			"actions page-title";
-		grid-template-columns: 1fr min-content;
-		grid-template-rows: auto 3fr min-content;
+			"page-title"
+			"navigation"
+			"content"
+			"actions";
+		grid-template-rows: auto auto minmax(0, 1fr) auto;
 	}
 }
 
@@ -187,11 +187,12 @@
 
 	@include mobile-portrait {
 		grid-template-areas:
-			"secondary secondary"
-			"content content"
-			"actions page-title";
-		grid-template-columns: 1fr min-content;
-		grid-template-rows: minmax(160px, 2fr) 5fr min-content;
+			"page-title"
+			"secondary"
+			"content"
+			"actions";
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto auto minmax(0, 1fr) auto;
 	}
 }
 
