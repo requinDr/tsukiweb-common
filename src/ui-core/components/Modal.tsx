@@ -91,6 +91,7 @@ const [render, setRender] = useState(show)
 
 		if (show && !node.open) {
 			node.showModal()
+			node.querySelector<HTMLElement>('[data-autofocus]')?.focus()
 		} else if (!show && node.open) {
 			node.classList.add(isClosingClass)
 			node.onanimationend = () => {
