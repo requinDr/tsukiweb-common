@@ -104,7 +104,8 @@
 			box-shadow: none;
 			clip-path: none;
 			border: 0;
-			border-image: none;
+			// longhand: the CSS minifier turns `border-image: none` into an empty, ignored value
+			border-image-source: none;
 
 			kbd {
 				display: none;

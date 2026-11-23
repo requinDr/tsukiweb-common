@@ -112,6 +112,7 @@ function createStyleReader(root: HTMLElement) {
 	svg.append(probe)
 	root.append(svg)
 	const cache = new Map<string, Stroke>()
+	const properties = new Map<string, string>()
 	const read = (key: string, className: string, stroke: string) => {
 		let value = cache.get(key)
 		if (!value) {
@@ -131,7 +132,12 @@ function createStyleReader(root: HTMLElement) {
 		/** stroke of an element with the class(es) `className` */
 		stroke: (className: string) => read(`.${className}`, className, ""),
 		color: (css: string) => read(css, "", css).color,
-		property: (name: string) => getComputedStyle(root).getPropertyValue(name),
+		property: (name: string) => {
+			let value = properties.get(name)
+			if (value === undefined)
+				properties.set(name, value = getComputedStyle(root).getPropertyValue(name))
+			return value
+		},
 		dispose: () => svg.remove(),
 	}
 }

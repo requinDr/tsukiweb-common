@@ -3,7 +3,6 @@ import Timer from "../utils/timer"
 import { extractInstructions } from "./utils";
 import { ScriptPlayerBase } from "./ScriptPlayer";
 import { CommandHandler } from "./types";
-import { line } from "motion/react-client";
 
 type BlockFinishCallback =
     (complete: boolean)=> void

@@ -37,7 +37,6 @@ const TabsBar = ({ tabs, selected, setSelected }: TabsProps) => {
 		const observer = new ResizeObserver(() => updateOverflow(element))
 		observer.observe(element)
 		Array.from(element.children).forEach(child => observer.observe(child))
-		updateOverflow(element)
 
 		return () => observer.disconnect()
 	}, [tabs.length])

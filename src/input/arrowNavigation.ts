@@ -319,7 +319,7 @@ function searchNavElmtsIn(from: Element) {
     const result = []
     let e
     while (e = elements.pop()) {
-        if (isElmtVisible(e) && isNavElmt(e))
+        if (isNavElmt(e) && isElmtVisible(e))
             result.push(e)
         else
             elements.push(...e.children as Iterable<HTMLElement | SVGElement>)
