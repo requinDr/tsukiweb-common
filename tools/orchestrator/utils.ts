@@ -22,6 +22,7 @@ export interface Check {
 export interface OrchestratorStep {
   id: number
   title: string
+  dependsOn?: number[]
   canRun: () => Promise<Check>
   isDone: () => Promise<Check>
   run: () => Promise<void>
@@ -44,10 +45,6 @@ export function combine(details: CheckDetail[]): Check {
 
 export async function fileExistsCheck(filePath: string, label = filePath): Promise<CheckDetail> {
   return check(await pathExists(filePath), stateFailure(label, 'missing'))
-}
-
-export async function directoryExistsCheck(dirPath: string, label = dirPath): Promise<CheckDetail> {
-  return check(await isDirectory(dirPath), stateFailure(label, 'missing'))
 }
 
 export async function nonEmptyDirectoryCheck(dirPath: string, label = dirPath): Promise<CheckDetail> {

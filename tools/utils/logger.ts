@@ -1,56 +1,68 @@
-declare const process: {
-  stdout: { isTTY: boolean; write: (s: string) => void }
-  stderr: { write: (s: string) => void }
+import { AsyncLocalStorage } from 'async_hooks'
+import { gray, red } from './console-utils.ts'
+
+const DEFAULT_KEY = ''
+const ANSI = /\x1b\[[0-9;]*m/g
+
+interface Scope {
+  key: string
+  label: string
 }
 
-const CURSOR_COL0  = '\r'          // move to column 0
-const CLEAR_LINE   = '\x1b[2K'    // clear entire current line
-const cursorUp = (n: number) => `\x1b[${n}A`
-const cursorDown = (n: number) => `\x1b[${n}B`
-
-type Mode = 'idle' | 'single' | 'multi'
+function fit(text: string, width: number): string {
+  if (text.replace(ANSI, '').length <= width) return text
+  let visible = 0
+  let result = ''
+  for (const part of text.split(/(\x1b\[[0-9;]*m)/)) {
+    if (part.startsWith('\x1b[')) {
+      result += part
+      continue
+    }
+    const room = width - 1 - visible
+    result += part.slice(0, Math.max(0, room))
+    visible += Math.min(part.length, Math.max(0, room))
+  }
+  return `${result}…\x1b[0m`
+}
 
 class Logger {
-  private mode: Mode = 'idle'
   private lines = new Map<string, string>()
-  private lineOrder: string[] = []
+  private drawnLines = 0
   private readonly tty = process.stdout.isTTY ?? false
-
-  // ─── Private ────────────────────────────────────────────────────────────────
+  private readonly scope = new AsyncLocalStorage<Scope>()
 
   private erase(): void {
-    if (!this.tty) return
+    if (!this.drawnLines) return
+    process.stdout.write(`\x1b[${this.drawnLines}A\r\x1b[0J`)
+    this.drawnLines = 0
+  }
 
-    if (this.mode === 'single') {
-      process.stdout.write(CURSOR_COL0 + CLEAR_LINE)
-    } else if (this.mode === 'multi') {
-      process.stdout.write(cursorUp(this.lineOrder.length))
-      for (let i = 0; i < this.lineOrder.length; i++) {
-        process.stdout.write(CURSOR_COL0 + CLEAR_LINE)
-        if (i < this.lineOrder.length - 1) process.stdout.write(cursorDown(1))
-      }
+  private draw(): void {
+    const width = (process.stdout.columns ?? 120) - 1
+    for (const text of this.lines.values()) {
+      process.stdout.write(fit(text.replace(/\s+$/, '').replace(/\n/g, ' '), width) + '\n')
+      this.drawnLines++
     }
   }
 
-  private redraw(): void {
-    if (!this.tty || this.mode !== 'multi') return
-    for (const key of this.lineOrder) {
-      process.stdout.write(CURSOR_COL0 + CLEAR_LINE + this.lines.get(key)! + '\n')
-    }
+  private print(stream: NodeJS.WriteStream, text: string): void {
+    this.erase()
+    stream.write(text + '\n')
+    this.draw()
   }
-
-  private reset(): void {
-    this.mode = 'idle'
-    this.lines.clear()
-    this.lineOrder = []
-  }
-
-  // ─── Public API ─────────────────────────────────────────────────────────────
 
   /**
-   * Update a progress line.
+   * Run `fn` with its own progress line: every progress() and log() made
+   * inside it updates that line, prefixed with `label`.
+   */
+  withScope<T>(key: string, label: string, fn: () => Promise<T>): Promise<T> {
+    return this.scope.run({ key, label }, fn)
+  }
+
+  /**
+   * Update a progress line in place.
    *
-   * - `logger.progress('Loading… 42%')` — single line, updated in place.
+   * - `logger.progress('Loading… 42%')` — default line.
    * - `logger.progress('worker-1', 'Worker 1: 42%')` — named line among several,
    *   each updated independently.
    */
@@ -58,79 +70,47 @@ class Logger {
   progress(key: string, text: string): void
   progress(keyOrText: string, text?: string): void {
     if (!this.tty) return
-
-    if (text === undefined) {
-      if (this.mode === 'multi') throw new Error('[logger] Cannot mix progress() and progress(key, text)')
-      this.mode = 'single'
-      process.stdout.write(CURSOR_COL0 + CLEAR_LINE + keyOrText)
-    } else {
-      if (this.mode === 'single') throw new Error('[logger] Cannot mix progress(key, text) and progress()')
-      this.mode = 'multi'
-
-      const key = keyOrText
-      if (!this.lines.has(key)) {
-        this.lineOrder.push(key)
-        this.lines.set(key, text)
-        process.stdout.write(text + '\n')
-        return
-      }
-
-      this.lines.set(key, text)
-      process.stdout.write(cursorUp(this.lineOrder.length))
-      this.redraw()
-    }
+    const scope = this.scope.getStore()
+    const message = text ?? keyOrText
+    this.erase()
+    if (scope) this.lines.set(scope.key, `${scope.label}  ${gray(message.trim())}`)
+    else this.lines.set(text === undefined ? DEFAULT_KEY : keyOrText, message)
+    this.draw()
   }
 
-  /**
-   * Print a permanent log message.
-   * In multi-line mode, progress lines are preserved below.
-   */
+  /** Print a permanent message above the progress lines. */
   log(...args: unknown[]): void {
-    if (this.tty) {
-      this.erase()
-      process.stdout.write(args.join(' ') + '\n')
-      this.redraw()
-    } else {
-      process.stdout.write(args.join(' ') + '\n')
+    if (this.scope.getStore()) {
+      this.progress(args.join(' '))
+      return
     }
+    this.print(process.stdout, args.join(' '))
   }
 
-  /**
-   * Print a permanent error message.
-   * In multi-line mode, progress lines are preserved below.
-   */
+  /** Print a permanent error message above the progress lines. */
   error(...args: unknown[]): void {
-    if (this.tty) {
-      this.erase()
-      process.stderr.write(args.join(' ') + '\n')
-      this.redraw()
-    } else {
-      process.stderr.write(args.join(' ') + '\n')
-    }
+    const scope = this.scope.getStore()
+    this.print(process.stderr, red(`${scope ? `${scope.label}  ` : ''}${args.join(' ')}`))
   }
 
-  /**
-   * Commit the last progress line and return to idle mode.
-   * Useful to "freeze" a final result before continuing to log.
-   *
-   * @example
-   * logger.progress('Done ✓')
-   * logger.done()
-   * logger.log('Continuing…')
-   */
+  /** Replace a progress line with a permanent message. */
+  finish(key: string, message: string): void {
+    this.erase()
+    this.lines.delete(key)
+    process.stdout.write(message + '\n')
+    this.draw()
+  }
+
+  /** Keep the current progress lines on screen and stop updating them. */
   done(): void {
-    if (this.tty && this.mode === 'single') {
-      process.stdout.write('\n')
-    }
-    this.reset()
+    this.lines.clear()
+    this.drawnLines = 0
   }
 
-  /**
-   * Erase the progress area and reset state, leaving no trace.
-   */
+  /** Erase the progress lines. */
   clear(): void {
     this.erase()
-    this.reset()
+    this.lines.clear()
   }
 
   section(title: string): void {

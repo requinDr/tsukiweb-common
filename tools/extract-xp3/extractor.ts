@@ -298,7 +298,6 @@ export async function extractXp3(
       }
     }
 
-    logger.clear()
     logger.log(`Extraction complete: ${extracted}/${entriesToExtract.length} files extracted to "${outputDir}"`)
   } catch (error) {
     logger.error(`An error occurred during XP3 extraction: ${(error as Error).message}`)

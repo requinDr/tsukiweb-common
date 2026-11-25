@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 
-const IGNORED_NAMES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini'])
+const IGNORED_NAMES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini', '.gitkeep'])
 
 export async function pathExists(filePath: string): Promise<boolean> {
   try {

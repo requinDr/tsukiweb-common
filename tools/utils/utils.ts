@@ -14,3 +14,17 @@ export function formatDuration(milliseconds: number): string {
 
   return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`
 }
+export async function mapConcurrent<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  let next = 0
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++
+      await fn(items[index], index)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker))
+}
